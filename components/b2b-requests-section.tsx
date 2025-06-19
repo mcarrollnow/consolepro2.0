@@ -12,12 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Building2, Clock, CheckCircle, AlertCircle, RefreshCw, DollarSign, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { B2BRequest } from "@/lib/google-sheets";
+import { readCustomerHistory } from '@/lib/csvReader';
 
 export function B2BRequestsSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [b2bRequests, setB2bRequests] = useState<B2BRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<B2BRequest | null>(null);
+  const [customerHistory, setCustomerHistory] = useState<any[]>([]);
+  const [liveUpdates, setLiveUpdates] = useState<string[]>([]);
   const { toast } = useToast();
 
   const fetchB2BRequests = async () => {
@@ -46,9 +49,48 @@ export function B2BRequestsSection() {
     }
   };
 
+  const fetchCustomerHistory = async () => {
+    if (selectedRequest) {
+      try {
+        const history = await readCustomerHistory(selectedRequest.id);
+        setCustomerHistory(history);
+      } catch (error) {
+        console.error('Error fetching customer history:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchB2BRequests();
+
+    // Set up WebSocket connection
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      setLiveUpdates((prevUpdates) => [...prevUpdates, message]);
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected from WebSocket server");
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
+
+  useEffect(() => {
+    fetchCustomerHistory();
+
+    const interval = setInterval(fetchCustomerHistory, 60000); // Refresh every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedRequest]);
 
   const filteredRequests = b2bRequests.filter(
     (request) =>
@@ -200,115 +242,83 @@ export function B2BRequestsSection() {
       </div>
 
       {/* B2B Requests Table */}
-      <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-white">Recent B2B Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Search requests, companies, contacts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder-slate-400"
-              />
+      <Table className="mt-6">
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Estimated Value</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredRequests.map((request) => (
+            <TableRow key={request.id} onClick={() => setSelectedRequest(request)} className="cursor-pointer hover:bg-slate-700">
+              <TableCell>{request.id}</TableCell>
+              <TableCell>{request.company}</TableCell>
+              <TableCell>{request.contact}</TableCell>
+              <TableCell>{request.email}</TableCell>
+              <TableCell>
+                <Badge className={getStatusColor(request.status)}>
+                  {getStatusIcon(request.status)}
+                  {request.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge className={getPriorityColor(request.priority)}>
+                  {request.priority}
+                </Badge>
+              </TableCell>
+              <TableCell>${request.estimatedValue.toFixed(2)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Dialog for Detailed Information */}
+      {selectedRequest && (
+        <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Request Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p><strong>ID:</strong> {selectedRequest.id}</p>
+              <p><strong>Company:</strong> {selectedRequest.company}</p>
+              <p><strong>Contact:</strong> {selectedRequest.contact}</p>
+              <p><strong>Email:</strong> {selectedRequest.email}</p>
+              <p><strong>Status:</strong> {selectedRequest.status}</p>
+              <p><strong>Priority:</strong> {selectedRequest.priority}</p>
+              <p><strong>Estimated Value:</strong> ${selectedRequest.estimatedValue.toFixed(2)}</p>
+              <div>
+                <h3 className="text-lg font-bold">Customer History</h3>
+                {customerHistory.map((entry, index) => (
+                  <div key={index} className="border-b border-slate-700 py-2">
+                    <p><strong>Date:</strong> {entry.date}</p>
+                    <p><strong>Action:</strong> {entry.action}</p>
+                    <p><strong>Details:</strong> {entry.details}</p>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Live Updates</h3>
+                {liveUpdates.length > 0 ? (
+                  <ul className="list-disc pl-5">
+                    {liveUpdates.map((update, index) => (
+                      <li key={index}>{update.message}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No live updates available.</p>
+                )}
+              </div>
             </div>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-700">
-                <TableHead className="text-slate-300">Request ID</TableHead>
-                <TableHead className="text-slate-300">Company</TableHead>
-                <TableHead className="text-slate-300">Contact</TableHead>
-                <TableHead className="text-slate-300">Email</TableHead>
-                <TableHead className="text-slate-300">Type</TableHead>
-                <TableHead className="text-slate-300">Value</TableHead>
-                <TableHead className="text-slate-300">Priority</TableHead>
-                <TableHead className="text-slate-300">Status</TableHead>
-                <TableHead className="text-slate-300">Date</TableHead>
-                <TableHead className="text-slate-300">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRequests.map((request) => (
-                <TableRow key={request.id} className="border-slate-700 hover:bg-slate-800/30">
-                  <TableCell className="text-slate-300 font-mono text-sm">{request.id}</TableCell>
-                  <TableCell className="text-white font-medium">{request.company}</TableCell>
-                  <TableCell className="text-slate-300">{request.contact}</TableCell>
-                  <TableCell className="text-slate-300">{request.email}</TableCell>
-                  <TableCell className="text-slate-300">{request.requestType}</TableCell>
-                  <TableCell className="text-slate-300">${request.estimatedValue.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge className={getPriorityColor(request.priority)}>
-                      {request.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(request.status)}>
-                      {getStatusIcon(request.status)}
-                      <span className="ml-1">{request.status}</span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-slate-300">{new Date(request.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedRequest(selectedRequest?.id === request.id ? null : request)}
-                      className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                    >
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {/* Request Details */}
-          {selectedRequest && (
-            <Card className="mt-6 bg-slate-900/50 border-slate-600">
-              <CardHeader>
-                <CardTitle className="text-white">Request Details - {selectedRequest.id}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-slate-400 text-sm">Phone</p>
-                      <p className="text-white">{selectedRequest.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400 text-sm">Request Date</p>
-                      <p className="text-white">{new Date(selectedRequest.date).toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-slate-400 text-sm mb-2">Description</p>
-                    <Textarea
-                      value={selectedRequest.description}
-                      className="bg-slate-800/50 border-slate-600 text-white"
-                      placeholder="No description provided"
-                      readOnly
-                    />
-                  </div>
-                  <div className="flex space-x-4">
-                    <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
-                      Contact Customer
-                    </Button>
-                    <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
-                      Update Status
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 } 
