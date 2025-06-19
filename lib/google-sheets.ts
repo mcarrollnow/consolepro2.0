@@ -52,6 +52,20 @@ export interface Customer {
   square_customer_id: string
 }
 
+export interface B2BRequest {
+  id: string
+  company: string
+  contact: string
+  email: string
+  phone: string
+  date: string
+  status: string
+  requestType: string
+  description: string
+  estimatedValue: number
+  priority: string
+}
+
 class GoogleSheetsService {
   private auth: GoogleAuth
   private sheets: sheets_v4.Sheets
@@ -305,6 +319,48 @@ class GoogleSheetsService {
       }))
     } catch (error) {
       console.error("Error fetching customers data:", error)
+      return []
+    }
+  }
+
+  async getB2BRequestsData(): Promise<B2BRequest[]> {
+    try {
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: "Orders!A:T", // Match the actual Orders sheet structure
+      })
+
+      const rows = response.data.values || []
+      if (rows.length === 0) return []
+
+      // Skip header row
+      const dataRows = rows.slice(1)
+
+      // Filter for requests from last 60 days and B2B orders
+      const sixtyDaysAgo = new Date()
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+
+      return dataRows
+        .map((row): B2BRequest => ({
+          id: row[1] || "", // Order_Code (column B)
+          company: row[5] || "", // Business_Name (column F)
+          contact: row[3] || "", // Customer_Name (column D)
+          email: row[4] || "", // Email (column E)
+          phone: row[6] || "", // Phone (column G)
+          date: row[0] || "", // Submission_Timestamp (column A)
+          status: row[18] || "", // Lifecycle_Stage (column S)
+          requestType: row[13] || "", // Order_Type (column N)
+          description: row[12] || "", // Special_Instructions (column M)
+          estimatedValue: Number.parseFloat(row[11]) || 0, // Total_Amount (column L)
+          priority: row[2] === 'B2B_ORDER' ? 'High' : 'Medium', // Based on Record_Type (column C)
+        }))
+        .filter(request => {
+          // Filter for B2B orders and within last 60 days
+          const requestDate = new Date(request.date)
+          return requestDate >= sixtyDaysAgo && (request.requestType === 'B2B' || request.priority === 'High')
+        })
+    } catch (error) {
+      console.error("Error fetching B2B requests data:", error)
       return []
     }
   }

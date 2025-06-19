@@ -30,6 +30,7 @@ const navItems = [
   { id: "analytics", label: "Analytics", icon: TrendingUp },
   { id: "emails", label: "Email Center", icon: Mail },
   { id: "settings", label: "Settings", icon: Settings },
+  { id: "b2b-requests", label: "B2B Requests", icon: FileText },
 ]
 
 export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {
