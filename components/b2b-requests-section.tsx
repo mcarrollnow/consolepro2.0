@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Building2, Clock, CheckCircle, AlertCircle, RefreshCw, DollarSign, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { B2BRequest } from "@/lib/google-sheets";
-import { readCustomerHistory } from '@/lib/csvReader';
+import { readGoogleSheet } from '@/lib/googleSheetsReader';
 
 export function B2BRequestsSection() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,7 +52,7 @@ export function B2BRequestsSection() {
   const fetchCustomerHistory = async () => {
     if (selectedRequest) {
       try {
-        const history = await readCustomerHistory(selectedRequest.id);
+        const history = await readGoogleSheet(selectedRequest.id);
         setCustomerHistory(history);
       } catch (error) {
         console.error('Error fetching customer history:', error);
