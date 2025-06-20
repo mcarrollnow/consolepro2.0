@@ -280,7 +280,17 @@ export function B2BRequestsSection() {
               <strong>Email:</strong> <a href={`mailto:${selectedRequest.email}?subject=Regarding Order ${selectedRequest.id}`} className="text-cyan-400 underline">{selectedRequest.email}</a><br />
               <strong>Status:</strong> {selectedRequest.status}<br />
               <strong>Priority:</strong> {selectedRequest.priority}<br />
-              <strong>Estimated Value:</strong> ${selectedRequest.estimatedValue.toFixed(2)}
+              <strong>Estimated Value:</strong> ${selectedRequest.estimatedValue.toFixed(2)}<br />
+              {selectedRequest.invoice_link && (
+                <a href={selectedRequest.invoice_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline mr-4">
+                  View Invoice
+                </a>
+              )}
+              {selectedRequest.payment_link && (
+                <a href={selectedRequest.payment_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">
+                  Pay Now
+                </a>
+              )}
             </div>
             <div className="mb-4">
               <h3 className="text-lg font-bold mb-2">Customer History</h3>

@@ -25,6 +25,8 @@ export interface OrderCustomer {
   total: number
   items: string
   notes: string
+  invoice_link?: string
+  payment_link?: string
 }
 
 export interface Customer {
@@ -179,6 +181,8 @@ class GoogleSheetsService {
           total: Number.parseFloat(row[6]) || 0,
           items: row[7] || "",
           notes: row[8] || "",
+          invoice_link: row[60] || "",
+          payment_link: row[61] || "",
         }),
       )
     } catch (error) {
