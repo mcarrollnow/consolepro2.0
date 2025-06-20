@@ -13,6 +13,7 @@ import { Plus, Search, Building2, Clock, CheckCircle, AlertCircle, RefreshCw, Do
 import { useToast } from "@/hooks/use-toast";
 import type { B2BRequest } from "@/lib/google-sheets";
 import { readGoogleSheet } from '@/lib/googleSheetsReader';
+import Link from 'next/link';
 
 export function B2BRequestsSection() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,6 +23,7 @@ export function B2BRequestsSection() {
   const [customerHistory, setCustomerHistory] = useState<any[]>([]);
   const [liveUpdates, setLiveUpdates] = useState<string[]>([]);
   const { toast } = useToast();
+  const [showDetails, setShowDetails] = useState(false);
 
   const fetchB2BRequests = async () => {
     try {
@@ -152,6 +154,16 @@ export function B2BRequestsSection() {
     request.priority.toLowerCase() === "high"
   );
 
+  const handleRowClick = (request: B2BRequest) => {
+    setSelectedRequest(request);
+    setShowDetails(true);
+  };
+
+  const handleBack = () => {
+    setShowDetails(false);
+    setSelectedRequest(null);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -242,83 +254,132 @@ export function B2BRequestsSection() {
         </Card>
       </div>
 
-      {/* B2B Requests Table */}
-      <Table className="mt-6">
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Estimated Value</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredRequests.map((request) => (
-            <TableRow key={request.id} onClick={() => setSelectedRequest(request)} className="cursor-pointer hover:bg-slate-700">
-              <TableCell>{request.id}</TableCell>
-              <TableCell>{request.company}</TableCell>
-              <TableCell>{request.contact}</TableCell>
-              <TableCell>{request.email}</TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(request.status)}>
-                  {getStatusIcon(request.status)}
-                  {request.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge className={getPriorityColor(request.priority)}>
-                  {request.priority}
-                </Badge>
-              </TableCell>
-              <TableCell>${request.estimatedValue.toFixed(2)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Dialog for Detailed Information */}
-      {selectedRequest && (
-        <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Request Details</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p><strong>ID:</strong> {selectedRequest.id}</p>
-              <p><strong>Company:</strong> {selectedRequest.company}</p>
-              <p><strong>Contact:</strong> {selectedRequest.contact}</p>
-              <p><strong>Email:</strong> {selectedRequest.email}</p>
-              <p><strong>Status:</strong> {selectedRequest.status}</p>
-              <p><strong>Priority:</strong> {selectedRequest.priority}</p>
-              <p><strong>Estimated Value:</strong> ${selectedRequest.estimatedValue.toFixed(2)}</p>
-              <div>
-                <h3 className="text-lg font-bold">Customer History</h3>
-                {customerHistory.map((entry, index) => (
-                  <div key={index} className="border-b border-slate-700 py-2">
-                    <p><strong>Date:</strong> {entry.date}</p>
-                    <p><strong>Action:</strong> {entry.action}</p>
-                    <p><strong>Details:</strong> {entry.details}</p>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">Live Updates</h3>
-                {liveUpdates.length > 0 ? (
-                  <ul className="list-disc pl-5">
-                    {liveUpdates.map((update, index) => (
-                      <li key={index}>{update.message}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No live updates available.</p>
-                )}
-              </div>
+      {/* Main Content or Details Panel */}
+      {showDetails && selectedRequest ? (
+        <div className="fixed inset-0 z-50 bg-slate-900/95 flex flex-col p-8 overflow-y-auto">
+          <button onClick={handleBack} className="mb-4 text-white flex items-center">
+            <span className="mr-2">←</span> Back to Orders
+          </button>
+          <div className="bg-slate-800 rounded-lg p-6 w-full max-w-4xl mx-auto shadow-lg">
+            <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
+              Order Details
+              <span className="ml-4 text-base text-cyan-400">Order ID: {selectedRequest.id}</span>
+            </h2>
+            <div className="mb-4">
+              <Link href={`/customers/${selectedRequest.id}`} className="text-cyan-400 underline mr-2">
+                {selectedRequest.company}
+              </Link>
+              <span className="text-slate-400">(Customer ID: </span>
+              <Link href={`/customers/${selectedRequest.id}`} className="text-cyan-400 underline">
+                {selectedRequest.id}
+              </Link>
+              <span className="text-slate-400">)</span>
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="mb-4">
+              <strong>Contact:</strong> {selectedRequest.contact}<br />
+              <strong>Email:</strong> <a href={`mailto:${selectedRequest.email}?subject=Regarding Order ${selectedRequest.id}`} className="text-cyan-400 underline">{selectedRequest.email}</a><br />
+              <strong>Status:</strong> {selectedRequest.status}<br />
+              <strong>Priority:</strong> {selectedRequest.priority}<br />
+              <strong>Estimated Value:</strong> ${selectedRequest.estimatedValue.toFixed(2)}
+            </div>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold mb-2">Customer History</h3>
+              {customerHistory.length > 0 ? (
+                <table className="w-full text-left text-white bg-slate-700 rounded">
+                  <thead>
+                    <tr>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Action</th>
+                      <th className="p-2">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customerHistory.map((entry, index) => (
+                      <tr key={index} className="border-b border-slate-600">
+                        <td className="p-2">{entry[6] || entry.date}</td>
+                        <td className="p-2">{entry[10] || entry.action}</td>
+                        <td className="p-2">{entry[12] || entry.details}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-slate-400">No customer history found.</p>
+              )}
+            </div>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold mb-2">Live Updates</h3>
+              {liveUpdates.length > 0 ? (
+                <ul className="list-disc pl-5 text-white">
+                  {liveUpdates.map((update, index) => (
+                    <li key={index}>{update.message || update}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-slate-400">No live updates available.</p>
+              )}
+            </div>
+            <div className="mt-6">
+              <a
+                href={`mailto:${selectedRequest.email}?subject=Regarding Order ${selectedRequest.id}`}
+                className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Start Email Thread
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* B2B Requests Table */}
+          <Table className="mt-6">
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Estimated Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.map((request) => (
+                <TableRow
+                  key={request.id}
+                  onClick={() => handleRowClick(request)}
+                  className="cursor-pointer hover:bg-slate-700 text-white"
+                >
+                  <TableCell>
+                    <Link href={`/customers/${request.id}`} className="text-cyan-400 underline">
+                      {request.id}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/customers/${request.id}`} className="text-cyan-400 underline">
+                      {request.company}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{request.contact}</TableCell>
+                  <TableCell>{request.email}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(request.status)}>
+                      {getStatusIcon(request.status)}
+                      {request.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getPriorityColor(request.priority)}>
+                      {request.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>${request.estimatedValue.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
       )}
     </div>
   );
