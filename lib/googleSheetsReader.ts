@@ -2,11 +2,13 @@
 import { google } from 'googleapis';
 
 export async function readGoogleSheet(sheetId: string, range: string) {
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set');
+  }
+  const credentials = JSON.parse(serviceAccountJson);
   const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
+    credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
