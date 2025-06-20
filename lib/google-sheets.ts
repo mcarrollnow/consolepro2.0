@@ -108,7 +108,7 @@ class GoogleSheetsService {
 
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Sheet1!A:K", // Try Sheet1 first, adjust based on your sheet name
+        range: "Product!A:K", // Use the correct sheet name for inventory
       })
 
       console.log("Google Sheets response:", response.data)
