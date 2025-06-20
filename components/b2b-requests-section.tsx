@@ -52,8 +52,14 @@ export function B2BRequestsSection() {
   const fetchCustomerHistory = async () => {
     if (selectedRequest) {
       try {
-        const history = await readGoogleSheet(selectedRequest.id);
-        setCustomerHistory(history);
+        const sheetId = process.env.GOOGLE_SPREADSHEET_ID as string;
+        const range = "Order Tracking - Customers!A:V";
+        const allCustomers = await readGoogleSheet(sheetId, range);
+        // Skip header row and find all rows matching the customer_id
+        const customerRows = (allCustomers || []).slice(1).filter(
+          (row: any[]) => row[0] === selectedRequest.id
+        );
+        setCustomerHistory(customerRows);
       } catch (error) {
         console.error('Error fetching customer history:', error);
       }
