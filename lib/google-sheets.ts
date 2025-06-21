@@ -106,11 +106,11 @@ class GoogleSheetsService {
   async getInventoryData(): Promise<InventoryItem[]> {
     try {
       console.log("Fetching inventory data from Google Sheets...")
-      console.log("Using spreadsheet ID:", this.spreadsheetId)
+      console.log("Using spreadsheet ID:", this.inventorySheetId)
 
       const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: "Product!A:K", // Use the correct sheet name for inventory
+        spreadsheetId: this.inventorySheetId,
+        range: "Product!A:L",
       })
 
       console.log("Google Sheets response:", response.data)
