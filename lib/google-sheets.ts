@@ -161,7 +161,7 @@ class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:I", // Adjust range based on your sheet structure
+        range: "Orders!A:BH", // Covers all columns
       })
 
       const rows = response.data.values || []
@@ -170,21 +170,26 @@ class GoogleSheetsService {
       // Skip header row
       const dataRows = rows.slice(1)
 
-      return dataRows.map(
-        (row): OrderCustomer => ({
-          orderId: row[0] || "",
-          customerId: row[1] || "",
-          customerName: row[2] || "",
-          customerEmail: row[3] || "",
-          orderDate: row[4] || "",
-          status: row[5] || "",
-          total: Number.parseFloat(row[6]) || 0,
-          items: row[7] || "",
-          notes: row[8] || "",
-          invoice_link: row[60] || "",
-          payment_link: row[61] || "",
-        }),
-      )
+      return dataRows.map((row): OrderCustomer => {
+        // Concatenate all product names (Product_1_Name at 20, Product_2_Name at 24, ... up to Product_10_Name at 56)
+        const productNames = []
+        for (let i = 20; i <= 56; i += 4) {
+          if (row[i] && row[i].trim() !== "") productNames.push(row[i])
+        }
+        return {
+          orderId: row[1] || "", // Order_Code
+          customerId: "", // Not available in this sheet
+          customerName: row[3] || "", // Customer_Name
+          customerEmail: row[4] || "", // Email
+          orderDate: row[0] || "", // Submission_Timestamp
+          status: row[17] || "", // Fulfillment_Status (or change to another if preferred)
+          total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
+          items: productNames.join(", "),
+          notes: row[12] || "", // Special_Instructions
+          invoice_link: row[60] || "", // invoice_link
+          payment_link: row[59] || "", // payment_link
+        }
+      })
     } catch (error) {
       console.error("Error fetching orders data:", error)
       return []
@@ -291,35 +296,35 @@ class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Customers!A:U", // 21 columns (A-U)
+        range: "Customers!A:V", // 22 columns (A-V)
       })
       const rows = response.data.values || []
       if (rows.length === 0) return []
       // Skip header row
       const dataRows = rows.slice(1)
       return dataRows.map((row): Customer => ({
-        customer_id: row[0] || "",
-        name: row[1] || "",
-        email: row[2] || "",
-        phone: row[3] || "",
-        company: row[4] || "",
-        address: row[5] || "",
-        first_order_date: row[6] || "",
-        last_order_date: row[7] || "",
-        total_orders: row[8] || "",
-        total_spent: row[9] || "",
-        customer_status: row[10] || "",
-        preferred_contact: row[11] || "",
-        customer_notes: row[12] || "",
-        tags: row[13] || "",
-        created_date: row[14] || "",
-        last_updated: row[15] || "",
-        referred_by: row[16] || "",
-        customer_class: row[17] || "",
-        square_reference_id: row[18] || "",
-        nickname: row[19] || "",
-        birthday: row[20] || "",
-        square_customer_id: row[21] || "",
+        customer_id: row[0]?.trim() || "",
+        name: row[1]?.trim() || "",
+        email: row[2]?.trim() || "",
+        phone: row[3]?.trim() || "",
+        company: row[4]?.trim() || "",
+        address: row[5]?.trim() || "",
+        first_order_date: row[6]?.trim() || "",
+        last_order_date: row[7]?.trim() || "",
+        total_orders: row[8]?.trim() || "",
+        total_spent: row[9]?.trim() || "",
+        customer_status: row[10]?.trim() || "",
+        preferred_contact: row[11]?.trim() || "",
+        customer_notes: row[12]?.trim() || "",
+        tags: row[13]?.trim() || "",
+        created_date: row[14]?.trim() || "",
+        last_updated: row[15]?.trim() || "",
+        referred_by: row[16]?.trim() || "",
+        customer_class: row[17]?.trim() || "",
+        square_reference_id: row[18]?.trim() || "",
+        nickname: row[19]?.trim() || "",
+        birthday: row[20]?.trim() || "",
+        square_customer_id: row[21]?.trim() || "",
       }))
     } catch (error) {
       console.error("Error fetching customers data:", error)
