@@ -373,6 +373,82 @@ class GoogleSheetsService {
       return []
     }
   }
+
+  async getPurchasesData(): Promise<any[]> {
+    try {
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.inventorySheetId,
+        range: "Purchases!A:D", // Timestamp, Product Barcode, Quantity, Product
+      })
+      const rows = response.data.values || []
+      if (rows.length === 0) return []
+      const headers = rows[0]
+      return rows.slice(1).map(row => {
+        const obj: any = {}
+        headers.forEach((header, i) => {
+          obj[header] = row[i] || ""
+        })
+        return obj
+      })
+    } catch (error: any) {
+      console.error("Error fetching purchases data:", error)
+      return []
+    }
+  }
+
+  async addPurchase({ barcode, quantity, timestamp }: { barcode: string, quantity: number, timestamp: string }): Promise<boolean> {
+    try {
+      const values = [[timestamp, barcode, quantity, ""]]
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.inventorySheetId,
+        range: "Purchases!A:D",
+        valueInputOption: "RAW",
+        requestBody: { values },
+      })
+      return true
+    } catch (error: any) {
+      console.error("Error adding purchase:", error)
+      return false
+    }
+  }
+
+  async getSalesData(): Promise<any[]> {
+    try {
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.inventorySheetId,
+        range: "Sales!A:F", // Timestamp, Product Barcode, Quantity, Product, customer_id, Order_Code
+      })
+      const rows = response.data.values || []
+      if (rows.length === 0) return []
+      const headers = rows[0]
+      return rows.slice(1).map(row => {
+        const obj: any = {}
+        headers.forEach((header, i) => {
+          obj[header] = row[i] || ""
+        })
+        return obj
+      })
+    } catch (error: any) {
+      console.error("Error fetching sales data:", error)
+      return []
+    }
+  }
+
+  async addSale({ barcode, quantity, timestamp, product = "", customer_id = "", order_code = "" }: { barcode: string, quantity: number, timestamp: string, product?: string, customer_id?: string, order_code?: string }): Promise<boolean> {
+    try {
+      const values = [[timestamp, barcode, quantity, product, customer_id, order_code]]
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.inventorySheetId,
+        range: "Sales!A:F",
+        valueInputOption: "RAW",
+        requestBody: { values },
+      })
+      return true
+    } catch (error: any) {
+      console.error("Error adding sale:", error)
+      return false
+    }
+  }
 }
 
 export const googleSheetsService = new GoogleSheetsService()
