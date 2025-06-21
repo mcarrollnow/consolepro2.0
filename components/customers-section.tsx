@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { Users, Search, UserPlus, Star } from "lucide-react"
+import Link from "next/link"
 
 export function CustomersSection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -170,63 +171,17 @@ export function CustomersSection() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedCustomer(selectedCustomer === customer.customer_id ? null : customer.customer_id)}
-                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                      <Link
+                        href={`/customers/${customer.customer_id}`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 px-2 py-1 rounded"
                       >
                         View Profile
-                      </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
-
-          {/* Customer Profile */}
-          {selectedCustomer && (
-            <Card className="mt-6 bg-slate-900/50 border-slate-600">
-              <CardHeader>
-                <CardTitle className="text-white">Customer Profile - {selectedCustomer}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  const customer = customers.find((c) => c.customer_id === selectedCustomer)
-                  return customer ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-slate-400 text-sm">Phone</p>
-                          <p className="text-white">{customer.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-slate-400 text-sm">Join Date</p>
-                          <p className="text-white">{customer.join_date}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-slate-400 text-sm mb-2">Customer Notes</p>
-                        <Textarea
-                          value={customer.notes}
-                          className="bg-slate-800/50 border-slate-600 text-white"
-                          placeholder="Add notes about this customer..."
-                        />
-                      </div>
-                      <div className="flex space-x-4">
-                        <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
-                          View Order History
-                        </Button>
-                        <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
-                          Send Message
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null
-                })()}
-              </CardContent>
-            </Card>
           )}
         </CardContent>
       </Card>
