@@ -59,7 +59,7 @@ export default function LoginPage() {
       if (data.success) {
         setSuccess("Phone verified! Redirecting...");
         document.cookie = `auth_phone=${encodeURIComponent(formattedPhone)}; path=/`;
-        setTimeout(() => router.push("/"), 1000);
+        setTimeout(() => window.location.href = "/", 1000);
       } else {
         setError(data.error || "Invalid code");
       }
