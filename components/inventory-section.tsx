@@ -16,30 +16,34 @@ import { DebugConnection } from "./debug-connection"
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("")
   const [inventoryData, setInventoryData] = useState<InventoryItem[]>([])
+  const [purchases, setPurchases] = useState<any[]>([])
+  const [sales, setSales] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false)
+  const [isSaleDialogOpen, setIsSaleDialogOpen] = useState(false)
+  const [purchaseQty, setPurchaseQty] = useState(0)
+  const [saleQty, setSaleQty] = useState(0)
   const { toast } = useToast()
 
   const fetchInventoryData = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/inventory")
-      if (response.ok) {
-        const data = await response.json()
-        setInventoryData(data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch inventory data",
-          variant: "destructive",
-        })
-      }
+      const [inventoryRes, purchasesRes, salesRes] = await Promise.all([
+        fetch("/api/inventory"),
+        fetch("/api/purchases"),
+        fetch("/api/sales"),
+      ])
+      const inventory = await inventoryRes.json()
+      const purchasesData = await purchasesRes.json()
+      const salesData = await salesRes.json()
+      setInventoryData(inventory)
+      setPurchases(purchasesData)
+      setSales(salesData)
     } catch (error) {
-      console.error("Error fetching inventory:", error)
       toast({
         title: "Error",
-        description: "Failed to connect to inventory system",
+        description: "Failed to fetch inventory or transaction data",
         variant: "destructive",
       })
     } finally {
@@ -50,6 +54,17 @@ export function InventorySection() {
   useEffect(() => {
     fetchInventoryData()
   }, [])
+
+  const getCurrentStock = (item: InventoryItem) => {
+    const barcode = item.barcode.toLowerCase()
+    const purchaseSum = purchases
+      .filter((p) => (p["Product Barcode"] || p.barcode || "").toLowerCase() === barcode)
+      .reduce((sum, p) => sum + (parseInt(p.Quantity) || 0), 0)
+    const saleSum = sales
+      .filter((s) => (s["Product Barcode"] || s.barcode || "").toLowerCase() === barcode)
+      .reduce((sum, s) => sum + (parseInt(s.Quantity) || 0), 0)
+    return (parseInt(item.initialStock) || 0) + purchaseSum - saleSum
+  }
 
   const filteredInventory = inventoryData.filter(
     (item) =>
@@ -241,8 +256,8 @@ export function InventorySection() {
                   <TableCell className="text-white font-medium">{item.product}</TableCell>
                   <TableCell className="text-slate-300">{item.category}</TableCell>
                   <TableCell className="text-slate-300">
-                    {item.currentStock}
-                    {item.currentStock <= item.restockLevel && (
+                    {getCurrentStock(item)}
+                    {getCurrentStock(item) <= item.restockLevel && (
                       <AlertTriangle className="inline h-4 w-4 text-yellow-400 ml-1" />
                     )}
                   </TableCell>
@@ -252,17 +267,30 @@ export function InventorySection() {
                     <Badge className={getStatusColor(item)}>{getStatusText(item)}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedItem(item)
-                        setIsEditDialogOpen(true)
-                      }}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedItem(item)
+                          setIsPurchaseDialogOpen(true)
+                        }}
+                        className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                      >
+                        Add Purchase
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedItem(item)
+                          setIsSaleDialogOpen(true)
+                        }}
+                        className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                      >
+                        Add Sale
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -271,42 +299,107 @@ export function InventorySection() {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {/* Add Purchase Dialog */}
+      <Dialog open={isPurchaseDialogOpen} onOpenChange={setIsPurchaseDialogOpen}>
         <DialogContent className="bg-slate-800 border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-white">Update Stock - {selectedItem?.product}</DialogTitle>
+            <DialogTitle className="text-white">Add Purchase - {selectedItem?.product}</DialogTitle>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">
               <div>
-                <Label className="text-slate-300">Current Stock</Label>
+                <Label className="text-slate-300">Quantity</Label>
                 <Input
                   type="number"
-                  defaultValue={selectedItem.currentStock}
+                  min={1}
+                  value={purchaseQty}
+                  onChange={(e) => setPurchaseQty(Number(e.target.value))}
                   className="bg-slate-900/50 border-slate-600 text-white"
-                  onChange={(e) => {
-                    const newStock = Number.parseInt(e.target.value) || 0
-                    setSelectedItem({ ...selectedItem, currentStock: newStock })
-                  }}
+                  placeholder="Enter quantity purchased"
                 />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
+                  onClick={() => setIsPurchaseDialogOpen(false)}
                   className="border-slate-600 text-slate-300"
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={() => {
-                    handleUpdateStock(selectedItem.barcode, selectedItem.currentStock)
-                    setIsEditDialogOpen(false)
+                  onClick={async () => {
+                    // Call API to add purchase record
+                    await fetch("/api/purchases", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        barcode: selectedItem.barcode,
+                        quantity: purchaseQty,
+                        timestamp: new Date().toISOString(),
+                      }),
+                    })
+                    setIsPurchaseDialogOpen(false)
+                    setPurchaseQty(0)
+                    fetchInventoryData()
                   }}
                   className="bg-gradient-to-r from-cyan-500 to-purple-500"
+                  disabled={purchaseQty <= 0}
                 >
-                  Update Stock
+                  Add Purchase
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Sale Dialog */}
+      <Dialog open={isSaleDialogOpen} onOpenChange={setIsSaleDialogOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Add Sale - {selectedItem?.product}</DialogTitle>
+          </DialogHeader>
+          {selectedItem && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-slate-300">Quantity</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={saleQty}
+                  onChange={(e) => setSaleQty(Number(e.target.value))}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                  placeholder="Enter quantity sold"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsSaleDialogOpen(false)}
+                  className="border-slate-600 text-slate-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    // Call API to add sale record
+                    await fetch("/api/sales", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        barcode: selectedItem.barcode,
+                        quantity: saleQty,
+                        timestamp: new Date().toISOString(),
+                      }),
+                    })
+                    setIsSaleDialogOpen(false)
+                    setSaleQty(0)
+                    fetchInventoryData()
+                  }}
+                  className="bg-gradient-to-r from-cyan-500 to-purple-500"
+                  disabled={saleQty <= 0}
+                >
+                  Add Sale
                 </Button>
               </div>
             </div>
