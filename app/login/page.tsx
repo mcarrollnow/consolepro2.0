@@ -11,16 +11,24 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const router = useRouter();
 
+  function formatPhone(phone: string) {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 10) return `+1${digits}`;
+    if (phone.startsWith('+')) return phone;
+    return phone;
+  }
+
   const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
     try {
+      const formattedPhone = formatPhone(phone);
       const res = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: formattedPhone }),
       });
       const data = await res.json();
       if (data.success) {
@@ -41,16 +49,16 @@ export default function LoginPage() {
     setError("");
     setSuccess("");
     try {
+      const formattedPhone = formatPhone(phone);
       const res = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code }),
+        body: JSON.stringify({ phone: formattedPhone, code }),
       });
       const data = await res.json();
       if (data.success) {
         setSuccess("Phone verified! Redirecting...");
-        // Set a simple cookie (for demo; use httpOnly/session in production)
-        document.cookie = `auth_phone=${encodeURIComponent(phone)}; path=/`;
+        document.cookie = `auth_phone=${encodeURIComponent(formattedPhone)}; path=/`;
         setTimeout(() => router.push("/"), 1000);
       } else {
         setError(data.error || "Invalid code");
