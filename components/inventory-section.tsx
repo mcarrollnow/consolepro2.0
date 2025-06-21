@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Package, AlertTriangle, Edit, RefreshCw } from "lucide-react"
+import { Plus, Search, Package, AlertTriangle, Edit, RefreshCw, Copy, MessageCircle, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { InventoryItem } from "@/lib/google-sheets"
 import { DebugConnection } from "./debug-connection"
+import { Textarea } from "@/components/ui/textarea"
 
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -25,6 +26,10 @@ export function InventorySection() {
   const [purchaseQty, setPurchaseQty] = useState(0)
   const [saleQty, setSaleQty] = useState(0)
   const { toast } = useToast()
+  const [activeView, setActiveView] = useState<'all' | 'low' | 'out'>('all')
+  const [ordersData, setOrdersData] = useState<any[]>([])
+  const [notifyDialogOpen, setNotifyDialogOpen] = useState(false)
+  const [notifyMessage, setNotifyMessage] = useState("")
 
   const fetchInventoryData = async () => {
     try {
@@ -51,8 +56,21 @@ export function InventorySection() {
     }
   }
 
+  const fetchOrdersData = async () => {
+    try {
+      const response = await fetch("/api/orders")
+      if (response.ok) {
+        const data = await response.json()
+        setOrdersData(data)
+      }
+    } catch (error) {
+      // ignore for now
+    }
+  }
+
   useEffect(() => {
     fetchInventoryData()
+    fetchOrdersData()
   }, [])
 
   const getCurrentStock = (item: InventoryItem) => {
@@ -122,12 +140,55 @@ export function InventorySection() {
     }
   }
 
-  const lowStockItems = inventoryData.filter((item) => item.currentStock <= item.restockLevel && item.currentStock > 0)
+  const lowStockItems = inventoryData.filter((item) => item.currentStock <= 100 && item.currentStock > 0)
   const outOfStockItems = inventoryData.filter((item) => item.currentStock === 0)
   const totalValue = inventoryData.reduce((sum, item) => {
     const price = Number.parseFloat(item.costPrice.replace("$", "")) || 0
     return sum + price * item.currentStock
   }, 0)
+
+  const unfulfilledOrders = ordersData.filter((order) => (order.status || '').toLowerCase() === 'processing')
+
+  const getPendingOrdersForItem = (item: InventoryItem) => {
+    return unfulfilledOrders.filter(order => {
+      return (
+        (order.items && order.items.toLowerCase().includes(item.product.toLowerCase())) ||
+        (item.barcode && order.items && order.items.includes(item.barcode))
+      )
+    })
+  }
+
+  const generateSupplierMessage = (section: 'low' | 'out') => {
+    const items = section === 'low' ? lowStockItems : outOfStockItems
+    let context = section === 'low'
+      ? 'The following items are low in stock (≤100 units) and may have pending orders:'
+      : 'The following items are out of stock and may have pending orders:'
+    let msg = context + '\n\n'
+    items.forEach((item: InventoryItem) => {
+      msg += `Product: ${item.product}\nBarcode: ${item.barcode}\nQty: ${item.currentStock}\n`
+      const pending = getPendingOrdersForItem(item)
+      if (pending.length > 0) {
+        msg += `Pending Orders: ${pending.map((o: any) => o.orderId).join(", ")}\n`
+      }
+      msg += '\n'
+    })
+    return msg
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(notifyMessage)
+    toast({ title: "Copied!", description: "Message copied to clipboard." })
+  }
+  const handleSMS = () => {
+    window.open(`sms:?body=${encodeURIComponent(notifyMessage)}`)
+  }
+  const handleThreema = () => {
+    const threemaId = process.env.NEXT_PUBLIC_THREEMA_ID || ''
+    const url = threemaId
+      ? `threema://compose?to=${threemaId}&text=${encodeURIComponent(notifyMessage)}`
+      : `threema://compose?text=${encodeURIComponent(notifyMessage)}`
+    window.open(url)
+  }
 
   if (loading) {
     return (
@@ -180,8 +241,7 @@ export function InventorySection() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+        <Card className={`bg-slate-800/50 border-slate-700/50 backdrop-blur-sm cursor-pointer ${activeView==='low' ? 'ring-2 ring-yellow-400' : ''}`} onClick={() => setActiveView('low')}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -192,8 +252,7 @@ export function InventorySection() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+        <Card className={`bg-slate-800/50 border-slate-700/50 backdrop-blur-sm cursor-pointer ${activeView==='out' ? 'ring-2 ring-red-400' : ''}`} onClick={() => setActiveView('out')}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -204,7 +263,6 @@ export function InventorySection() {
             </div>
           </CardContent>
         </Card>
-
         <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -218,86 +276,157 @@ export function InventorySection() {
         </Card>
       </div>
 
-      {/* Search and Filter */}
-      <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-white">Product Inventory</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Search products, barcodes, or categories..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder-slate-400"
-              />
+      {/* Filtered inventory view */}
+      {(activeView === 'low' || activeView === 'out') && (
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center justify-between">
+              {activeView === 'low' ? 'Low Stock Items' : 'Out of Stock Items'}
+              <Button size="sm" variant="outline" className="ml-4" onClick={() => {
+                setNotifyMessage(generateSupplierMessage(activeView))
+                setNotifyDialogOpen(true)
+              }}>
+                <Send className="h-4 w-4 mr-1" /> Notify Supplier
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700">
+                  <TableHead className="text-slate-300">Barcode</TableHead>
+                  <TableHead className="text-slate-300">Product</TableHead>
+                  <TableHead className="text-slate-300">Current Stock</TableHead>
+                  <TableHead className="text-slate-300">Pending Orders</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(activeView === 'low' ? lowStockItems : outOfStockItems).map(item => (
+                  <TableRow key={item.barcode} className="border-slate-700">
+                    <TableCell className="text-slate-300 font-mono text-xs">{item.barcode}</TableCell>
+                    <TableCell className="text-white font-medium">{item.product}</TableCell>
+                    <TableCell className="text-slate-300">{item.currentStock}</TableCell>
+                    <TableCell className="text-slate-300">
+                      {getPendingOrdersForItem(item).length > 0 ? (
+                        <ul className="list-disc ml-4">
+                          {getPendingOrdersForItem(item).map(order => (
+                            <li key={order.orderId} className="text-xs">
+                              Order #{order.orderId} ({order.customerName})
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-slate-500">None</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Button variant="ghost" className="mt-4 text-cyan-400" onClick={() => setActiveView('all')}>Back to Inventory</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Notify Supplier Dialog */}
+      <Dialog open={notifyDialogOpen} onOpenChange={(open: boolean) => setNotifyDialogOpen(open)}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Notify Supplier</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea className="w-full bg-slate-900/50 border-slate-600 text-white" rows={8} value={notifyMessage} readOnly />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCopy}><Copy className="h-4 w-4 mr-1" /> Copy</Button>
+              <Button variant="outline" onClick={handleSMS}><MessageCircle className="h-4 w-4 mr-1" /> SMS</Button>
+              <Button variant="outline" onClick={handleThreema}><Send className="h-4 w-4 mr-1" /> Threema</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-700">
-                <TableHead className="text-slate-300">Barcode</TableHead>
-                <TableHead className="text-slate-300">Product</TableHead>
-                <TableHead className="text-slate-300">Category</TableHead>
-                <TableHead className="text-slate-300">Current Stock</TableHead>
-                <TableHead className="text-slate-300">Restock Level</TableHead>
-                <TableHead className="text-slate-300">Cost Price</TableHead>
-                <TableHead className="text-slate-300">Status</TableHead>
-                <TableHead className="text-slate-300">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInventory.map((item) => (
-                <TableRow key={item.barcode} className="border-slate-700 hover:bg-slate-800/30">
-                  <TableCell className="text-slate-300 font-mono text-xs">{item.barcode}</TableCell>
-                  <TableCell className="text-white font-medium">{item.product}</TableCell>
-                  <TableCell className="text-slate-300">{item.category}</TableCell>
-                  <TableCell className="text-slate-300">
-                    {getCurrentStock(item)}
-                    {getCurrentStock(item) <= item.restockLevel && (
-                      <AlertTriangle className="inline h-4 w-4 text-yellow-400 ml-1" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-slate-300">{item.restockLevel}</TableCell>
-                  <TableCell className="text-slate-300">{item.costPrice}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(item)}>{getStatusText(item)}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedItem(item)
-                          setIsPurchaseDialogOpen(true)
-                        }}
-                        className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                      >
-                        Add Purchase
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedItem(item)
-                          setIsSaleDialogOpen(true)
-                        }}
-                        className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                      >
-                        Add Sale
-                      </Button>
-                    </div>
-                  </TableCell>
+      {/* Main inventory table (only if not in filtered view) */}
+      {activeView === 'all' && (
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Product Inventory</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Input
+                  placeholder="Search products, barcodes, or categories..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder-slate-400"
+                />
+              </div>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700">
+                  <TableHead className="text-slate-300">Barcode</TableHead>
+                  <TableHead className="text-slate-300">Product</TableHead>
+                  <TableHead className="text-slate-300">Category</TableHead>
+                  <TableHead className="text-slate-300">Current Stock</TableHead>
+                  <TableHead className="text-slate-300">Restock Level</TableHead>
+                  <TableHead className="text-slate-300">Cost Price</TableHead>
+                  <TableHead className="text-slate-300">Status</TableHead>
+                  <TableHead className="text-slate-300">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredInventory.map((item) => (
+                  <TableRow key={item.barcode} className="border-slate-700 hover:bg-slate-800/30">
+                    <TableCell className="text-slate-300 font-mono text-xs">{item.barcode}</TableCell>
+                    <TableCell className="text-white font-medium">{item.product}</TableCell>
+                    <TableCell className="text-slate-300">{item.category}</TableCell>
+                    <TableCell className="text-slate-300">
+                      {getCurrentStock(item)}
+                      {getCurrentStock(item) <= item.restockLevel && (
+                        <AlertTriangle className="inline h-4 w-4 text-yellow-400 ml-1" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-slate-300">{item.restockLevel}</TableCell>
+                    <TableCell className="text-slate-300">{item.costPrice}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(item)}>{getStatusText(item)}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedItem(item)
+                            setIsPurchaseDialogOpen(true)
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                        >
+                          Add Purchase
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedItem(item)
+                            setIsSaleDialogOpen(true)
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                        >
+                          Add Sale
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Add Purchase Dialog */}
       <Dialog open={isPurchaseDialogOpen} onOpenChange={setIsPurchaseDialogOpen}>
