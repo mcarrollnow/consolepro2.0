@@ -22,9 +22,10 @@ export async function POST(req: NextRequest) {
       // You may want to set a cookie or session here
       return NextResponse.json({ success: true });
     } else {
-      return NextResponse.json({ success: false, status: verificationCheck.status });
+      return NextResponse.json({ success: false, status: verificationCheck.status, twilio: verificationCheck });
     }
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Twilio verify error:', error);
+    return NextResponse.json({ error: error.message, details: error }, { status: 500 });
   }
 } 
