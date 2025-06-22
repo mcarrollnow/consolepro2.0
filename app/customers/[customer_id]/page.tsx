@@ -2,9 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { notFound } from "next/navigation";
 
 async function getCustomer(customer_id: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/customers`);
-  const customers = await res.json();
-  return customers.find((c: any) => c.customer_id === customer_id);
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    "https://www.myconsole.pro";
+  const res = await fetch(`${baseUrl}/api/customers/${customer_id}`);
+  if (!res.ok) return null;
+  return await res.json();
 }
 
 export default async function CustomerProfilePage({ params }: { params: { customer_id: string } }) {
