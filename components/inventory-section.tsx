@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { InventoryItem } from "@/lib/google-sheets"
 import { DebugConnection } from "./debug-connection"
 import { Textarea } from "@/components/ui/textarea"
+import Link from "next/link"
 
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -303,8 +304,16 @@ export function InventorySection() {
               <TableBody>
                 {(activeView === 'low' ? lowStockItems : outOfStockItems).map(item => (
                   <TableRow key={item.barcode} className="border-slate-700">
-                    <TableCell className="text-slate-300 font-mono text-xs">{item.barcode}</TableCell>
-                    <TableCell className="text-white font-medium">{item.product}</TableCell>
+                    <TableCell className="text-slate-300 font-mono text-xs">
+                      <Link href={`/inventory/${item.barcode}`} className="text-cyan-400 hover:underline">
+                        {item.barcode}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-white font-medium">
+                      <Link href={`/inventory/${item.barcode}`} className="text-cyan-400 hover:underline">
+                        {item.product}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-slate-300">{item.currentStock}</TableCell>
                     <TableCell className="text-slate-300">
                       {getPendingOrdersForItem(item).length > 0 ? (
@@ -380,8 +389,16 @@ export function InventorySection() {
               <TableBody>
                 {filteredInventory.map((item) => (
                   <TableRow key={item.barcode} className="border-slate-700 hover:bg-slate-800/30">
-                    <TableCell className="text-slate-300 font-mono text-xs">{item.barcode}</TableCell>
-                    <TableCell className="text-white font-medium">{item.product}</TableCell>
+                    <TableCell className="text-slate-300 font-mono text-xs">
+                      <Link href={`/inventory/${item.barcode}`} className="text-cyan-400 hover:underline">
+                        {item.barcode}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-white font-medium">
+                      <Link href={`/inventory/${item.barcode}`} className="text-cyan-400 hover:underline">
+                        {item.product}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-slate-300">{item.category}</TableCell>
                     <TableCell className="text-slate-300">
                       {getCurrentStock(item)}
