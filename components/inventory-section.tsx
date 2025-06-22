@@ -282,7 +282,7 @@ export function InventorySection() {
           <CardHeader>
             <CardTitle className="text-white flex items-center justify-between">
               {activeView === 'low' ? 'Low Stock Items' : 'Out of Stock Items'}
-              <Button size="sm" variant="outline" className="ml-4 border-2 border-orange-500 text-orange-300 hover:bg-orange-500/10 hover:text-white font-semibold shadow-orange-500/30" onClick={() => {
+              <Button size="sm" variant="outline" className="ml-4 border-2 border-orange-500 text-black hover:bg-orange-500/10 hover:text-white font-semibold shadow-orange-500/30" onClick={() => {
                 setNotifyMessage(generateSupplierMessage(activeView))
                 setNotifyDialogOpen(true)
               }}>
