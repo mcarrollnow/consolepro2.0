@@ -319,6 +319,7 @@ export function OrdersSection() {
                 <TableHead className="text-slate-300">Total</TableHead>
                 <TableHead className="text-slate-300">Status</TableHead>
                 <TableHead className="text-slate-300">Date</TableHead>
+                <TableHead className="text-slate-300">Invoice</TableHead>
                 <TableHead className="text-slate-300">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -337,6 +338,13 @@ export function OrdersSection() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-slate-300">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-slate-300">
+                    {order.invoice_link ? (
+                      <a href={order.invoice_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">Invoice</a>
+                    ) : (
+                      <span className="text-slate-500">N/A</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
