@@ -403,9 +403,9 @@ export function InventorySection() {
                             setSelectedItem(item)
                             setIsPurchaseDialogOpen(true)
                           }}
-                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                          className="border-slate-600 text-black hover:bg-slate-800"
                         >
-                          Add Purchase
+                          + Product
                         </Button>
                         <Button
                           variant="outline"
@@ -414,9 +414,9 @@ export function InventorySection() {
                             setSelectedItem(item)
                             setIsSaleDialogOpen(true)
                           }}
-                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                          className="border-slate-600 text-black hover:bg-slate-800"
                         >
-                          Add Sale
+                          - Product
                         </Button>
                       </div>
                     </TableCell>
