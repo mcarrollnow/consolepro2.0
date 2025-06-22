@@ -7,7 +7,6 @@ import { OrdersSection } from "@/components/orders-section"
 import { CustomersSection } from "@/components/customers-section"
 import { AnalyticsSection } from "@/components/analytics-section"
 import { MessagingSection } from "@/components/messaging-section"
-import { B2BRequestsSection } from "@/components/b2b-requests-section"
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("inventory")
@@ -54,8 +53,6 @@ export default function Dashboard() {
             </div>
           </div>
         )
-      case "b2b-requests":
-        return <B2BRequestsSection />
       default:
         return <InventorySection />
     }
