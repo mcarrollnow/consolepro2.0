@@ -61,6 +61,8 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
   const product = await getProductData(barcode)
   if (!product) return notFound()
 
+  console.log("ProductDetailPage product:", product);
+
   // Collect all customer emails for group email
   const allEmails = product.allCustomers.map(c => c.email).join(",")
 
@@ -97,11 +99,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
         </CardHeader>
         <CardContent>
           <div className="h-64 flex items-center justify-center text-slate-400">
-            {Array.isArray(product.salesTrend) && product.salesTrend.length > 0 ? (
-              <SalesTrendChart salesTrend={product.salesTrend} />
-            ) : (
-              <span>No sales trend data available.</span>
-            )}
+            <SalesTrendChart salesTrend={product.salesTrend} />
           </div>
         </CardContent>
       </Card>
