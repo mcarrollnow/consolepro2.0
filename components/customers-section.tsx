@@ -48,8 +48,9 @@ export function CustomersSection() {
         aValue = (aValue || '').toLowerCase()
         bValue = (bValue || '').toLowerCase()
       } else if (sortConfig.key === 'total_spent') {
-        aValue = Number(aValue) || 0
-        bValue = Number(bValue) || 0
+        // Remove any non-numeric characters (except dot and minus), then parse as float
+        aValue = parseFloat((aValue || '0').replace(/[^0-9.-]+/g, '')) || 0
+        bValue = parseFloat((bValue || '0').replace(/[^0-9.-]+/g, '')) || 0
       }
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
