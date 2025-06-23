@@ -112,6 +112,8 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
   // Notion link lookup
   const notionKey = normalizeProductName(product.name)
   const notionUrl = notionLinks[notionKey]
+  // Use Notion link as image if available, else fallback
+  const productImage = notionUrl || product.image || "/placeholder.svg"
 
   console.log("ProductDetailPage product:", product);
 
@@ -123,7 +125,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Product Header */}
         <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl">
-          <Avatar src={product.image} alt={product.name} className="h-28 w-28 rounded-xl border border-slate-800 bg-slate-800" />
+          <Avatar src={productImage} alt={product.name} className="h-28 w-28 rounded-xl border border-slate-800 bg-slate-800" />
           <div className="flex-1">
             <div className="text-3xl font-bold text-white mb-1">{product.name}</div>
             <div className="text-cyan-400 text-sm mb-2 font-mono">Barcode: {product.barcode}</div>
