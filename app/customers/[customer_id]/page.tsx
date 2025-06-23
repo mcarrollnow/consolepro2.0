@@ -40,7 +40,7 @@ export default async function CustomerProfilePage({ params }: { params: { custom
       if (trimmed) productCounts[trimmed] = (productCounts[trimmed] || 0) + 1;
     });
   });
-  const topProducts = Object.entries(productCounts)
+  const topProducts = Object.entries(productCounts || {})
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
