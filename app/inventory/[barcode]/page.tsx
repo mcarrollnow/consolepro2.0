@@ -86,9 +86,8 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
           <CardTitle className="text-white text-xl">Sales Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Placeholder for chart */}
           <div className="h-64 flex items-center justify-center text-slate-400">
-            {Array.isArray(product.salesTrend) ? (
+            {Array.isArray(product.salesTrend) && product.salesTrend.length > 0 ? (
               <ChartContainer data={product.salesTrend} />
             ) : (
               <span>No sales trend data available.</span>
@@ -104,26 +103,30 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
             <CardTitle className="text-white text-lg">Top 5 Customers</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Purchases</TableHead>
-                  <TableHead>Last Purchase</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.topCustomers.map((c, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{c.name}</TableCell>
-                    <TableCell>{c.email}</TableCell>
-                    <TableCell>{c.purchases}</TableCell>
-                    <TableCell>{c.lastPurchase}</TableCell>
+            {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Purchases</TableHead>
+                    <TableHead>Last Purchase</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {product.topCustomers.map((c, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{c.name}</TableCell>
+                      <TableCell>{c.email}</TableCell>
+                      <TableCell>{c.purchases}</TableCell>
+                      <TableCell>{c.lastPurchase}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <span>No customer data available.</span>
+            )}
           </CardContent>
         </Card>
         <Card className="bg-slate-900/50 border-slate-600">
@@ -131,24 +134,28 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
             <CardTitle className="text-white text-lg">Frequently Bought Together</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Barcode</TableHead>
-                  <TableHead>Times Bought Together</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.frequentlyBoughtTogether.map((p, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{p.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.barcode}</TableCell>
-                    <TableCell>{p.count}</TableCell>
+            {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Barcode</TableHead>
+                    <TableHead>Times Bought Together</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {product.frequentlyBoughtTogether.map((p, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{p.name}</TableCell>
+                      <TableCell className="font-mono text-xs">{p.barcode}</TableCell>
+                      <TableCell>{p.count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <span>No frequently bought together data available.</span>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -159,26 +166,30 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
           <CardTitle className="text-white text-xl">All Customers Who Purchased This Product</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Purchases</TableHead>
-                <TableHead>Last Purchase</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {product.allCustomers.map((c, i) => (
-                <TableRow key={i}>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.email}</TableCell>
-                  <TableCell>{c.purchases}</TableCell>
-                  <TableCell>{c.lastPurchase}</TableCell>
+          {Array.isArray(product.allCustomers) && product.allCustomers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Purchases</TableHead>
+                  <TableHead>Last Purchase</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {product.allCustomers.map((c, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{c.name}</TableCell>
+                    <TableCell>{c.email}</TableCell>
+                    <TableCell>{c.purchases}</TableCell>
+                    <TableCell>{c.lastPurchase}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <span>No customer data available.</span>
+          )}
         </CardContent>
       </Card>
     </div>
