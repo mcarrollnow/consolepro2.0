@@ -9,6 +9,10 @@ import {
 } from "recharts";
 
 export default function SalesTrendChart({ salesTrend }: { salesTrend: any[] }) {
+  console.log("SalesTrendChart data:", salesTrend);
+  if (!Array.isArray(salesTrend) || salesTrend.length === 0) {
+    return <div className="text-slate-400">No sales trend data available.</div>;
+  }
   return (
     <ChartContainer data={salesTrend} config={{}}>
       <LineChart data={salesTrend} width={600} height={250}>
