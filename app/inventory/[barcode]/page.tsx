@@ -73,139 +73,115 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
   const allEmails = product.allCustomers.map(c => c.email).join(",")
 
   return (
-    <div className="max-w-5xl mx-auto py-10 space-y-8">
+    <div className="max-w-6xl mx-auto py-10 space-y-8">
       {/* Product Header */}
-      <Card className="bg-slate-900/50 border-slate-600">
-        <CardHeader className="flex flex-row items-center gap-6">
-          <Avatar src={product.image} alt={product.name} className="h-24 w-24 rounded-lg border border-slate-700 bg-slate-800" />
-          <div className="flex-1">
-            <CardTitle className="text-white text-3xl mb-1">{product.name}</CardTitle>
-            <div className="text-slate-400 text-sm mb-2">Barcode: <span className="font-mono text-slate-200">{product.barcode}</span></div>
-            <div className="flex flex-wrap gap-4 items-center">
-              <span className="text-slate-300">Total Sales: <b>{product.totalSales}</b></span>
-              <span className="text-slate-300">Revenue: <b>${product.revenue.toLocaleString()}</b></span>
-              <Badge className="bg-cyan-700 text-cyan-100">Sales Rank #{product.salesRank}</Badge>
-            </div>
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl">
+        <Avatar src={product.image} alt={product.name} className="h-28 w-28 rounded-xl border border-slate-800 bg-slate-800" />
+        <div className="flex-1">
+          <div className="text-3xl font-bold text-white mb-1">{product.name}</div>
+          <div className="text-cyan-400 text-sm mb-2 font-mono">Barcode: {product.barcode}</div>
+          <div className="flex flex-wrap gap-6 items-center mb-2">
+            <span className="text-slate-300 text-lg">Total Sales: <b className="text-white">{product.totalSales}</b></span>
+            <span className="text-slate-300 text-lg">Revenue: <b className="text-white">${product.revenue.toLocaleString()}</b></span>
+            <Badge className="bg-cyan-700 text-cyan-100 text-base px-4 py-2 rounded-lg">Sales Rank #{product.salesRank}</Badge>
           </div>
-        </CardHeader>
-        <CardContent className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-          <div className="flex-1" />
-          <Button asChild className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg">
-            <a href={`mailto:?bcc=${allEmails}`} title="Email all customers for this product">
-              Email All Customers
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Sales Trend Chart */}
-      <Card className="bg-slate-900/50 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white text-xl">Sales Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center text-slate-400">
-            <SalesTrendChart salesTrend={product.salesTrend} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Top Customers & Frequently Bought Together */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-slate-900/50 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white text-lg">Top 5 Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Purchases</TableHead>
-                    <TableHead>Last Purchase</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {product.topCustomers.map((c, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{c.name}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.purchases}</TableCell>
-                      <TableCell>{c.lastPurchase}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <span>No customer data available.</span>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-900/50 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white text-lg">Frequently Bought Together</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Barcode</TableHead>
-                    <TableHead>Times Bought Together</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {product.frequentlyBoughtTogether.map((p, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell className="font-mono text-xs">{p.barcode}</TableCell>
-                      <TableCell>{p.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <span>No frequently bought together data available.</span>
-            )}
-          </CardContent>
-        </Card>
+        </div>
+        <Button asChild className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg px-6 py-3 text-lg rounded-xl">
+          <a href={`mailto:?bcc=${allEmails}`} title="Email all customers for this product">
+            Email All Customers
+          </a>
+        </Button>
       </div>
 
-      {/* All Customers Table */}
-      <Card className="bg-slate-900/50 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white text-xl">All Customers Who Purchased This Product</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Array.isArray(product.allCustomers) && product.allCustomers.length > 0 ? (
+      {/* Sales Trend Chart */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 shadow-xl">
+        <SalesTrendChart salesTrend={product.salesTrend} />
+      </div>
+
+      {/* Top Customers & Frequently Bought Together */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+          <div className="text-white text-lg font-semibold mb-4">Top 5 Customers</div>
+          {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Purchases</TableHead>
-                  <TableHead>Last Purchase</TableHead>
+                  <TableHead className="text-slate-300">Name</TableHead>
+                  <TableHead className="text-slate-300">Email</TableHead>
+                  <TableHead className="text-slate-300">Purchases</TableHead>
+                  <TableHead className="text-slate-300">Last Purchase</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {product.allCustomers.map((c, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{c.name}</TableCell>
-                    <TableCell>{c.email}</TableCell>
-                    <TableCell>{c.purchases}</TableCell>
-                    <TableCell>{c.lastPurchase}</TableCell>
+                {product.topCustomers.map((c, i) => (
+                  <TableRow key={i} className="hover:bg-slate-800/60">
+                    <TableCell className="text-white font-medium">{c.name}</TableCell>
+                    <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
+                    <TableCell className="text-white">{c.purchases}</TableCell>
+                    <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           ) : (
-            <span>No customer data available.</span>
+            <span className="text-slate-400">No customer data available.</span>
           )}
-        </CardContent>
-      </Card>
+        </div>
+        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+          <div className="text-white text-lg font-semibold mb-4">Frequently Bought Together</div>
+          {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-slate-300">Product</TableHead>
+                  <TableHead className="text-slate-300">Barcode</TableHead>
+                  <TableHead className="text-slate-300">Times Bought Together</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {product.frequentlyBoughtTogether.map((p, i) => (
+                  <TableRow key={i} className="hover:bg-slate-800/60">
+                    <TableCell className="text-white font-medium">{p.name}</TableCell>
+                    <TableCell className="text-cyan-300 font-mono">{p.barcode}</TableCell>
+                    <TableCell className="text-white">{p.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <span className="text-slate-400">No frequently bought together data available.</span>
+          )}
+        </div>
+      </div>
+
+      {/* All Customers Table */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 shadow-xl">
+        <div className="text-white text-xl font-semibold mb-4">All Customers Who Purchased This Product</div>
+        {Array.isArray(product.allCustomers) && product.allCustomers.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-slate-300">Name</TableHead>
+                <TableHead className="text-slate-300">Email</TableHead>
+                <TableHead className="text-slate-300">Purchases</TableHead>
+                <TableHead className="text-slate-300">Last Purchase</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {product.allCustomers.map((c, i) => (
+                <TableRow key={i} className="hover:bg-slate-800/60">
+                  <TableCell className="text-white font-medium">{c.name}</TableCell>
+                  <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
+                  <TableCell className="text-white">{c.purchases}</TableCell>
+                  <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <span className="text-slate-400">No customer data available.</span>
+        )}
+      </div>
     </div>
   )
 } 
