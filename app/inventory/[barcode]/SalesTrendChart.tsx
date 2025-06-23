@@ -11,10 +11,13 @@ import {
 export default function SalesTrendChart({ salesTrend }: { salesTrend: any[] }) {
   console.log("SalesTrendChart data:", salesTrend);
   if (!Array.isArray(salesTrend) || salesTrend.length === 0) {
-    return <div className="text-slate-400 border-4 border-cyan-500 bg-slate-900 z-50 p-8 text-center">No sales trend data available.</div>;
+    return <div className="bg-slate-900/50 border border-slate-600 rounded-xl p-8 text-center text-slate-400">No sales trend data available.</div>;
   }
   return (
-    <div style={{ border: '4px solid #06b6d4', background: '#0f172a', zIndex: 1000, position: 'relative', padding: 16 }}>
+    <div className="bg-slate-900/50 border border-slate-600 rounded-xl p-6">
+      <pre className="mb-4 p-2 rounded bg-slate-800 text-slate-200 text-xs overflow-x-auto">
+        {JSON.stringify(salesTrend, null, 2)}
+      </pre>
       <ChartContainer data={salesTrend} config={{}}>
         <LineChart data={salesTrend} width={600} height={250}>
           <Line
