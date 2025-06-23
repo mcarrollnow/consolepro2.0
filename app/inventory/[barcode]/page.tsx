@@ -12,6 +12,9 @@ import {
   YAxis,
   Tooltip
 } from "recharts";
+import dynamic from "next/dynamic";
+
+const SalesTrendChart = dynamic(() => import("./SalesTrendChart"), { ssr: false });
 
 // TODO: Replace with real data fetching
 async function getProductData(barcode: string) {
@@ -95,14 +98,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
         <CardContent>
           <div className="h-64 flex items-center justify-center text-slate-400">
             {Array.isArray(product.salesTrend) && product.salesTrend.length > 0 ? (
-              <ChartContainer data={product.salesTrend} config={{}}>
-                <LineChart data={product.salesTrend} width={600} height={250}>
-                  <Line type="monotone" dataKey="sales" stroke="#8884d8" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                </LineChart>
-              </ChartContainer>
+              <SalesTrendChart salesTrend={product.salesTrend} />
             ) : (
               <span>No sales trend data available.</span>
             )}
