@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Users, Search, UserPlus, Star } from "lucide-react"
+import { Users, Search, UserPlus, Star, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 
 export function CustomersSection() {
@@ -15,6 +15,7 @@ export function CustomersSection() {
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null)
   const [customers, setCustomers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
 
   useEffect(() => {
     async function fetchCustomers() {
@@ -36,6 +37,35 @@ export function CustomersSection() {
     (customer.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (customer.customer_id || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Sorting logic
+  const sortedCustomers = [...filteredCustomers]
+  if (sortConfig) {
+    sortedCustomers.sort((a, b) => {
+      let aValue = a[sortConfig.key]
+      let bValue = b[sortConfig.key]
+      if (sortConfig.key === 'name') {
+        aValue = (aValue || '').toLowerCase()
+        bValue = (bValue || '').toLowerCase()
+      } else if (sortConfig.key === 'total_spent') {
+        aValue = Number(aValue) || 0
+        bValue = Number(bValue) || 0
+      }
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => {
+      if (prev && prev.key === key) {
+        // Toggle direction
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+      }
+      return { key, direction: 'asc' }
+    })
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -148,16 +178,32 @@ export function CustomersSection() {
               <TableHeader>
                 <TableRow className="border-slate-700">
                   <TableHead className="text-slate-300">Customer ID</TableHead>
-                  <TableHead className="text-slate-300">Name</TableHead>
+                  <TableHead
+                    className="text-slate-300 cursor-pointer select-none"
+                    onClick={() => handleSort('name')}
+                  >
+                    Name
+                    {sortConfig?.key === 'name' && (
+                      sortConfig.direction === 'asc' ? <ChevronUp className="inline h-4 w-4 ml-1" /> : <ChevronDown className="inline h-4 w-4 ml-1" />
+                    )}
+                  </TableHead>
                   <TableHead className="text-slate-300">Email</TableHead>
                   <TableHead className="text-slate-300">Orders</TableHead>
-                  <TableHead className="text-slate-300">Total Spent</TableHead>
+                  <TableHead
+                    className="text-slate-300 cursor-pointer select-none"
+                    onClick={() => handleSort('total_spent')}
+                  >
+                    Total Spent
+                    {sortConfig?.key === 'total_spent' && (
+                      sortConfig.direction === 'asc' ? <ChevronUp className="inline h-4 w-4 ml-1" /> : <ChevronDown className="inline h-4 w-4 ml-1" />
+                    )}
+                  </TableHead>
                   <TableHead className="text-slate-300">Status</TableHead>
                   <TableHead className="text-slate-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCustomers.map((customer) => (
+                {sortedCustomers.map((customer) => (
                   <TableRow key={customer.customer_id} className="border-slate-700 hover:bg-slate-800/30">
                     <TableCell className="text-slate-300 font-mono">{customer.customer_id}</TableCell>
                     <TableCell className="text-white font-medium">{customer.name}</TableCell>
