@@ -56,10 +56,16 @@ async function getProductData(barcode: string) {
   }
 }
 
-export default async function ProductDetailPage({ params }: { params: { barcode: string } }) {
+export default async function ProductDetailPage({ params }: { params: { barcode?: string } }) {
+  console.log("ProductDetailPage params:", params);
+  if (!params || !params.barcode) {
+    return <div className="text-red-500 text-center py-10">Error: No barcode provided in URL.</div>;
+  }
   const { barcode } = params
   const product = await getProductData(barcode)
-  if (!product) return notFound()
+  if (!product) {
+    return <div className="text-red-500 text-center py-10">Error: Product not found for barcode: {barcode}</div>;
+  }
 
   console.log("ProductDetailPage product:", product);
 
