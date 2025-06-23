@@ -186,7 +186,7 @@ class GoogleSheetsService {
           total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
           items: productNames.join(", "),
           notes: row[12] || "", // Special_Instructions
-          invoice_link: row[60] || "", // invoice_link
+          invoice_link: row[61] || "", // invoice_link (BJ)
           payment_link: row[59] || "", // payment_link
         }
       })
@@ -446,6 +446,66 @@ class GoogleSheetsService {
       return true
     } catch (error: any) {
       console.error("Error adding sale:", error)
+      return false
+    }
+  }
+
+  async updateInvoiceStatus(orderCode: string, invoiceStatus: string): Promise<boolean> {
+    try {
+      console.log(`Updating invoice status for order ${orderCode} to ${invoiceStatus}`)
+      
+      // Get all orders data to find the row
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: "Orders!A:BH", // Covers all columns
+      })
+
+      const rows = response.data.values || []
+      if (rows.length === 0) {
+        console.error("No data found in Orders sheet")
+        return false
+      }
+
+      // Find the row with the matching order code (Order_Code is in column B, index 1)
+      const headerRow = rows[0]
+      const dataRows = rows.slice(1)
+      const orderRowIndex = dataRows.findIndex(row => row[1] === orderCode) // Column B (index 1) is Order_Code
+
+      if (orderRowIndex === -1) {
+        console.error(`Order not found: ${orderCode}`)
+        return false
+      }
+
+      // Calculate the actual row number (add 2 to account for header row and 0-based index)
+      const actualRowNumber = orderRowIndex + 2
+
+      // Update Invoice_Status column (column R, which is index 17)
+      const updateRange = `Orders!R${actualRowNumber}`
+      
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: updateRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[invoiceStatus]]
+        }
+      })
+
+      // Also update the Last_Updated column (column T, which is index 19)
+      const lastUpdatedRange = `Orders!T${actualRowNumber}`
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: lastUpdatedRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[new Date().toISOString()]]
+        }
+      })
+
+      console.log(`Successfully updated invoice status for order ${orderCode} to ${invoiceStatus}`)
+      return true
+    } catch (error) {
+      console.error("Error updating invoice status:", error)
       return false
     }
   }

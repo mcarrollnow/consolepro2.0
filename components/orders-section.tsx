@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
+import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { OrderCustomer } from "@/lib/google-sheets"
 
@@ -26,6 +27,10 @@ export function OrdersSection() {
     total: 0,
     notes: "",
   })
+  const [isInvoiceStatusDialogOpen, setIsInvoiceStatusDialogOpen] = useState(false)
+  const [selectedOrderForInvoiceUpdate, setSelectedOrderForInvoiceUpdate] = useState<OrderCustomer | null>(null)
+  const [newInvoiceStatus, setNewInvoiceStatus] = useState("")
+  const [updatingInvoiceStatus, setUpdatingInvoiceStatus] = useState(false)
   const { toast } = useToast()
 
   const fetchOrdersData = async () => {
@@ -123,6 +128,56 @@ export function OrdersSection() {
         variant: "destructive",
       })
     }
+  }
+
+  const handleUpdateInvoiceStatus = async () => {
+    if (!selectedOrderForInvoiceUpdate || !newInvoiceStatus) return
+
+    try {
+      setUpdatingInvoiceStatus(true)
+      const response = await fetch("/api/orders/update-invoice-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderCode: selectedOrderForInvoiceUpdate.orderId,
+          invoiceStatus: newInvoiceStatus,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        toast({
+          title: "Success",
+          description: `Invoice status updated to ${result.invoiceStatus} for order ${result.orderCode}`,
+        })
+        setIsInvoiceStatusDialogOpen(false)
+        setSelectedOrderForInvoiceUpdate(null)
+        setNewInvoiceStatus("")
+        fetchOrdersData() // Refresh data to show updated status
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.error || "Failed to update invoice status",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error updating invoice status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update invoice status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingInvoiceStatus(false)
+    }
+  }
+
+  const openInvoiceStatusDialog = (order: OrderCustomer) => {
+    setSelectedOrderForInvoiceUpdate(order)
+    setNewInvoiceStatus("")
+    setIsInvoiceStatusDialogOpen(true)
   }
 
   const processingOrders = ordersData.filter((order) => order.status.toLowerCase() === "processing")
@@ -339,11 +394,22 @@ export function OrdersSection() {
                   </TableCell>
                   <TableCell className="text-slate-300">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-slate-300">
-                    {order.invoice_link ? (
-                      <a href={order.invoice_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">Invoice</a>
-                    ) : (
-                      <span className="text-slate-500">N/A</span>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {order.invoice_link ? (
+                        <a href={order.invoice_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">Invoice</a>
+                      ) : (
+                        <span className="text-slate-500">N/A</span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openInvoiceStatusDialog(order)}
+                        className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 p-1 h-6 w-6"
+                        title="Update Invoice Status"
+                      >
+                        <CreditCard className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Button
@@ -393,6 +459,69 @@ export function OrdersSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Invoice Status Update Dialog */}
+      <Dialog open={isInvoiceStatusDialogOpen} onOpenChange={setIsInvoiceStatusDialogOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Update Invoice Status</DialogTitle>
+          </DialogHeader>
+          {selectedOrderForInvoiceUpdate && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-slate-400 text-sm">Order Code</p>
+                <p className="text-white font-mono">{selectedOrderForInvoiceUpdate.orderId}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm">Customer</p>
+                <p className="text-white">{selectedOrderForInvoiceUpdate.customerName}</p>
+              </div>
+              <div>
+                <Label className="text-slate-300">Invoice Status</Label>
+                <Select value={newInvoiceStatus} onValueChange={setNewInvoiceStatus}>
+                  <SelectTrigger className="bg-slate-900/50 border-slate-600 text-white">
+                    <SelectValue placeholder="Select invoice status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="PENDING" className="text-white">PENDING</SelectItem>
+                    <SelectItem value="PAID" className="text-green-400">PAID</SelectItem>
+                    <SelectItem value="OVERDUE" className="text-red-400">OVERDUE</SelectItem>
+                    <SelectItem value="CANCELLED" className="text-gray-400">CANCELLED</SelectItem>
+                    <SelectItem value="REFUNDED" className="text-yellow-400">REFUNDED</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsInvoiceStatusDialogOpen(false)}
+                  className="border-slate-600 text-slate-300"
+                  disabled={updatingInvoiceStatus}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateInvoiceStatus} 
+                  className="bg-gradient-to-r from-orange-500 to-red-500"
+                  disabled={!newInvoiceStatus || updatingInvoiceStatus}
+                >
+                  {updatingInvoiceStatus ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Update Status
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
