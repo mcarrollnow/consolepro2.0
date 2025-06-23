@@ -88,7 +88,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode:
         <CardContent>
           <div className="h-64 flex items-center justify-center text-slate-400">
             {Array.isArray(product.salesTrend) && product.salesTrend.length > 0 ? (
-              <ChartContainer data={product.salesTrend} />
+              <ChartContainer data={product.salesTrend} config={{}} />
             ) : (
               <span>No sales trend data available.</span>
             )}
