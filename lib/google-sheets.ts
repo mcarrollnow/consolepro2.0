@@ -68,7 +68,7 @@ export interface B2BRequest {
   priority: string
 }
 
-class GoogleSheetsService {
+export class GoogleSheetsService {
   private auth: GoogleAuth
   private sheets: sheets_v4.Sheets
   private spreadsheetId: string
