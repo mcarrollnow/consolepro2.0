@@ -13,9 +13,9 @@ const templateRaw = fs.readFileSync(ORDER_TEMPLATE_CSV, 'utf8');
 const [headerLine] = templateRaw.split(/\r?\n/);
 const header = headerLine.split(',');
 
-// Ensure 'contact_id' is in the header
-if (!header.includes('contact_id')) {
-  header.push('contact_id');
+// Ensure 'customer_id' is in the header
+if (!header.includes('customer_id')) {
+  header.push('customer_id');
 }
 
 // Read normalized data
@@ -36,8 +36,8 @@ normalizedRecords.forEach((row: any) => {
   order['Product_1_Barcode'] = row.barcode || '';
   order['Product_1_Quantity'] = row.quantity || '';
   order['Product_1_Price'] = row.sales || '';
-  // Always set contact_id
-  order['contact_id'] = row.customer_id || '';
+  // Always set customer_id
+  order['customer_id'] = row.customer_id || '';
   outputRows.push(header.map(col => order[col]));
 });
 

@@ -27,7 +27,7 @@ export interface OrderCustomer {
   notes: string
   invoice_link?: string
   payment_link?: string
-  contact_id?: string
+  customer_id?: string
 }
 
 export interface Customer {
@@ -162,7 +162,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:BK", // Now includes contact_id (BK = 63)
+        range: "Orders!A:BK", // Now includes customer_id (BK = 63)
       })
 
       const rows = response.data.values || []
@@ -189,7 +189,7 @@ export class GoogleSheetsService {
           notes: row[12] || "", // Special_Instructions
           invoice_link: row[61] || "", // invoice_link (BJ)
           payment_link: row[59] || "", // payment_link (BH)
-          contact_id: row[63] || "", // contact_id (BK)
+          customer_id: row[63] || "", // customer_id (BK)
         }
       })
     } catch (error) {
