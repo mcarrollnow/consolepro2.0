@@ -147,6 +147,14 @@ export default async function CustomerProfilePage({ params }: { params: { custom
                   <p className="text-slate-400 text-sm">Preferred Contact</p>
                   <p className="text-white">{customer.preferred_contact}</p>
                 </div>
+                <div>
+                  <p className="text-slate-400 text-sm">Wix Contact ID</p>
+                  <p className="text-white">{customer.wix_contact_id || "Not set"}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm">Square Customer ID</p>
+                  <p className="text-white">{customer.square_customer_id || "Not set"}</p>
+                </div>
               </div>
               <div className="mt-4">
                 <p className="text-slate-400 text-sm mb-2">Customer Notes</p>

@@ -53,6 +53,7 @@ export interface Customer {
   nickname: string
   birthday: string
   square_customer_id: string
+  wix_contact_id: string
 }
 
 export interface B2BRequest {
@@ -146,7 +147,7 @@ export class GoogleSheetsService {
           salePrice: row[10] || "",
         }
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching inventory data:", error)
       if (error.code === 403) {
         console.error("Permission denied. Check if the service account has access to the spreadsheet.")
@@ -302,7 +303,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Customers!A:V", // 22 columns (A-V)
+        range: "Customers!A:W", // 23 columns (A-W) - now includes wix_contact_id
       })
       const rows = response.data.values || []
       if (rows.length === 0) return []
@@ -331,6 +332,7 @@ export class GoogleSheetsService {
         nickname: row[19]?.trim() || "",
         birthday: row[20]?.trim() || "",
         square_customer_id: row[21]?.trim() || "",
+        wix_contact_id: row[22]?.trim() || "",
       }))
     } catch (error) {
       console.error("Error fetching customers data:", error)

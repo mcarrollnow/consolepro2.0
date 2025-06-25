@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Missing customerId' }, { status: 400 });
   }
   const sheetId = process.env.GOOGLE_SPREADSHEET_ID as string;
-  const range = 'Order Tracking - Customers!A:V';
+  const range = 'Customers!A:W';
   const allCustomers = await readGoogleSheet(sheetId, range);
   // Skip header row and find all rows matching the customer_id
   const customerRows = (allCustomers || []).slice(1).filter(
