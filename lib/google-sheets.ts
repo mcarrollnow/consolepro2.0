@@ -27,6 +27,7 @@ export interface OrderCustomer {
   notes: string
   invoice_link?: string
   payment_link?: string
+  contact_id?: string
 }
 
 export interface Customer {
@@ -161,7 +162,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:BH", // Covers all columns
+        range: "Orders!A:BK", // Now includes contact_id (BK = 63)
       })
 
       const rows = response.data.values || []
@@ -182,17 +183,22 @@ export class GoogleSheetsService {
           customerName: row[3] || "", // Customer_Name
           customerEmail: row[4] || "", // Email
           orderDate: row[0] || "", // Submission_Timestamp
-          status: row[17] || "", // Fulfillment_Status (or change to another if preferred)
+          status: row[17] || "", // Fulfillment_Status
           total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
           items: productNames.join(", "),
           notes: row[12] || "", // Special_Instructions
           invoice_link: row[61] || "", // invoice_link (BJ)
-          payment_link: row[59] || "", // payment_link
+          payment_link: row[59] || "", // payment_link (BH)
+          contact_id: row[63] || "", // contact_id (BK)
         }
       })
     } catch (error) {
-      console.error("Error fetching orders data:", error)
-      return []
+      if (error instanceof Error) {
+        console.error("Error fetching orders data:", error.message, error.stack);
+      } else {
+        console.error("Error fetching orders data:", error);
+      }
+      return [];
     }
   }
 
