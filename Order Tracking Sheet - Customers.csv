@@ -1,7 +1,7 @@
 customer_id,name,email,phone,company,address,first_order_date, last_order_date ,total_orders,total_spent,customer_status,preferred_contact,customer_notes,tags,created_date,last_updated,referred_by,customer_class,square_reference_id,nickname,birthday,square_customer_id ,wix_contact_id
 777001,Nicolette The Charlotte Haus,innovativeskinhealth@gmail.com,16502220483,,,4/2/2025,4/2/25,1,$450.00,Active,Email,,,4/2/25,4/2/25,,Retail,Nathan Bibeau,,,6CC6EWHXCRF3M70Z6019AARHT0,
 777002,Jazzmin Lynch,Jazzminlynch828@gmail.com,17163398444,,,2/23/2025,4/2/25,2,$151.00,Active,Email,,,2/23/25,4/2/25,,Retail,,,,MBHTT8FPA43JGK3H0J77EJZWW0,
-777003,Nicole Phillips,,18314666802,,,12/18/2024,4/1/25,5,$742.50,Active,Phone,,,12/18/24,4/1/25,,Retail,,,,,
+777003,Nicole Phillips,,18314666802,,,12/18/2024,4/1/25,5,$742.50,Active,Phone,This is a test,,12/18/24,4/1/25,,Retail,,,,,
 777004,Charles White,charles.t.white.12@gmail.com,16232560446,,,6/7/2023,3/31/25,22,"$4,373.50",Active,Email,,,6/7/23,3/31/25,,Retail,,,,FDG2M8B2N56MK6NNK6K02Y45V4,
 777005,Rebecca Burleson,,19289409607,,,11/21/2024,3/29/25,2,"$1,800.00",Active,Phone,,,11/21/24,3/29/25,,Retail,,,,,
 777006,Amy White,amy_weesner@hotmail.com,16128190663,,,9/30/2024,3/27/25,4,$490.50,Active,Email,,,9/30/24,3/27/25,,Retail,,,,YRC17YFFRKN06EBHC5MS0EXDA0,
@@ -79,3 +79,4 @@ customer_id,name,email,phone,company,address,first_order_date, last_order_date ,
 777080,Jon,540213145@qq.com,8888888888,,A,2025-06-22T06:25:24.730Z, 2025-06-22T06:25:27.715Z ,2,$0.00,Active,,,,2025-06-22T06:25:24.730Z,2025-06-22T06:25:27.715Z,Adam ,,,,,,
 777081,T P,mailtp@gmail.com,6023939383,T P,", Phoenix, AZ 85029",2025-06-23T04:42:38.096Z, 2025-06-23T04:42:38.096Z ,1,$0.00,Active,,,,2025-06-23T04:42:38.096Z,2025-06-23T04:42:38.096Z,,RTL,,,,,
 777082,Monique Millan,mmillan01@outlook.com,(602) 320-7921‬,,"14870 W Encanto Blvd 1032 , Goodyear, AZ 85395",2025-06-23T14:40:47.653Z, 2025-06-23T14:40:47.653Z ,1,$0.00,Active,,,,2025-06-23T14:40:47.653Z,2025-06-23T14:40:47.653Z,,RTL,,,,,
+777083,Scottie Pippen,Scottie@bulls.com,1332222222,Scottie Pippen,", Chicago, IL 23453",2025-06-25T17:20:37.428Z, 2025-06-25T17:20:37.428Z ,1,$0.00,Active,,,,2025-06-25T17:20:37.428Z,2025-06-25T17:20:37.428Z,,RTL,,,,,

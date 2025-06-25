@@ -178,6 +178,10 @@ export class GoogleSheetsService {
         for (let i = 20; i <= 56; i += 4) {
           if (row[i] && row[i].trim() !== "") productNames.push(row[i])
         }
+        const customer_id = (row[63] || "").trim();
+        if (!customer_id) {
+          console.warn("Order missing customer_id:", row);
+        }
         return {
           orderId: row[1] || "", // Order_Code
           customerId: "", // Not available in this sheet
@@ -190,7 +194,7 @@ export class GoogleSheetsService {
           notes: row[12] || "", // Special_Instructions
           invoice_link: row[61] || "", // invoice_link (BJ)
           payment_link: row[59] || "", // payment_link (BH)
-          customer_id: row[63] || "", // customer_id (BK)
+          customer_id,
         }
       })
     } catch (error) {
