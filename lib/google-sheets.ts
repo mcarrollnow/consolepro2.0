@@ -178,7 +178,7 @@ export class GoogleSheetsService {
         for (let i = 20; i <= 56; i += 4) {
           if (row[i] && row[i].trim() !== "") productNames.push(row[i])
         }
-        const customer_id = (row[63] || "").trim();
+        const customer_id = (row[64] || "").trim(); // BM = 64
         if (!customer_id) {
           console.warn("Order missing customer_id:", row);
         }
