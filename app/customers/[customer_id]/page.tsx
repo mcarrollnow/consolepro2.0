@@ -23,8 +23,10 @@ export default async function CustomerProfilePage({ params }: { params: { custom
   const customer = await getCustomer(params.customer_id);
   if (!customer) return notFound();
   const orders = await getOrders();
-  // Filter orders by customer email (since customerId is not in orders)
-  const customerOrders = orders.filter((o: any) => o.customerEmail?.toLowerCase() === customer.email?.toLowerCase());
+  // Filter orders by contact_id (internal customer_id)
+  const customerOrders = orders.filter(
+    (o: any) => o.contact_id && o.contact_id.toString() === customer.customer_id.toString()
+  );
 
   // Aggregate stats
   const totalOrders = customerOrders.length;
