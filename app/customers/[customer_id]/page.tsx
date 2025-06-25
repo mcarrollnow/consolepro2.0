@@ -22,7 +22,10 @@ async function getOrders() {
 export default async function CustomerProfilePage({ params }: { params: { customer_id: string } }) {
   const customer = await getCustomer(params.customer_id);
   if (!customer) return notFound();
-  const orders = await getOrders();
+  const orders: any[] = await getOrders();
+  // Debug logging for customer_id matching
+  console.log("Customer ID:", customer.customer_id, typeof customer.customer_id);
+  console.log("Order customer_ids:", orders.map((o: any) => [o.customer_id, typeof o.customer_id]));
   // Filter orders by customer_id (internal customer_id)
   const customerOrders = orders.filter(
     (o: any) => o.customer_id && o.customer_id.trim() === customer.customer_id.trim()
