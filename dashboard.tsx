@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { SidebarNav } from "./components/sidebar-nav"
+import { DailyOverview } from "./components/daily-overview"
 import { InventorySection } from "./components/inventory-section"
 import { OrdersSection } from "./components/orders-section"
 import { ActiveOrdersSection } from "./components/active-orders-section"
@@ -10,10 +11,12 @@ import { AnalyticsSection } from "./components/analytics-section"
 import { MessagingSection } from "./components/messaging-section"
 
 export default function Dashboard() {
-  const [activeSection, setActiveSection] = useState("inventory")
+  const [activeSection, setActiveSection] = useState("daily-overview")
 
   const renderSection = () => {
     switch (activeSection) {
+      case "daily-overview":
+        return <DailyOverview />
       case "inventory":
         return <InventorySection />
       case "orders":

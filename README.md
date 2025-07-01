@@ -4,12 +4,14 @@ A modern business management dashboard with Google Sheets integration and AI-pow
 
 ## Features
 
+- **Daily Overview**: AI-generated daily business intelligence with peptide research insights
 - **Inventory Management**: Track stock levels, categories, and product information
 - **Order Management**: Manage active and archived orders with detailed tracking
 - **Customer Management**: Customer profiles with order history
 - **AI Assistant**: Ask questions about your business data using Claude AI
 - **Analytics**: Business insights and reporting
 - **Real-time Updates**: Live data from Google Sheets
+- **Scheduled Reports**: Automated daily overview generation
 
 ## Environment Variables
 
@@ -23,6 +25,10 @@ INVENTORY_SHEET_ID=your_inventory_sheet_id
 
 # AI Integration (Claude API)
 CLAUDE_API_KEY=your_claude_api_key
+
+# Daily Overview & Scheduling (Optional)
+CRON_SECRET=your_cron_secret_key
+NEXT_PUBLIC_BASE_URL=https://your-domain.com
 ```
 
 ### Getting Your Claude API Key
@@ -66,6 +72,58 @@ The dashboard expects the following sheets in your Google Spreadsheet:
 - **Customers**: Customer database
 - **Purchases**: Stock purchases
 - **Sales**: Product sales
+
+## Daily Overview
+
+The Daily Overview section provides:
+
+- **Pending Orders Summary**: Orders that need attention
+- **Invoice Tracking**: Orders requiring invoice generation
+- **30-Day Revenue Analysis**: Financial performance insights
+- **AI-Generated Insights**: Business recommendations and peptide product suggestions
+
+The overview is automatically generated using your business data and Claude AI for intelligent analysis.
+
+## Scheduled Daily Overview
+
+To set up automated daily overview generation:
+
+### Option 1: Vercel Cron (Recommended)
+Add this to your `vercel.json`:
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-overview",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
+```
+
+### Option 2: GitHub Actions
+Create `.github/workflows/daily-overview.yml`:
+```yaml
+name: Daily Overview
+on:
+  schedule:
+    - cron: '0 9 * * *'
+jobs:
+  daily-overview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Daily Overview
+        run: |
+          curl -X POST https://your-domain.com/api/cron/daily-overview \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+### Option 3: External Cron Service
+Use services like cron-job.org or EasyCron to call:
+```
+POST https://your-domain.com/api/cron/daily-overview
+Authorization: Bearer your_cron_secret
+```
 
 ## AI Chat Usage
 

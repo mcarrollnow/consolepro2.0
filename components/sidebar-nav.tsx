@@ -13,6 +13,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -23,6 +24,7 @@ interface SidebarNavProps {
 }
 
 const navItems = [
+  { id: "daily-overview", label: "Daily Overview", icon: BarChart3 },
   { id: "inventory", label: "Inventory", icon: Package },
   { id: "orders", label: "All Orders", icon: ShoppingCart },
   { id: "active-orders", label: "Active Orders", icon: Clock },
