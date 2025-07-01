@@ -13,17 +13,19 @@ export async function GET() {
     }
 
     // Fetch current business data
-    const [inventoryRes, ordersRes, customersRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/inventory`),
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`),
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/customers`)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    // Fetch only active orders for summary
+    const [ordersRes, archivedOrdersRes, customersRes] = await Promise.all([
+      fetch(`${baseUrl}/api/orders?sheet=Orders`),
+      fetch(`${baseUrl}/api/orders?sheet=Archived Orders`),
+      fetch(`${baseUrl}/api/customers`)
     ])
 
-    const inventory = await inventoryRes.json()
     const orders = await ordersRes.json()
+    const archivedOrders = await archivedOrdersRes.json()
     const customers = await customersRes.json()
 
-    // Calculate 30-day revenue
+    // Calculate 30-day revenue, pending, invoices from active orders only
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     
@@ -36,15 +38,18 @@ export async function GET() {
       return sum + (parseFloat(order.Total_Amount || order.total) || 0)
     }, 0)
 
-    // Get pending orders
+    // Get pending orders (active only)
     const pendingOrders = orders.filter((order: any) => 
       (order.Fulfillment_Status || order.status || '').toLowerCase() === 'processing'
     )
 
-    // Get orders that need invoices (no invoice link)
+    // Get orders that need invoices (active only)
     const ordersNeedingInvoices = orders.filter((order: any) => 
       !order.invoice_link && !order.invoiceLink
     )
+
+    // For AI, combine both active and archived orders for trends/history
+    const allOrders = [...orders, ...archivedOrders]
 
     // Initialize Anthropic client
     const anthropic = new Anthropic({
@@ -53,10 +58,11 @@ export async function GET() {
 
     const systemPrompt = `You are a business intelligence AI assistant. Generate a daily overview report with the following sections:
 
-1. PENDING ORDERS SUMMARY
-2. INVOICES TO BE SENT
-3. 30-DAY REVENUE ANALYSIS
-4. PEPTIDE PRODUCT INSIGHT
+1. PENDING ORDERS SUMMARY (from active orders only)
+2. INVOICES TO BE SENT (from active orders only)
+3. 30-DAY REVENUE ANALYSIS (from active orders only)
+4. ORDER HISTORY & TRENDS (use all orders, active and archived)
+5. PEPTIDE PRODUCT INSIGHT
 
 For the peptide insight, research the latest trends in peptide therapeutics and suggest a potential product based on:
 - Current market demand
@@ -68,18 +74,21 @@ Make the report concise, actionable, and professional. Include specific numbers 
 
     const userPrompt = `Generate today's daily business overview.
 
-Business Data:
+Business Data (Active Orders):
 - Pending Orders: ${pendingOrders.length} orders with status "Processing"
 - Orders Needing Invoices: ${ordersNeedingInvoices.length} orders without invoice links
 - 30-Day Revenue: $${thirtyDayRevenue.toFixed(2)}
-- Total Orders: ${orders.length}
+- Total Active Orders: ${orders.length}
 - Total Customers: ${customers.length}
 
-Recent Orders (last 30 days):
+Recent Active Orders (last 30 days):
 ${JSON.stringify(recentOrders.slice(-10), null, 2)}
 
-Pending Orders Details:
+Pending Orders Details (Active):
 ${JSON.stringify(pendingOrders.slice(0, 5), null, 2)}
+
+Order History (All Orders):
+${JSON.stringify(allOrders.slice(-10), null, 2)}
 
 Please provide a comprehensive daily overview with actionable insights.`
 
@@ -101,7 +110,14 @@ Please provide a comprehensive daily overview with actionable insights.`
       ]
     })
 
-    const dailyOverview = msg.content?.[0]?.text || "Unable to generate daily overview."
+    let dailyOverview = "Unable to generate daily overview."
+    if (Array.isArray(msg.content) && msg.content.length > 0) {
+      const first = msg.content[0]
+      if (typeof first === "string") dailyOverview = first
+      else if (typeof first === "object" && first !== null && 'type' in first && (first as any).type === "text" && 'text' in first) dailyOverview = (first as any).text
+      else if (typeof first === "object" && first !== null && 'content' in first && Array.isArray((first as any).content) && (first as any).content[0]?.type === "text" && 'text' in (first as any).content[0]) dailyOverview = (first as any).content[0].text
+      else dailyOverview = String(first)
+    }
 
     // Create structured response
     const overview = {
