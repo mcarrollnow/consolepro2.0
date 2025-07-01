@@ -191,6 +191,25 @@ export function ActiveOrdersSection() {
   const shippedOrders = ordersData.filter((order) => order.status.toLowerCase() === "shipped")
   const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0)
 
+  const handleMarkAsShipped = async (orderId: string) => {
+    try {
+      const response = await fetch("/api/orders/archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (response.ok) {
+        toast({ title: "Order archived", description: `Order ${orderId} marked as shipped and archived.` });
+        setOrdersData((prev) => prev.filter((o) => o.orderId !== orderId));
+      } else {
+        const error = await response.json();
+        toast({ title: "Error", description: error.error || "Failed to archive order", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to archive order", variant: "destructive" });
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -369,6 +388,14 @@ export function ActiveOrdersSection() {
                           className="border-slate-600 text-slate-300 hover:bg-slate-700 h-8 px-2"
                         >
                           Invoice
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleMarkAsShipped(order.orderId)}
+                          className="bg-green-600 hover:bg-green-700 text-white h-8 px-2"
+                        >
+                          Mark as Shipped
                         </Button>
                       </div>
                     </TableCell>
