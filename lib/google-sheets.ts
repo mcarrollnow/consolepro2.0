@@ -163,7 +163,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:BK", // Now includes customer_id (BK = 63)
+        range: "Orders!A:BM", // Now includes customer_id (column 65 = BM)
       })
 
       const rows = response.data.values || []
@@ -178,10 +178,7 @@ export class GoogleSheetsService {
         for (let i = 20; i <= 56; i += 4) {
           if (row[i] && row[i].trim() !== "") productNames.push(row[i])
         }
-        const customer_id = (row[64] || "").trim(); // BM = 64
-        if (!customer_id) {
-          console.warn("Order missing customer_id:", row);
-        }
+        const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
         return {
           orderId: row[1] || "", // Order_Code
           customerId: "", // Not available in this sheet
