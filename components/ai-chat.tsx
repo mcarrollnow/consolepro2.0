@@ -16,6 +16,59 @@ interface Message {
   timestamp: Date
 }
 
+function DailyOverviewWidget() {
+  const [overview, setOverview] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch("/api/daily-overview")
+        if (!response.ok) throw new Error("Failed to fetch daily overview")
+        const data = await response.json()
+        setOverview(data)
+      } catch (err: any) {
+        setError(err.message || "Unknown error")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOverview()
+  }, [])
+
+  return (
+    <div className="mb-6">
+      <div className="rounded-xl shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-700/30 p-4">
+        <div className="flex items-center mb-2">
+          <span className="text-cyan-400 font-bold text-lg mr-2">Daily Overview</span>
+          <span className="text-xs text-slate-400">(AI-powered)</span>
+        </div>
+        {loading ? (
+          <div className="text-slate-400 text-sm">Loading daily overview...</div>
+        ) : error ? (
+          <div className="text-red-400 text-sm">{error}</div>
+        ) : overview ? (
+          <div>
+            <div className="flex flex-wrap gap-4 mb-2">
+              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-cyan-300 font-semibold">Pending: {overview.summary.pendingOrders}</div>
+              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-orange-300 font-semibold">Invoices: {overview.summary.ordersNeedingInvoices}</div>
+              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-green-300 font-semibold">30-Day Revenue: ${overview.summary.thirtyDayRevenue.toFixed(2)}</div>
+            </div>
+            <div className="text-slate-200 text-sm whitespace-pre-line mb-1">
+              {overview.aiInsights?.split("\n").slice(0, 4).join("\n")}
+              {overview.aiInsights?.split("\n").length > 4 && <span className="text-cyan-400"> ...</span>}
+            </div>
+            <div className="text-xs text-slate-500">{overview.date}</div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export function AIChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
@@ -123,113 +176,116 @@ export function AIChat() {
   }
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center">
-          <Sparkles className="h-5 w-5 text-cyan-400 mr-2" />
-          AI Assistant
-          <Badge className="ml-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border-cyan-500/30">
-            Beta
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Chat Messages */}
-        <div className="h-64 border border-slate-700/50 rounded-lg bg-slate-900/50">
-          <ScrollArea className="h-full p-4">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
-                <Bot className="h-8 w-8 text-slate-500" />
-                <p className="text-slate-400 text-sm">Ask me anything about your inventory, orders, or customers!</p>
-                <p className="text-slate-500 text-xs">Examples: "Show me low stock items", "What are my recent orders?", "Find customer John Smith"</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
+    <>
+      <DailyOverviewWidget />
+      <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center">
+            <Sparkles className="h-5 w-5 text-cyan-400 mr-2" />
+            AI Assistant
+            <Badge className="ml-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border-cyan-500/30">
+              Beta
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Chat Messages */}
+          <div className="h-64 border border-slate-700/50 rounded-lg bg-slate-900/50">
+            <ScrollArea className="h-full p-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
+                  <Bot className="h-8 w-8 text-slate-500" />
+                  <p className="text-slate-400 text-sm">Ask me anything about your inventory, orders, or customers!</p>
+                  <p className="text-slate-500 text-xs">Examples: "Show me low stock items", "What are my recent orders?", "Find customer John Smith"</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.role === "user"
-                          ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30"
-                          : "bg-slate-700/50 text-slate-200 border border-slate-600/50"
-                      }`}
+                      key={message.id}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      <div className="flex items-start space-x-2">
-                        {message.role === "assistant" && (
-                          <Bot className="h-4 w-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {message.timestamp.toLocaleTimeString()}
-                          </p>
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          message.role === "user"
+                            ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30"
+                            : "bg-slate-700/50 text-slate-200 border border-slate-600/50"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-2">
+                          {message.role === "assistant" && (
+                            <Bot className="h-4 w-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.role === "user" && (
+                            <User className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                          )}
                         </div>
-                        {message.role === "user" && (
-                          <User className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-slate-700/50 text-slate-200 border border-slate-600/50 rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 text-cyan-400 animate-spin" />
-                        <span className="text-sm">AI is thinking...</span>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-slate-700/50 text-slate-200 border border-slate-600/50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 text-cyan-400 animate-spin" />
+                          <span className="text-sm">AI is thinking...</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </ScrollArea>
-        </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+          </div>
 
-        {/* Input Area */}
-        <div className="flex space-x-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask about inventory, orders, customers..."
-            className="flex-1 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={isLoading || !inputValue.trim()}
-            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-between items-center text-xs text-slate-500">
-          <span>
-            {contextData ? "Connected to data sources" : "Loading data sources..."}
-          </span>
-          {messages.length > 0 && (
+          {/* Input Area */}
+          <div className="flex space-x-2">
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask about inventory, orders, customers..."
+              className="flex-1 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+              disabled={isLoading}
+            />
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearChat}
-              className="text-slate-400 hover:text-white hover:bg-slate-700/50 h-6 px-2"
+              onClick={sendMessage}
+              disabled={isLoading || !inputValue.trim()}
+              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
             >
-              Clear Chat
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-between items-center text-xs text-slate-500">
+            <span>
+              {contextData ? "Connected to data sources" : "Loading data sources..."}
+            </span>
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearChat}
+                className="text-slate-400 hover:text-white hover:bg-slate-700/50 h-6 px-2"
+              >
+                Clear Chat
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </>
   )
 } 
