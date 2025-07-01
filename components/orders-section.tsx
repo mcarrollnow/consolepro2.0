@@ -399,7 +399,7 @@ export function OrdersSection() {
                   <TableCell className="text-white font-medium">
                     {order.customer_id ? (
                       <Link 
-                        href={`/customers/${order.customer_id}/new-profile`}
+                        href={`/customers/${order.customer_id}`}
                         className="text-cyan-400 hover:text-cyan-300 hover:underline"
                       >
                         {order.customerName}
@@ -411,7 +411,7 @@ export function OrdersSection() {
                   <TableCell className="text-slate-300 font-mono text-sm">
                     {order.customer_id ? (
                       <Link 
-                        href={`/customers/${order.customer_id}/new-profile`}
+                        href={`/customers/${order.customer_id}`}
                         className="text-cyan-400 hover:text-cyan-300 hover:underline"
                       >
                         {order.customer_id}
