@@ -21,15 +21,17 @@ function normalizeProductName(name: string) {
 
 async function fetchLiveProductProfile(barcode: string) {
   // Fetch all data in parallel
-  const [inventoryRes, salesRes, ordersRes] = await Promise.all([
+  const [inventoryRes, salesRes, ordersRes, customersRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/inventory`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/sales`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/orders?sheet=Orders`, { cache: 'no-store' }),
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/customers`, { cache: 'no-store' }),
   ])
-  const [inventory, sales, orders] = await Promise.all([
+  const [inventory, sales, orders, customers] = await Promise.all([
     inventoryRes.json(),
     salesRes.json(),
     ordersRes.json(),
+    customersRes.json(),
   ])
   // Find product
   const product = inventory.find((item: any) => item.barcode === barcode)
@@ -40,21 +42,28 @@ async function fetchLiveProductProfile(barcode: string) {
   // Orders for this product
   const productOrders = orders.filter((order: any) => Array.isArray(order.products) && order.products.some((p: any) => p.barcode === barcode))
 
+  // Build customer lookup
+  const customerLookup: Record<string, { name: string, email: string }> = {}
+  for (const cust of customers) {
+    customerLookup[cust.customer_id] = { name: cust.name, email: cust.email }
+  }
+
   // Top customers
   const customerMap: Record<string, { name: string, email: string, purchases: number, lastPurchase: string }> = {}
   for (const sale of productSales) {
-    const email = sale["customer_id"] || "Unknown"
-    if (!customerMap[email]) {
-      customerMap[email] = {
-        name: sale["customer_id"] || "Unknown",
-        email,
+    const customerId = sale["customer_id"] || "Unknown"
+    const customerInfo = customerLookup[customerId] || { name: customerId, email: customerId }
+    if (!customerMap[customerId]) {
+      customerMap[customerId] = {
+        name: customerInfo.name,
+        email: customerInfo.email,
         purchases: 0,
         lastPurchase: sale["Timestamp"] || ""
       }
     }
-    customerMap[email].purchases += parseInt(sale["Quantity"] || "1")
-    if (sale["Timestamp"] > customerMap[email].lastPurchase) {
-      customerMap[email].lastPurchase = sale["Timestamp"]
+    customerMap[customerId].purchases += parseInt(sale["Quantity"] || "1")
+    if (sale["Timestamp"] > customerMap[customerId].lastPurchase) {
+      customerMap[customerId].lastPurchase = sale["Timestamp"]
     }
   }
   const allCustomers = Object.values(customerMap)
