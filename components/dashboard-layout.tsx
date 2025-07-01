@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { SidebarNav } from "./sidebar-nav"
-import { DailyOverview } from "./daily-overview"
+import { MainDashboard } from "./main-dashboard"
 import { InventorySection } from "./inventory-section"
 import { ActiveOrdersSection } from "./active-orders-section"
 import { CustomersSection } from "./customers-section"
@@ -25,7 +25,7 @@ export function DashboardLayout({ children, defaultSection = "daily-overview" }:
   const renderSection = () => {
     switch (activeSection) {
       case "daily-overview":
-        return <DailyOverview />
+        return <MainDashboard />
       case "inventory":
         return <InventorySection />
       case "active-orders":
@@ -77,7 +77,7 @@ export function DashboardLayout({ children, defaultSection = "daily-overview" }:
           </div>
         )
       default:
-        return children || <DailyOverview />
+        return children || <MainDashboard />
     }
   }
 
