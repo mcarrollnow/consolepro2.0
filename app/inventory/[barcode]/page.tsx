@@ -227,8 +227,14 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
     return <div className="text-red-500 text-center py-10">Error: Product not found for barcode: {barcode}</div>;
   }
 
-  // Always use product.image, never Notion
-  const productImage = `/Product_Images/${product.barcode}.jpg`
+  // Build image path based on public folder naming
+  const baseProductName = product.product
+    .replace(/\s*\d+\s*mg/gi, '') // remove mg/strength
+    .replace(/[-\s]+/g, '_') // replace spaces/dashes with underscores
+    .replace(/_+/g, '_') // collapse multiple underscores
+    .toLowerCase()
+    .trim();
+  const productImage = `/${baseProductName}.png`;
   const allEmails = product.allCustomers.map((c: any) => c.email).join(",")
 
   return (
