@@ -274,15 +274,14 @@ export class GoogleSheetsService {
           }
         }
         
-        const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
-        
-        // Use customer info from the end of the row for archived orders, original columns for active orders
-        let customerName, customerEmail, customerPhone
+        let customer_id, customerName, customerEmail, customerPhone
         if (isArchivedOrders) {
-          customerName = (row[65] || "").toString().trim(); // Column 66 = customer_name
-          customerEmail = (row[66] || "").toString().trim(); // Column 67 = customer_email  
-          customerPhone = (row[67] || "").toString().trim(); // Column 68 = customer_phone
+          customer_id = (row[60] || "").trim(); // customer_id
+          customerName = (row[61] || "").toString().trim(); // customer_name
+          customerEmail = (row[62] || "").toString().trim(); // customer_email
+          customerPhone = (row[63] || "").toString().trim(); // customer_phone
         } else {
+          customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
           customerName = row[3] || ""; // Customer_Name
           customerEmail = row[4] || ""; // Email
           customerPhone = row[6] || ""; // Phone
@@ -290,7 +289,7 @@ export class GoogleSheetsService {
         
         return {
           orderId: row[1] || "", // Order_Code
-          customerId: customer_id, // Use customer_id from column 65
+          customerId: customer_id, // Use customer_id
           customerName: customerName,
           customerEmail: customerEmail,
           orderDate: row[0] || "", // Submission_Timestamp
@@ -298,8 +297,8 @@ export class GoogleSheetsService {
           total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
           items: products.map(p => p.name).join(", "),
           notes: row[12] || "", // Special_Instructions
-          invoice_link: row[61] || "", // invoice_link (BJ)
-          payment_link: row[59] || "", // payment_link (BH)
+          invoice_link: row[58] || "", // invoice_link
+          payment_link: row[57] || "", // payment_link
           customer_id,
           businessName: row[5] || "", // Business_Name
           phone: customerPhone, // Use the correct phone from customer columns
@@ -641,11 +640,13 @@ export class GoogleSheetsService {
       
       // Try Archived Orders sheet first
       let response;
+      let isArchivedOrders = false;
       try {
         response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
           range: "Archived Orders!A:BM",
         });
+        isArchivedOrders = true;
         console.log("Using Archived Orders sheet for customer order history");
       } catch (archiveError) {
         // Fallback to Orders sheet
@@ -654,6 +655,7 @@ export class GoogleSheetsService {
           spreadsheetId: this.spreadsheetId,
           range: "Orders!A:BM",
         });
+        isArchivedOrders = false;
       }
 
       const rows = response.data.values || [];
@@ -669,33 +671,44 @@ export class GoogleSheetsService {
       // Filter and map orders for this specific customer
       const customerOrders = dataRows
         .filter(row => {
-          const orderCustomerId = (row[64] || "").toString().trim(); // Column 65 (customer_id)
+          let orderCustomerId
+          if (isArchivedOrders) {
+            orderCustomerId = (row[60] || "").toString().trim(); // customer_id
+          } else {
+            orderCustomerId = (row[64] || "").toString().trim(); // Column 65 (customer_id)
+          }
           return orderCustomerId === customerId.trim();
         })
         .map((row): OrderCustomer => {
           // Simple product extraction from Product_1_Name (column 21)
           const productName = (row[20] || "").toString().trim(); // Column 21 = Product_1_Name
           
-          // Use customer info from the end of the row (archived orders format)
-          const customerName = (row[65] || "").toString().trim(); // Column 66 = customer_name
-          const customerEmail = (row[66] || "").toString().trim(); // Column 67 = customer_email  
-          const customerPhone = (row[67] || "").toString().trim(); // Column 68 = customer_phone
+          let customerName, customerEmail, customerPhone
+          if (isArchivedOrders) {
+            customerName = (row[61] || "").toString().trim(); // customer_name
+            customerEmail = (row[62] || "").toString().trim(); // customer_email
+            customerPhone = (row[63] || "").toString().trim(); // customer_phone
+          } else {
+            customerName = (row[3] || "").toString(); // Customer_Name
+            customerEmail = (row[4] || "").toString(); // Email
+            customerPhone = (row[6] || "").toString(); // Phone
+          }
           
           return {
             orderId: (row[1] || "").toString(), // Order_Code
             customerId: customerId,
-            customerName: customerName || (row[3] || "").toString(), // Use archived customer name, fallback to original
-            customerEmail: customerEmail || (row[4] || "").toString(), // Use archived customer email, fallback to original
+            customerName: customerName,
+            customerEmail: customerEmail,
             orderDate: (row[0] || "").toString(), // Submission_Timestamp
             status: (row[16] || "").toString(), // Fulfillment_Status
             total: parseFloat((row[11] || "0").toString().replace(/[^0-9.]/g, "")), // Total_Amount
             items: productName,
             notes: (row[12] || "").toString(), // Special_Instructions
-            invoice_link: (row[61] || "").toString(), // invoice_link
-            payment_link: (row[60] || "").toString(), // payment_link
+            invoice_link: (row[58] || "").toString(), // invoice_link
+            payment_link: (row[57] || "").toString(), // payment_link
             customer_id: customerId,
             businessName: row[5] || "",
-            phone: customerPhone || row[6] || "", // Use archived customer phone, fallback to original
+            phone: customerPhone,
             addressStreet: row[7] || "",
             addressCity: row[8] || "",
             addressState: row[9] || "",
