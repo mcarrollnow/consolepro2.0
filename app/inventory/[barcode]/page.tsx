@@ -119,15 +119,30 @@ async function fetchLiveProductProfile(barcode: string) {
   console.log(`Found ${productOrders.length} orders containing this product`)
   console.log(`Total orders available: ${allOrders.length}`)
   
+  // Debug: Log first few orders to see their structure
+  console.log("Sample orders structure:")
+  allOrders.slice(0, 3).forEach((order, index) => {
+    console.log(`Order ${index + 1}:`, {
+      orderId: order.orderId,
+      items: order.items,
+      products: order.products,
+      hasProductsArray: Array.isArray(order.products),
+      productsLength: order.products?.length || 0
+    })
+  })
+  
   // Look through all orders to find orders that contain this product
+  let ordersWithTargetProduct = 0
   for (const order of allOrders) {
     // Check if this order contains our target product
     const hasTargetProduct = order.products?.some((p: any) => p.barcode === barcode) || 
                            (order.items && order.items.toLowerCase().includes(product.product.toLowerCase()))
     
     if (hasTargetProduct) {
+      ordersWithTargetProduct++
       console.log(`Order ${order.orderId} contains target product`)
       console.log(`Order products:`, order.products)
+      console.log(`Order items:`, order.items)
       
       // Now look for other products in this same order
       if (order.products && Array.isArray(order.products) && order.products.length > 0) {
@@ -152,6 +167,8 @@ async function fetchLiveProductProfile(barcode: string) {
       }
     }
   }
+  
+  console.log(`Total orders containing target product: ${ordersWithTargetProduct}`)
   
   const frequentlyBoughtTogether = Object.values(togetherMap).sort((a, b) => b.count - a.count).slice(0, 5)
   console.log(`Frequently bought together results:`, frequentlyBoughtTogether)
