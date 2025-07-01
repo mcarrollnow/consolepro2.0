@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Plus, Search, Package, AlertTriangle, Edit, RefreshCw, Copy, MessageCircle, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { InventoryItem } from "@/lib/google-sheets"
-import { DebugConnection } from "./debug-connection"
+import { AIChat } from "./ai-chat"
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 
@@ -227,7 +227,7 @@ export function InventorySection() {
       </div>
 
       {/* Debug Connection - Remove this after testing */}
-      <DebugConnection />
+              <AIChat />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
