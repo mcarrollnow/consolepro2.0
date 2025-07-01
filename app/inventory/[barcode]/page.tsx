@@ -228,7 +228,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
   }
 
   // Always use product.image, never Notion
-  const productImage = getDriveDirectImage(product.image) || "/placeholder.svg"
+  const productImage = `/Product_Images/${product.barcode}.jpg`
   const allEmails = product.allCustomers.map((c: any) => c.email).join(",")
 
   return (
