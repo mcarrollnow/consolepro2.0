@@ -530,6 +530,72 @@ export class GoogleSheetsService {
       return false
     }
   }
+
+  async getCustomerOrderHistory(customerId: string): Promise<OrderCustomer[]> {
+    try {
+      console.log(`Fetching order history for customer: ${customerId}`);
+      
+      // Try Archived Orders sheet first
+      let response;
+      try {
+        response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: "Archived Orders!A:BM",
+        });
+        console.log("Using Archived Orders sheet for customer order history");
+      } catch (archiveError) {
+        // Fallback to Orders sheet
+        console.log("Archived Orders not found, using Orders sheet");
+        response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: "Orders!A:BM",
+        });
+      }
+
+      const rows = response.data.values || [];
+      if (rows.length === 0) {
+        console.log("No data found in sheet");
+        return [];
+      }
+
+      // Skip header row
+      const dataRows = rows.slice(1);
+      console.log(`Processing ${dataRows.length} total rows`);
+
+      // Filter and map orders for this specific customer
+      const customerOrders = dataRows
+        .filter(row => {
+          const orderCustomerId = (row[64] || "").toString().trim(); // Column 65 (customer_id)
+          return orderCustomerId === customerId.trim();
+        })
+        .map((row): OrderCustomer => {
+          // Simple product extraction from Product_1_Name (column 21)
+          const productName = (row[20] || "").toString().trim(); // Column 21 = Product_1_Name
+          
+          return {
+            orderId: (row[1] || "").toString(), // Order_Code
+            customerId: customerId,
+            customerName: (row[3] || "").toString(), // Customer_Name
+            customerEmail: (row[4] || "").toString(), // Email
+            orderDate: (row[0] || "").toString(), // Submission_Timestamp
+            status: (row[16] || "").toString(), // Fulfillment_Status
+            total: parseFloat((row[11] || "0").toString().replace(/[^0-9.]/g, "")), // Total_Amount
+            items: productName,
+            notes: (row[12] || "").toString(), // Special_Instructions
+            invoice_link: (row[61] || "").toString(), // invoice_link
+            payment_link: (row[60] || "").toString(), // payment_link
+            customer_id: customerId,
+          };
+        });
+
+      console.log(`Found ${customerOrders.length} orders for customer ${customerId}`);
+      return customerOrders;
+
+    } catch (error) {
+      console.error("Error fetching customer order history:", error);
+      return [];
+    }
+  }
 }
 
 export const googleSheetsService = new GoogleSheetsService()

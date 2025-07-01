@@ -11,23 +11,22 @@ async function getCustomer(customer_id: string) {
   return await res.json();
 }
 
-// Fetch all orders
-async function getOrders() {
+// Fetch customer orders directly
+async function getCustomerOrders(customer_id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.myconsole.pro";
-  const res = await fetch(`${baseUrl}/api/orders`);
-  if (!res.ok) return [];
+  const res = await fetch(`${baseUrl}/api/customers/${customer_id}/orders`);
+  if (!res.ok) {
+    console.error("Failed to fetch customer orders:", res.status, res.statusText);
+    return [];
+  }
   return await res.json();
 }
 
 export default async function CustomerNewProfilePage({ params }: { params: { customer_id: string } }) {
   const customer = await getCustomer(params.customer_id);
   if (!customer) return notFound();
-  const orders: any[] = await getOrders();
-
-  // Filter orders for this customer
-  const customerOrders = orders.filter(
-    (o: any) => o.customer_id && o.customer_id.trim() === customer.customer_id.trim()
-  );
+  
+  const customerOrders = await getCustomerOrders(params.customer_id);
 
   // Aggregate stats
   const totalOrders = customerOrders.length;
@@ -35,24 +34,17 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
   const firstOrderDate = customerOrders.length ? new Date(Math.min(...customerOrders.map((o: any) => new Date(o.orderDate).getTime()))).toLocaleDateString() : "-";
   const lastOrderDate = customerOrders.length ? new Date(Math.max(...customerOrders.map((o: any) => new Date(o.orderDate).getTime()))).toLocaleDateString() : "-";
 
-  // Product/peptide stats
+  // Product stats
   const productCounts: Record<string, number> = {};
   const productTotals: Record<string, number> = {};
   customerOrders.forEach((order: any) => {
-    if (order.items) {
-      const items = order.items.split(",");
-      const prices = order.item_prices ? order.item_prices.split(",") : [];
-      items.forEach((item: string, idx: number) => {
-        const trimmed = item.trim();
-        if (trimmed) {
-          productCounts[trimmed] = (productCounts[trimmed] || 0) + 1;
-          // Try to sum price per item if available
-          const price = parseFloat(prices[idx]) || 0;
-          productTotals[trimmed] = (productTotals[trimmed] || 0) + price;
-        }
-      });
+    if (order.items && order.items.trim()) {
+      const item = order.items.trim();
+      productCounts[item] = (productCounts[item] || 0) + 1;
+      productTotals[item] = (productTotals[item] || 0) + (order.total || 0);
     }
   });
+  
   const topProducts = Object.entries(productCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
@@ -98,7 +90,7 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
           {/* Top 3 Products */}
           <Card className="bg-slate-800/50 border-slate-700/50">
             <CardHeader>
-              <CardTitle className="text-white text-lg">Top 3 Most Ordered Peptides</CardTitle>
+              <CardTitle className="text-white text-lg">Top 3 Most Ordered Products</CardTitle>
             </CardHeader>
             <CardContent>
               {topProducts.length === 0 ? (
@@ -180,7 +172,10 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
             </CardHeader>
             <CardContent>
               {customerOrders.length === 0 ? (
-                <p className="text-slate-400">No orders found for this customer.</p>
+                <div className="text-center py-8">
+                  <p className="text-slate-400 text-lg">No orders found for this customer.</p>
+                  <p className="text-slate-500 text-sm mt-2">Customer ID: {customer.customer_id}</p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -190,26 +185,18 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
                       <TableHead className="text-slate-300">Status</TableHead>
                       <TableHead className="text-slate-300">Total</TableHead>
                       <TableHead className="text-slate-300">Items</TableHead>
-                      <TableHead className="text-slate-300">Customer Name</TableHead>
-                      <TableHead className="text-slate-300">Customer ID</TableHead>
+                      <TableHead className="text-slate-300">Notes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {customerOrders.map((order: any) => (
                       <TableRow key={order.orderId}>
-                        <TableCell className="text-slate-300 font-mono text-xs">
-                          <Link href={`/customers/${order.customer_id}/new-profile`}>{order.orderId}</Link>
-                        </TableCell>
+                        <TableCell className="text-slate-300 font-mono text-xs">{order.orderId}</TableCell>
                         <TableCell className="text-slate-300">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-slate-300">{order.status}</TableCell>
-                        <TableCell className="text-slate-300">${order.total.toFixed(2)}</TableCell>
-                        <TableCell className="text-slate-300">{order.items}</TableCell>
-                        <TableCell className="text-slate-300">
-                          <Link href={`/customers/${order.customer_id}/new-profile`}>{order.customerName}</Link>
-                        </TableCell>
-                        <TableCell className="text-slate-300">
-                          <Link href={`/customers/${order.customer_id}/new-profile`}>{order.customer_id}</Link>
-                        </TableCell>
+                        <TableCell className="text-slate-300">{order.status || "N/A"}</TableCell>
+                        <TableCell className="text-slate-300">${order.total?.toFixed(2) || "0.00"}</TableCell>
+                        <TableCell className="text-slate-300">{order.items || "N/A"}</TableCell>
+                        <TableCell className="text-slate-300">{order.notes || "N/A"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
