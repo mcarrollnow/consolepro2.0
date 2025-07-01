@@ -13,6 +13,11 @@ import { MessagingSection } from "./components/messaging-section"
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("daily-overview")
 
+  const handleSectionChange = (section: string) => {
+    console.log("Changing section to:", section)
+    setActiveSection(section)
+  }
+
   const renderSection = () => {
     switch (activeSection) {
       case "daily-overview":
@@ -71,7 +76,7 @@ export default function Dashboard() {
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-slate-900/20 to-purple-900/20 pointer-events-none" />
 
       <div className="flex relative z-10">
-        <SidebarNav activeSection={activeSection} onSectionChange={setActiveSection} />
+        <SidebarNav activeSection={activeSection} onSectionChange={handleSectionChange} />
 
         <main className="flex-1 p-8 overflow-auto">
           <div className="max-w-7xl mx-auto">{renderSection()}</div>

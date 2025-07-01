@@ -37,19 +37,24 @@ interface DailyOverview {
 }
 
 export function DailyOverview() {
+  console.log("DailyOverview component rendered")
   const [overview, setOverview] = useState<DailyOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
   const fetchDailyOverview = async () => {
+    console.log("Fetching daily overview...")
     try {
       setLoading(true)
       const response = await fetch("/api/daily-overview")
+      console.log("Daily overview response status:", response.status)
       if (response.ok) {
         const data = await response.json()
+        console.log("Daily overview data received:", data)
         setOverview(data)
       } else {
+        console.error("Daily overview response not ok:", response.status, response.statusText)
         toast({
           title: "Error",
           description: "Failed to fetch daily overview",
