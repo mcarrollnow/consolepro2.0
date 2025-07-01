@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Bot, Send, User, Loader2, Sparkles } from "lucide-react"
+import { Bot, Send, User, Loader2, Sparkles, ChevronDown, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Message {
@@ -27,16 +27,32 @@ function DailyOverviewWidget() {
   const [overview, setOverview] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(true)
 
   useEffect(() => {
     const fetchOverview = async () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await fetch("/api/daily-overview")
-        if (!response.ok) throw new Error("Failed to fetch daily overview")
-        const data = await response.json()
-        setOverview(data)
+        // Fetch only from active Orders sheet
+        const ordersRes = await fetch("/api/orders?sheet=Orders")
+        if (!ordersRes.ok) throw new Error("Failed to fetch orders")
+        const orders = await ordersRes.json()
+        // Simulate summary (replace with real summary logic if needed)
+        const pendingOrders = orders.filter((o: any) => (o.Fulfillment_Status || o.status || '').toLowerCase() === 'processing').length
+        const ordersNeedingInvoices = orders.filter((o: any) => !o.invoice_link && !o.invoiceLink).length
+        const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const recentOrders = orders.filter((o: any) => new Date(o.Submission_Timestamp || o.orderDate) >= thirtyDaysAgo)
+        const thirtyDayRevenue = recentOrders.reduce((sum: number, o: any) => sum + (parseFloat(o.Total_Amount || o.total) || 0), 0)
+        setOverview({
+          summary: {
+            pendingOrders,
+            ordersNeedingInvoices,
+            thirtyDayRevenue
+          },
+          aiInsights: null, // We'll keep this for now, but you can add a fetch to /api/daily-overview if you want AI insight
+          date: new Date().toISOString().split('T')[0]
+        })
       } catch (err: any) {
         setError(err.message || "Unknown error")
       } finally {
@@ -51,30 +67,40 @@ function DailyOverviewWidget() {
 
   return (
     <div className="mb-6">
-      <div className="rounded-xl shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-700/30 p-4">
-        <div className="flex items-center mb-2">
-          <span className="text-cyan-400 font-bold text-lg mr-2">Daily Overview</span>
-          <span className="text-xs text-slate-400">(AI-powered)</span>
-        </div>
-        {loading ? (
-          <div className="text-slate-400 text-sm">Loading daily overview...</div>
-        ) : error ? (
-          <div className="text-red-400 text-sm">{error}</div>
-        ) : overview ? (
-          <div className="text-slate-200 text-base space-y-2">
-            <div className="font-semibold">{greeting}</div>
-            <div>{intro}</div>
-            <ul className="list-disc ml-6">
-              <li>You have <span className="text-cyan-300 font-bold">{overview.summary.pendingOrders}</span> pending orders and <span className="text-orange-300 font-bold">{overview.summary.ordersNeedingInvoices}</span> invoices to send.</li>
-              <li>In the last 30 days, you've made <span className="text-green-300 font-bold">${overview.summary.thirtyDayRevenue.toFixed(2)}</span> in revenue.</li>
-            </ul>
-            <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
-            <div className="italic text-slate-300 whitespace-pre-line">
-              {overview.aiInsights?.split("\n").slice(3).join("\n")}
+      <div className="rounded-xl shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-700/30">
+        <button
+          className="w-full flex items-center justify-between px-4 py-2 focus:outline-none hover:bg-slate-800/40 rounded-t-xl"
+          onClick={() => setCollapsed((c) => !c)}
+        >
+          <span className="text-cyan-400 font-bold text-lg">Daily Overview</span>
+          {collapsed ? <ChevronRight className="h-5 w-5 text-cyan-400" /> : <ChevronDown className="h-5 w-5 text-cyan-400" />}
+        </button>
+        {!collapsed && (
+          <div className="p-4 pt-0">
+            <div className="flex items-center mb-2">
+              <span className="text-xs text-slate-400">(AI-powered)</span>
             </div>
-            <div className="text-xs text-slate-500 mt-2">{overview.date}</div>
+            {loading ? (
+              <div className="text-slate-400 text-sm">Loading daily overview...</div>
+            ) : error ? (
+              <div className="text-red-400 text-sm">{error}</div>
+            ) : overview ? (
+              <div className="text-slate-200 text-base space-y-2">
+                <div className="font-semibold">{greeting}</div>
+                <div>{intro}</div>
+                <ul className="list-disc ml-6">
+                  <li>You have <span className="text-cyan-300 font-bold">{overview.summary.pendingOrders}</span> pending orders and <span className="text-orange-300 font-bold">{overview.summary.ordersNeedingInvoices}</span> invoices to send.</li>
+                  <li>In the last 30 days, you've made <span className="text-green-300 font-bold">${overview.summary.thirtyDayRevenue.toFixed(2)}</span> in revenue.</li>
+                </ul>
+                {/* <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
+                <div className="italic text-slate-300 whitespace-pre-line">
+                  {overview.aiInsights}
+                </div> */}
+                <div className="text-xs text-slate-500 mt-2">{overview.date}</div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   )
