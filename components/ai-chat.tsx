@@ -219,8 +219,14 @@ export function AIChat() {
     <>
       <DailyOverviewWidget />
       <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
+        {/* Geoffrey Header */}
+        <div className="flex items-center gap-4 px-6 pt-6 pb-2">
+          <GeoffreyAvatar size={64} />
+          <span className="text-2xl font-bold text-white">Geoffrey</span>
+        </div>
+        <CardHeader className="pt-2 pb-0">
+          <CardTitle className="text-white flex items-center hidden">
+            {/* Hide old header */}
             <Sparkles className="h-5 w-5 text-cyan-400 mr-2" />
             AI Assistant
             <Badge className="ml-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border-cyan-500/30">
