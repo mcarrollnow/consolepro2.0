@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import dynamic from "next/dynamic";
 import { CustomerOrdersDialog } from "./CustomerOrdersDialog"
+import { DashboardLayout } from "@/components/dashboard-layout"
 
 const SalesTrendChart = dynamic(() => import("./SalesTrendChart"), { ssr: false });
 
@@ -264,127 +265,131 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
   const productImagePath = `/${baseProductName}.png`;
   const allEmails = product.allCustomers.map((c: any) => c.email).join(",")
 
-  return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 py-10">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Product Header */}
-        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl">
-          <div style={{ width: 273, height: 154, borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img
-              src={productImage}
-              alt={product.product}
-              width={273}
-              height={154}
-              style={{ objectFit: 'cover', width: 273, height: 154, borderRadius: 16 }}
-            />
+  const ProductDetailContent = () => (
+    <div className="space-y-8">
+      {/* Product Header */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl">
+        <div style={{ width: 273, height: 154, borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={productImage}
+            alt={product.product}
+            width={273}
+            height={154}
+            style={{ objectFit: 'cover', width: 273, height: 154, borderRadius: 16 }}
+          />
+        </div>
+        <div className="flex-1">
+          <div className="text-3xl font-bold text-white mb-1">{product.product}</div>
+          <div className="text-cyan-400 text-sm mb-2 font-mono">Barcode: {product.barcode}</div>
+          <div className="flex flex-wrap gap-6 items-center mb-2">
+            <span className="text-slate-300 text-lg">Total Sales: <b className="text-white">{product.totalSales}</b></span>
+            <span className="text-slate-300 text-lg">Revenue: <b className="text-white">${product.revenue.toLocaleString()}</b></span>
+            <Badge className="bg-cyan-700 text-cyan-100 text-base px-4 py-2 rounded-lg">Sales Rank #{product.salesRank}</Badge>
           </div>
-          <div className="flex-1">
-            <div className="text-3xl font-bold text-white mb-1">{product.product}</div>
-            <div className="text-cyan-400 text-sm mb-2 font-mono">Barcode: {product.barcode}</div>
-            <div className="flex flex-wrap gap-6 items-center mb-2">
-              <span className="text-slate-300 text-lg">Total Sales: <b className="text-white">{product.totalSales}</b></span>
-              <span className="text-slate-300 text-lg">Revenue: <b className="text-white">${product.revenue.toLocaleString()}</b></span>
-              <Badge className="bg-cyan-700 text-cyan-100 text-base px-4 py-2 rounded-lg">Sales Rank #{product.salesRank}</Badge>
-            </div>
-            {notionLinks[normalizeProductName(product.product)] && (
-              <a
-                href={notionLinks[normalizeProductName(product.product)]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition"
-              >
-                View Notion Profile
-              </a>
-            )}
-          </div>
-          <Button asChild className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg px-6 py-3 text-lg rounded-xl">
-            <a href={`mailto:?bcc=${allEmails}`} title="Email all customers for this product">
-              Email All Customers
+          {notionLinks[normalizeProductName(product.product)] && (
+            <a
+              href={notionLinks[normalizeProductName(product.product)]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition"
+            >
+              View Notion Profile
             </a>
-          </Button>
-        </div>
-
-        {/* Sales Trend Chart */}
-        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 shadow-xl">
-          <SalesTrendChart salesTrend={product.salesTrend} />
-        </div>
-
-        {/* Top 5 Customers Section */}
-        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-          <div className="text-white text-lg font-semibold mb-4">Top 5 Customers</div>
-          {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-slate-300">Name</TableHead>
-                  <TableHead className="text-slate-300">Email</TableHead>
-                  <TableHead className="text-slate-300">Phone</TableHead>
-                  <TableHead className="text-slate-300">Purchases</TableHead>
-                  <TableHead className="text-slate-300">Last Purchase</TableHead>
-                  <TableHead className="text-slate-300">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.topCustomers.map((c: any, i: number) => (
-                  <TableRow key={i} className="hover:bg-slate-800/60">
-                    <TableCell className="text-white font-medium">
-                      <Link 
-                        href={`/customers/${c.customerId}`}
-                        className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
-                      >
-                        {c.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
-                    <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
-                    <TableCell className="text-white">{c.purchases}</TableCell>
-                    <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
-                    <TableCell>
-                      <CustomerOrdersDialog customer={c} productName={product.product} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <span className="text-slate-400">No customer data available.</span>
           )}
         </div>
+        <Button asChild className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg px-6 py-3 text-lg rounded-xl">
+          <a href={`mailto:?bcc=${allEmails}`} title="Email all customers for this product">
+            Email All Customers
+          </a>
+        </Button>
+      </div>
 
-        {/* Frequently Bought Together Section */}
-        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-          <div className="text-white text-lg font-semibold mb-4">Frequently Bought Together</div>
-          {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-slate-300">Product</TableHead>
-                  <TableHead className="text-slate-300">Barcode</TableHead>
-                  <TableHead className="text-slate-300">Times Bought Together</TableHead>
+      {/* Sales Trend Chart */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 shadow-xl">
+        <SalesTrendChart salesTrend={product.salesTrend} />
+      </div>
+
+      {/* Top 5 Customers Section */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+        <div className="text-white text-lg font-semibold mb-4">Top 5 Customers</div>
+        {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-slate-300">Name</TableHead>
+                <TableHead className="text-slate-300">Email</TableHead>
+                <TableHead className="text-slate-300">Phone</TableHead>
+                <TableHead className="text-slate-300">Purchases</TableHead>
+                <TableHead className="text-slate-300">Last Purchase</TableHead>
+                <TableHead className="text-slate-300">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {product.topCustomers.map((c: any, i: number) => (
+                <TableRow key={i} className="hover:bg-slate-800/60">
+                  <TableCell className="text-white font-medium">
+                    <Link 
+                      href={`/customers/${c.customerId}`}
+                      className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                    >
+                      {c.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
+                  <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
+                  <TableCell className="text-white">{c.purchases}</TableCell>
+                  <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
+                  <TableCell>
+                    <CustomerOrdersDialog customer={c} productName={product.product} />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.frequentlyBoughtTogether.map((p: any, i: number) => (
-                  <TableRow key={i} className="hover:bg-slate-800/60">
-                    <TableCell className="text-white font-medium">
-                      <Link 
-                        href={`/inventory/${p.barcode}`}
-                        className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
-                      >
-                        {p.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-cyan-300 font-mono">{p.barcode}</TableCell>
-                    <TableCell className="text-white">{p.count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <span className="text-slate-400">No data available.</span>
-          )}
-        </div>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <span className="text-slate-400">No customer data available.</span>
+        )}
+      </div>
+
+      {/* Frequently Bought Together Section */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+        <div className="text-white text-lg font-semibold mb-4">Frequently Bought Together</div>
+        {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-slate-300">Product</TableHead>
+                <TableHead className="text-slate-300">Barcode</TableHead>
+                <TableHead className="text-slate-300">Times Bought Together</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {product.frequentlyBoughtTogether.map((p: any, i: number) => (
+                <TableRow key={i} className="hover:bg-slate-800/60">
+                  <TableCell className="text-white font-medium">
+                    <Link 
+                      href={`/inventory/${p.barcode}`}
+                      className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                    >
+                      {p.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-cyan-300 font-mono">{p.barcode}</TableCell>
+                  <TableCell className="text-white">{p.count}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <span className="text-slate-400">No data available.</span>
+        )}
       </div>
     </div>
-  )
+  );
+
+  return (
+    <DashboardLayout>
+      <ProductDetailContent />
+    </DashboardLayout>
+  );
 }

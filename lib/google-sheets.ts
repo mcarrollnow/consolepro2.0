@@ -761,6 +761,58 @@ export class GoogleSheetsService {
       return [];
     }
   }
+
+  async appendToArchivedOrders(order: OrderCustomer): Promise<void> {
+    // Get header for Archived Orders
+    const response = await this.sheets.spreadsheets.values.get({
+      spreadsheetId: this.spreadsheetId,
+      range: 'Archived Orders!A:BM',
+    });
+    const header = response.data.values?.[0] || [];
+    // Map order fields to row
+    const row: any[] = header.map((col: string) => {
+      // Try to match by header name (case-insensitive)
+      const key = Object.keys(order).find(k => k.toLowerCase() === col.trim().toLowerCase());
+      return key ? (order as any)[key] : '';
+    });
+    await this.sheets.spreadsheets.values.append({
+      spreadsheetId: this.spreadsheetId,
+      range: 'Archived Orders!A:BM',
+      valueInputOption: 'RAW',
+      requestBody: { values: [row] },
+    });
+  }
+
+  async deleteOrderFromOrdersSheet(orderId: string): Promise<void> {
+    // Get all orders
+    const response = await this.sheets.spreadsheets.values.get({
+      spreadsheetId: this.spreadsheetId,
+      range: 'Orders!A:BM',
+    });
+    const rows = response.data.values || [];
+    const header = rows[0];
+    const orderIdCol = header.findIndex((col: string) => col.trim() === 'Order_Code');
+    const rowIndex = rows.findIndex((row, idx) => idx > 0 && row[orderIdCol] === orderId);
+    if (rowIndex === -1) return;
+    // Delete the row (rowIndex is 0-based, add 1 for 1-based, add 1 for header)
+    await this.sheets.spreadsheets.batchUpdate({
+      spreadsheetId: this.spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: 0, // Orders sheet is usually the first, adjust if needed
+                dimension: 'ROWS',
+                startIndex: rowIndex,
+                endIndex: rowIndex + 1,
+              },
+            },
+          },
+        ],
+      },
+    });
+  }
 }
 
 export const googleSheetsService = new GoogleSheetsService()

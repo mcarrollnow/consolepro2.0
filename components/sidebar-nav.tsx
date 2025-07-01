@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 interface SidebarNavProps {
   activeSection: string
@@ -26,8 +27,8 @@ interface SidebarNavProps {
 const navItems = [
   { id: "daily-overview", label: "Daily Overview", icon: BarChart3 },
   { id: "inventory", label: "Inventory", icon: Package },
-  { id: "orders", label: "All Orders", icon: ShoppingCart },
   { id: "active-orders", label: "Active Orders", icon: Clock },
+  { id: "order-archive", label: "Order Archive", icon: FileText },
   { id: "customers", label: "Customers", icon: Users },
   { id: "invoices", label: "Invoices", icon: FileText },
   { id: "messaging", label: "Messaging", icon: MessageSquare },
@@ -52,9 +53,9 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
         {!collapsed && (
-          <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent hover:from-cyan-300 hover:to-purple-300 transition-colors">
             Dashboard
-          </h1>
+          </Link>
         )}
         <Button
           variant="ghost"
