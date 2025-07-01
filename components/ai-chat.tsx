@@ -16,6 +16,13 @@ interface Message {
   timestamp: Date
 }
 
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning, Sir!"
+  if (hour < 18) return "Good afternoon, Sir!"
+  return "Good evening, Sir!"
+}
+
 function DailyOverviewWidget() {
   const [overview, setOverview] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -39,6 +46,9 @@ function DailyOverviewWidget() {
     fetchOverview()
   }, [])
 
+  const greeting = getGreeting()
+  const intro = "I hope all is well with you. I've been busy here maintaining your orders and inventory. Here's a quick update to catch you up:"
+
   return (
     <div className="mb-6">
       <div className="rounded-xl shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-700/30 p-4">
@@ -51,17 +61,18 @@ function DailyOverviewWidget() {
         ) : error ? (
           <div className="text-red-400 text-sm">{error}</div>
         ) : overview ? (
-          <div>
-            <div className="flex flex-wrap gap-4 mb-2">
-              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-cyan-300 font-semibold">Pending: {overview.summary.pendingOrders}</div>
-              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-orange-300 font-semibold">Invoices: {overview.summary.ordersNeedingInvoices}</div>
-              <div className="bg-slate-800/70 rounded-lg px-3 py-1 text-xs text-green-300 font-semibold">30-Day Revenue: ${overview.summary.thirtyDayRevenue.toFixed(2)}</div>
+          <div className="text-slate-200 text-base space-y-2">
+            <div className="font-semibold">{greeting}</div>
+            <div>{intro}</div>
+            <ul className="list-disc ml-6">
+              <li>You have <span className="text-cyan-300 font-bold">{overview.summary.pendingOrders}</span> pending orders and <span className="text-orange-300 font-bold">{overview.summary.ordersNeedingInvoices}</span> invoices to send.</li>
+              <li>In the last 30 days, you've made <span className="text-green-300 font-bold">${overview.summary.thirtyDayRevenue.toFixed(2)}</span> in revenue.</li>
+            </ul>
+            <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
+            <div className="italic text-slate-300 whitespace-pre-line">
+              {overview.aiInsights?.split("\n").slice(3).join("\n")}
             </div>
-            <div className="text-slate-200 text-sm whitespace-pre-line mb-1">
-              {overview.aiInsights?.split("\n").slice(0, 4).join("\n")}
-              {overview.aiInsights?.split("\n").length > 4 && <span className="text-cyan-400"> ...</span>}
-            </div>
-            <div className="text-xs text-slate-500">{overview.date}</div>
+            <div className="text-xs text-slate-500 mt-2">{overview.date}</div>
           </div>
         ) : null}
       </div>
