@@ -71,11 +71,17 @@ Please provide a helpful response based on the available data.`
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
+        max_tokens: 20000,
+        temperature: 1,
         messages: [
           {
-            role: "user",
-            content: `${systemPrompt}\n\n${userPrompt}`
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": `${systemPrompt}\n\n${userPrompt}`
+              }
+            ]
           }
         ]
       })
