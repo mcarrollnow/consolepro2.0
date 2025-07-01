@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { ChartContainer } from "@/components/ui/chart"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import dynamic from "next/dynamic";
+import { CustomerOrdersDialog } from "./CustomerOrdersDialog"
 
 const SalesTrendChart = dynamic(() => import("./SalesTrendChart"), { ssr: false });
 
@@ -61,7 +64,7 @@ async function fetchLiveProductProfile(barcode: string) {
   })
 
   // Top customers: aggregate by customer_id, but use name/email/phone from order row
-  const customerMap: Record<string, { name: string, email: string, phone: string, purchases: number, lastPurchase: string }> = {}
+  const customerMap: Record<string, { customerId: string, name: string, email: string, phone: string, purchases: number, lastPurchase: string, orders: any[] }> = {}
   
   console.log(`Processing ${productOrders.length} orders for product ${barcode}`)
   
@@ -75,14 +78,17 @@ async function fetchLiveProductProfile(barcode: string) {
     
     if (!customerMap[customerId]) {
       customerMap[customerId] = {
+        customerId,
         name,
         email,
         phone,
         purchases: 0,
-        lastPurchase: order.orderDate || order.order_date || ""
+        lastPurchase: order.orderDate || order.order_date || "",
+        orders: []
       }
     }
     customerMap[customerId].purchases += 1
+    customerMap[customerId].orders.push(order)
     if ((order.orderDate || order.order_date || "") > customerMap[customerId].lastPurchase) {
       customerMap[customerId].lastPurchase = order.orderDate || order.order_date || ""
     }
@@ -207,16 +213,27 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
                     <TableHead className="text-slate-300">Phone</TableHead>
                     <TableHead className="text-slate-300">Purchases</TableHead>
                     <TableHead className="text-slate-300">Last Purchase</TableHead>
+                    <TableHead className="text-slate-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {product.topCustomers.map((c: any, i: number) => (
                     <TableRow key={i} className="hover:bg-slate-800/60">
-                      <TableCell className="text-white font-medium">{c.name}</TableCell>
+                      <TableCell className="text-white font-medium">
+                        <Link 
+                          href={`/customers/${c.customerId}`}
+                          className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                        >
+                          {c.name}
+                        </Link>
+                      </TableCell>
                       <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
                       <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
                       <TableCell className="text-white">{c.purchases}</TableCell>
                       <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
+                      <TableCell>
+                        <CustomerOrdersDialog customer={c} productName={product.product} />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
