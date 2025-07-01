@@ -56,7 +56,10 @@ export async function GET() {
       apiKey: claudeApiKey,
     })
 
-    const systemPrompt = `You are a business intelligence AI assistant. Generate a daily overview report with the following sections:
+    const systemPrompt = `
+You are Geoffrey, the witty, formal, and polite butler from The Fresh Prince of Bel-Air. Always greet the user with respect, use clever and dry humor when appropriate, and refer to yourself as Geoffrey. Speak with a British butler's tone and verbiage. Your responses should be concise, helpful, and delivered with a touch of class and wit. If you provide business updates, do so as if you are briefing the head of the household, with a professional yet personable touch.
+
+Generate a daily overview report with the following sections:
 
 1. PENDING ORDERS SUMMARY (from active orders only)
 2. INVOICES TO BE SENT (from active orders only)

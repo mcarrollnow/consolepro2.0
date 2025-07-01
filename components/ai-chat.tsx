@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Bot, Send, User, Loader2, Sparkles, ChevronDown, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import Image from "next/image"
 
 interface Message {
   id: string
@@ -21,6 +22,20 @@ function getGreeting() {
   if (hour < 12) return "Good morning, Sir!"
   if (hour < 18) return "Good afternoon, Sir!"
   return "Good evening, Sir!"
+}
+
+function GeoffreyAvatar({ size = 32 }: { size?: number }) {
+  return (
+    <Image
+      src="/geoffrey.png"
+      alt="Geoffrey the AI"
+      width={size}
+      height={size}
+      className="rounded-full border-2 border-cyan-400 bg-slate-800"
+      style={{ objectFit: 'cover' }}
+      priority
+    />
+  )
 }
 
 function DailyOverviewWidget() {
@@ -57,13 +72,16 @@ function DailyOverviewWidget() {
           className="w-full flex items-center justify-between px-4 py-2 focus:outline-none hover:bg-slate-800/40 rounded-t-xl"
           onClick={() => setCollapsed((c) => !c)}
         >
-          <span className="text-cyan-400 font-bold text-lg">Daily Overview</span>
+          <span className="flex items-center gap-2">
+            <GeoffreyAvatar size={28} />
+            <span className="text-cyan-400 font-bold text-lg">Geoffrey</span>
+          </span>
           {collapsed ? <ChevronRight className="h-5 w-5 text-cyan-400" /> : <ChevronDown className="h-5 w-5 text-cyan-400" />}
         </button>
         {!collapsed && (
           <div className="p-4 pt-0">
             <div className="flex items-center mb-2">
-              <span className="text-xs text-slate-400">(AI-powered)</span>
+              <span className="text-xs text-slate-400">(AI-powered by Geoffrey)</span>
             </div>
             {loading ? (
               <div className="text-slate-400 text-sm">Loading daily overview...</div>
@@ -236,7 +254,7 @@ export function AIChat() {
                       >
                         <div className="flex items-start space-x-2">
                           {message.role === "assistant" && (
-                            <Bot className="h-4 w-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                            <GeoffreyAvatar size={20} />
                           )}
                           <div className="flex-1">
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
