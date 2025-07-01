@@ -4,6 +4,7 @@ import { useState } from "react"
 import {
   Package,
   ShoppingCart,
+  Clock,
   Users,
   FileText,
   MessageSquare,
@@ -23,7 +24,8 @@ interface SidebarNavProps {
 
 const navItems = [
   { id: "inventory", label: "Inventory", icon: Package },
-  { id: "orders", label: "Orders & Tracking", icon: ShoppingCart },
+  { id: "orders", label: "All Orders", icon: ShoppingCart },
+  { id: "active-orders", label: "Active Orders", icon: Clock },
   { id: "customers", label: "Customers", icon: Users },
   { id: "invoices", label: "Invoices", icon: FileText },
   { id: "messaging", label: "Messaging", icon: MessageSquare },

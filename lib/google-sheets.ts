@@ -173,13 +173,83 @@ export class GoogleSheetsService {
     }
   }
 
-  async getOrdersData(): Promise<OrderCustomer[]> {
+  async getActiveOrdersData(): Promise<OrderCustomer[]> {
     try {
-      // Main orders section should only show ACTIVE orders from the Orders sheet
+      // Active orders from the Orders sheet
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
         range: "Orders!A:BM", // Active orders only
       })
+
+      const rows = response.data.values || []
+      if (rows.length === 0) return []
+
+      // Skip header row
+      const dataRows = rows.slice(1)
+
+      return dataRows.map((row): OrderCustomer => {
+        // Extract product details (Product_1_Name at 20, Product_1_Barcode at 21, Product_1_Price at 22, Product_1_Quantity at 23)
+        const products = []
+        for (let i = 20; i <= 56; i += 4) {
+          if (row[i] && row[i].trim() !== "") {
+            products.push({
+              name: row[i] || "", // Product_X_Name
+              barcode: row[i + 1] || "", // Product_X_Barcode
+              price: parseFloat(row[i + 2] || "0"), // Product_X_Price
+              quantity: parseInt(row[i + 3] || "0"), // Product_X_Quantity
+            })
+          }
+        }
+        
+        const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
+        return {
+          orderId: row[1] || "", // Order_Code
+          customerId: customer_id, // Use customer_id from column 65
+          customerName: row[3] || "", // Customer_Name
+          customerEmail: row[4] || "", // Email
+          orderDate: row[0] || "", // Submission_Timestamp
+          status: row[17] || "", // Fulfillment_Status
+          total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
+          items: products.map(p => p.name).join(", "),
+          notes: row[12] || "", // Special_Instructions
+          invoice_link: row[61] || "", // invoice_link (BJ)
+          payment_link: row[59] || "", // payment_link (BH)
+          customer_id,
+          businessName: row[5] || "", // Business_Name
+          phone: row[6] || "", // Phone
+          addressStreet: row[7] || "", // Address_Street
+          addressCity: row[8] || "", // Address_City
+          addressState: row[9] || "", // Address_State
+          addressZIP: row[10] || "", // Address_ZIP
+          products,
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching active orders data:", error.message, error.stack);
+      } else {
+        console.error("Error fetching active orders data:", error);
+      }
+      return [];
+    }
+  }
+
+  async getOrdersData(): Promise<OrderCustomer[]> {
+    try {
+      // Try to read from Archived Orders first, fallback to Orders
+      let response
+      try {
+        response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: "Archived Orders!A:BM",
+        })
+      } catch (error) {
+        console.log("Archived Orders sheet not found, falling back to Orders sheet")
+        response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: "Orders!A:BM",
+        })
+      }
 
       const rows = response.data.values || []
       if (rows.length === 0) return []

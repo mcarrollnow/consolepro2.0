@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server"
 import { googleSheetsService } from "@/lib/google-sheets"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const ordersData = await googleSheetsService.getOrdersData()
+    const { searchParams } = new URL(request.url)
+    const sheet = searchParams.get('sheet') || 'Archived Orders'
+    
+    let ordersData
+    if (sheet === 'Orders') {
+      ordersData = await googleSheetsService.getActiveOrdersData()
+    } else {
+      ordersData = await googleSheetsService.getOrdersData()
+    }
+    
     return NextResponse.json(ordersData)
   } catch (error) {
     console.error("Error fetching orders:", error)

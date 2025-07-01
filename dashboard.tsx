@@ -4,6 +4,7 @@ import { useState } from "react"
 import { SidebarNav } from "./components/sidebar-nav"
 import { InventorySection } from "./components/inventory-section"
 import { OrdersSection } from "./components/orders-section"
+import { ActiveOrdersSection } from "./components/active-orders-section"
 import { CustomersSection } from "./components/customers-section"
 import { AnalyticsSection } from "./components/analytics-section"
 import { MessagingSection } from "./components/messaging-section"
@@ -17,6 +18,8 @@ export default function Dashboard() {
         return <InventorySection />
       case "orders":
         return <OrdersSection />
+      case "active-orders":
+        return <ActiveOrdersSection />
       case "customers":
         return <CustomersSection />
       case "analytics":
