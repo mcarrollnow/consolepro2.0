@@ -98,18 +98,33 @@ async function fetchLiveProductProfile(barcode: string) {
   
   console.log(`Found ${allCustomers.length} unique customers, top 5:`, topCustomers)
 
-  // Frequently bought together
+  // Frequently bought together - find products bought in the same orders as this product
   const togetherMap: Record<string, { name: string, barcode: string, count: number }> = {}
-  for (const order of productOrders) {
-    for (const p of order.products) {
-      if (p.barcode !== barcode) {
-        if (!togetherMap[p.barcode]) {
-          togetherMap[p.barcode] = { name: p.name, barcode: p.barcode, count: 0 }
+  
+  // Get all order IDs that contain this product
+  const orderIdsWithThisProduct = new Set(productOrders.map(order => order.orderId))
+  
+  // Look through all orders (not just productOrders) to find orders that contain this product
+  for (const order of allOrders) {
+    // Check if this order contains our target product
+    const hasTargetProduct = order.products?.some((p: any) => p.barcode === barcode) || 
+                           (order.items && order.items.toLowerCase().includes(product.product.toLowerCase()))
+    
+    if (hasTargetProduct) {
+      // Now look for other products in this same order
+      if (order.products && Array.isArray(order.products)) {
+        for (const p of order.products) {
+          if (p.barcode && p.barcode !== barcode && p.name) {
+            if (!togetherMap[p.barcode]) {
+              togetherMap[p.barcode] = { name: p.name, barcode: p.barcode, count: 0 }
+            }
+            togetherMap[p.barcode].count += 1
+          }
         }
-        togetherMap[p.barcode].count += 1
       }
     }
   }
+  
   const frequentlyBoughtTogether = Object.values(togetherMap).sort((a, b) => b.count - a.count).slice(0, 5)
 
   // Sales trend (by day)
@@ -200,73 +215,80 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
           <SalesTrendChart salesTrend={product.salesTrend} />
         </div>
 
-        {/* Top Customers & Frequently Bought Together */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-            <div className="text-white text-lg font-semibold mb-4">Top 5 Customers</div>
-            {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-slate-300">Name</TableHead>
-                    <TableHead className="text-slate-300">Email</TableHead>
-                    <TableHead className="text-slate-300">Phone</TableHead>
-                    <TableHead className="text-slate-300">Purchases</TableHead>
-                    <TableHead className="text-slate-300">Last Purchase</TableHead>
-                    <TableHead className="text-slate-300">Actions</TableHead>
+        {/* Top 5 Customers Section */}
+        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+          <div className="text-white text-lg font-semibold mb-4">Top 5 Customers</div>
+          {Array.isArray(product.topCustomers) && product.topCustomers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-slate-300">Name</TableHead>
+                  <TableHead className="text-slate-300">Email</TableHead>
+                  <TableHead className="text-slate-300">Phone</TableHead>
+                  <TableHead className="text-slate-300">Purchases</TableHead>
+                  <TableHead className="text-slate-300">Last Purchase</TableHead>
+                  <TableHead className="text-slate-300">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {product.topCustomers.map((c: any, i: number) => (
+                  <TableRow key={i} className="hover:bg-slate-800/60">
+                    <TableCell className="text-white font-medium">
+                      <Link 
+                        href={`/customers/${c.customerId}`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                      >
+                        {c.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
+                    <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
+                    <TableCell className="text-white">{c.purchases}</TableCell>
+                    <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
+                    <TableCell>
+                      <CustomerOrdersDialog customer={c} productName={product.product} />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {product.topCustomers.map((c: any, i: number) => (
-                    <TableRow key={i} className="hover:bg-slate-800/60">
-                      <TableCell className="text-white font-medium">
-                        <Link 
-                          href={`/customers/${c.customerId}`}
-                          className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
-                        >
-                          {c.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
-                      <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
-                      <TableCell className="text-white">{c.purchases}</TableCell>
-                      <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
-                      <TableCell>
-                        <CustomerOrdersDialog customer={c} productName={product.product} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <span className="text-slate-400">No customer data available.</span>
-            )}
-          </div>
-          <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-            <div className="text-white text-lg font-semibold mb-4">Frequently Bought Together</div>
-            {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-slate-300">Product</TableHead>
-                    <TableHead className="text-slate-300">Barcode</TableHead>
-                    <TableHead className="text-slate-300">Times Bought Together</TableHead>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <span className="text-slate-400">No customer data available.</span>
+          )}
+        </div>
+
+        {/* Frequently Bought Together Section */}
+        <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+          <div className="text-white text-lg font-semibold mb-4">Frequently Bought Together</div>
+          {Array.isArray(product.frequentlyBoughtTogether) && product.frequentlyBoughtTogether.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-slate-300">Product</TableHead>
+                  <TableHead className="text-slate-300">Barcode</TableHead>
+                  <TableHead className="text-slate-300">Times Bought Together</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {product.frequentlyBoughtTogether.map((p: any, i: number) => (
+                  <TableRow key={i} className="hover:bg-slate-800/60">
+                    <TableCell className="text-white font-medium">
+                      <Link 
+                        href={`/inventory/${p.barcode}`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                      >
+                        {p.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-cyan-300 font-mono">{p.barcode}</TableCell>
+                    <TableCell className="text-white">{p.count}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {product.frequentlyBoughtTogether.map((p: any, i: number) => (
-                    <TableRow key={i} className="hover:bg-slate-800/60">
-                      <TableCell className="text-white font-medium">{p.name}</TableCell>
-                      <TableCell className="text-cyan-300 font-mono">{p.barcode}</TableCell>
-                      <TableCell className="text-white">{p.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <span className="text-slate-400">No data available.</span>
-            )}
-          </div>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <span className="text-slate-400">No data available.</span>
+          )}
         </div>
       </div>
     </div>
