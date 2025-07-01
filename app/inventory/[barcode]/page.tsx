@@ -227,14 +227,41 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
     return <div className="text-red-500 text-center py-10">Error: Product not found for barcode: {barcode}</div>;
   }
 
-  // Build image path based on public folder naming
+  // Explicitly assign the correct image path for each product
+  let productImage = "/placeholder.svg";
+  if (["Semaglutide 2mg", "Semaglutide 5mg", "Semaglutide 10mg"].includes(product.product)) productImage = "/semaglutide.png";
+  else if (["Tirzepatide 10 mg", "Tirzepatide 15 mg", "Tirzepatide 30 mg", "Tirzepatide 5mg", "Tirzepatide 60 mg"].includes(product.product)) productImage = "/tirzepatide.png";
+  else if (["BPC-157 10 mg", "BPC-157 2 mg", "BPC-157 5 mg"].includes(product.product)) productImage = "/bpc157.png";
+  else if (["AOD-9604 2 mg"].includes(product.product)) productImage = "/aod_9604.png";
+  else if (["Cagrilintide 10 mg", "Cagrilintide 5 mg"].includes(product.product)) productImage = "/cagrilintide.png";
+  else if (["Epithalon 10mg"].includes(product.product)) productImage = "/epithalon.png";
+  else if (["GHK-Cu 100mg", "GHK-Cu 50mg"].includes(product.product)) productImage = "/ghk_cu.png";
+  else if (["GHRP-2 - 2mg", "GHRP-2 5mg"].includes(product.product)) productImage = "/ghrp_2.png";
+  else if (["HCG 5,000iu"].includes(product.product)) productImage = "/hcg.png";
+  else if (["Hexarelin 2mg", "Hexarelin 5mg"].includes(product.product)) productImage = "/hexarelin.png";
+  else if (["MOTS-C 10mg"].includes(product.product)) productImage = "/mots_c.png";
+  else if (["NAD+ 500mg"].includes(product.product)) productImage = "/nad_.png";
+  else if (["Oxytocin Acetate - 2mg"].includes(product.product)) productImage = "/oxytocin_acetate.png";
+  else if (["PEG-MGF"].includes(product.product)) productImage = "/peg_mgf.png";
+  else if (["PT-141 10mg", "PT-141 5mg"].includes(product.product)) productImage = "/pt_141.png";
+  else if (["Retatrutide 10 MG"].includes(product.product)) productImage = "/retatrutide.png";
+  else if (["Selank 5mg"].includes(product.product)) productImage = "/selank.png";
+  else if (["Semax 10mg"].includes(product.product)) productImage = "/semax.png";
+  else if (["Sermorelin 2mg", "Sermorelin 5mg"].includes(product.product)) productImage = "/sermorelin.png";
+  else if (["Snap-8 10mg"].includes(product.product)) productImage = "/snap_8.png";
+  else if (["SS-31 10mg", "SS-31 50mg"].includes(product.product)) productImage = "/ss_31.png";
+  else if (["TB-500 10mg", "TB-500  2mg", "TB-500  5mg"].includes(product.product)) productImage = "/tb_500.png";
+  else if (["Tesamorelin 10 mg", "Tesamorelin 2 mg", "Tesamorelin 5 mg"].includes(product.product)) productImage = "/tesamorelin.png";
+  else if (["Thymosin alpha 1 - 10 MG", "Thymosin alpha 1 - 5 MG"].includes(product.product)) productImage = "/thymosin_alpha_1.png";
+  else if (["Thymulin 10 mg"].includes(product.product)) productImage = "/thymulin.png";
+
   const baseProductName = product.product
     .replace(/\s*\d+\s*mg/gi, '') // remove mg/strength
     .replace(/[-\s]+/g, '_') // replace spaces/dashes with underscores
     .replace(/_+/g, '_') // collapse multiple underscores
     .toLowerCase()
     .trim();
-  const productImage = `/${baseProductName}.png`;
+  const productImagePath = `/${baseProductName}.png`;
   const allEmails = product.allCustomers.map((c: any) => c.email).join(",")
 
   return (
