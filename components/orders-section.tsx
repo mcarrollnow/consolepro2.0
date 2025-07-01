@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard } from "lucide-react"
+import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Package, MapPin } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { OrderCustomer } from "@/lib/google-sheets"
+import Link from "next/link"
 
 export function OrdersSection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -20,6 +21,7 @@ export function OrdersSection() {
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<OrderCustomer | null>(null)
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false)
+  const [isOrderDetailsDialogOpen, setIsOrderDetailsDialogOpen] = useState(false)
   const [newOrder, setNewOrder] = useState({
     customerName: "",
     customerEmail: "",
@@ -94,6 +96,11 @@ export function OrdersSection() {
       default:
         return "bg-slate-500/20 text-slate-400 border-slate-500/30"
     }
+  }
+
+  const openOrderDetails = (order: OrderCustomer) => {
+    setSelectedOrder(order)
+    setIsOrderDetailsDialogOpen(true)
   }
 
   const handleCreateOrder = async () => {
@@ -381,9 +388,27 @@ export function OrdersSection() {
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.orderId} className="border-slate-700 hover:bg-slate-800/30">
-                  <TableCell className="text-slate-300 font-mono text-sm">{order.orderId}</TableCell>
-                  <TableCell className="text-white font-medium">{order.customerName}</TableCell>
-                  <TableCell className="text-slate-300 font-mono text-sm">{order.customerId}</TableCell>
+                  <TableCell className="text-slate-300 font-mono text-sm">
+                    <button
+                      onClick={() => openOrderDetails(order)}
+                      className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
+                    >
+                      {order.orderId}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-white font-medium">
+                    {order.customer_id ? (
+                      <Link 
+                        href={`/customers/${order.customer_id}/new-profile`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                      >
+                        {order.customerName}
+                      </Link>
+                    ) : (
+                      order.customerName
+                    )}
+                  </TableCell>
+                  <TableCell className="text-slate-300 font-mono text-sm">{order.customer_id || "N/A"}</TableCell>
                   <TableCell className="text-slate-300 max-w-xs truncate">{order.items}</TableCell>
                   <TableCell className="text-slate-300">${order.total.toFixed(2)}</TableCell>
                   <TableCell>
@@ -415,7 +440,7 @@ export function OrdersSection() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedOrder(selectedOrder?.orderId === order.orderId ? null : order)}
+                      onClick={() => openOrderDetails(order)}
                       className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                     >
                       View Details
@@ -425,40 +450,168 @@ export function OrdersSection() {
               ))}
             </TableBody>
           </Table>
-
-          {/* Order Details */}
-          {selectedOrder && (
-            <Card className="mt-6 bg-slate-900/50 border-slate-600">
-              <CardHeader>
-                <CardTitle className="text-white">Order Details - {selectedOrder.orderId}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-slate-400 text-sm">Customer Email</p>
-                      <p className="text-white">{selectedOrder.customerEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400 text-sm">Order Date</p>
-                      <p className="text-white">{new Date(selectedOrder.orderDate).toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-slate-400 text-sm mb-2">Order Notes</p>
-                    <Textarea
-                      value={selectedOrder.notes}
-                      className="bg-slate-800/50 border-slate-600 text-white"
-                      placeholder="Add notes for this order..."
-                      readOnly
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </CardContent>
       </Card>
+
+      {/* Order Details Dialog */}
+      <Dialog open={isOrderDetailsDialogOpen} onOpenChange={setIsOrderDetailsDialogOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Order Details - {selectedOrder?.orderId}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Customer Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Customer Information</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-slate-400 text-sm">Name</p>
+                      <p className="text-white">{selectedOrder.customerName}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-sm">Email</p>
+                      <p className="text-white">{selectedOrder.customerEmail}</p>
+                    </div>
+                    {selectedOrder.businessName && (
+                      <div>
+                        <p className="text-slate-400 text-sm">Business</p>
+                        <p className="text-white">{selectedOrder.businessName}</p>
+                      </div>
+                    )}
+                    {selectedOrder.phone && (
+                      <div>
+                        <p className="text-slate-400 text-sm">Phone</p>
+                        <p className="text-white">{selectedOrder.phone}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Shipping Address */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Shipping Address
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedOrder.addressStreet && (
+                      <p className="text-white">{selectedOrder.addressStreet}</p>
+                    )}
+                    {(selectedOrder.addressCity || selectedOrder.addressState || selectedOrder.addressZIP) && (
+                      <p className="text-white">
+                        {[selectedOrder.addressCity, selectedOrder.addressState, selectedOrder.addressZIP]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+                    {!selectedOrder.addressStreet && !selectedOrder.addressCity && (
+                      <p className="text-slate-500">No address provided</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Order Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-slate-400 text-sm">Order Date</p>
+                    <p className="text-white">{new Date(selectedOrder.orderDate).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-sm">Status</p>
+                    <Badge className={getStatusColor(selectedOrder.status)}>
+                      {getStatusIcon(selectedOrder.status)}
+                      <span className="ml-1">{selectedOrder.status}</span>
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-sm">Customer ID</p>
+                    <p className="text-white font-mono">{selectedOrder.customer_id || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Products */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Products</h3>
+                {selectedOrder.products && selectedOrder.products.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedOrder.products.map((product, index) => (
+                      <div key={index} className="bg-slate-900/50 border border-slate-600 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="text-white font-medium">{product.name}</p>
+                            <p className="text-slate-400 text-sm">Barcode: {product.barcode}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white">${product.price.toFixed(2)}</p>
+                            <p className="text-slate-400 text-sm">Qty: {product.quantity}</p>
+                            <p className="text-green-400 font-medium">
+                              ${(product.price * product.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t border-slate-600 pt-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-lg font-semibold text-white">Total</p>
+                        <p className="text-2xl font-bold text-green-400">${selectedOrder.total.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-4">
+                    <p className="text-slate-400">No detailed product information available</p>
+                    <p className="text-white mt-2">{selectedOrder.items}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              {selectedOrder.notes && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Order Notes</h3>
+                  <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-4">
+                    <p className="text-white">{selectedOrder.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Links */}
+              <div className="flex gap-4">
+                {selectedOrder.invoice_link && (
+                  <a 
+                    href={selectedOrder.invoice_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                  >
+                    View Invoice
+                  </a>
+                )}
+                {selectedOrder.payment_link && (
+                  <a 
+                    href={selectedOrder.payment_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                  >
+                    Payment Link
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Invoice Status Update Dialog */}
       <Dialog open={isInvoiceStatusDialogOpen} onOpenChange={setIsInvoiceStatusDialogOpen}>

@@ -28,6 +28,20 @@ export interface OrderCustomer {
   invoice_link?: string
   payment_link?: string
   customer_id?: string
+  // Additional fields for detailed order view
+  businessName?: string
+  phone?: string
+  addressStreet?: string
+  addressCity?: string
+  addressState?: string
+  addressZIP?: string
+  // Product details
+  products?: Array<{
+    name: string
+    barcode: string
+    price: number
+    quantity: number
+  }>
 }
 
 export interface Customer {
@@ -174,25 +188,40 @@ export class GoogleSheetsService {
       const dataRows = rows.slice(1)
 
       return dataRows.map((row): OrderCustomer => {
-        // Concatenate all product names (Product_1_Name at 20, Product_2_Name at 24, ... up to Product_10_Name at 56)
-        const productNames = []
+        // Extract product details (Product_1_Name at 20, Product_1_Barcode at 21, Product_1_Price at 22, Product_1_Quantity at 23)
+        const products = []
         for (let i = 20; i <= 56; i += 4) {
-          if (row[i] && row[i].trim() !== "") productNames.push(row[i])
+          if (row[i] && row[i].trim() !== "") {
+            products.push({
+              name: row[i] || "", // Product_X_Name
+              barcode: row[i + 1] || "", // Product_X_Barcode
+              price: parseFloat(row[i + 2] || "0"), // Product_X_Price
+              quantity: parseInt(row[i + 3] || "0"), // Product_X_Quantity
+            })
+          }
         }
+        
         const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
         return {
           orderId: row[1] || "", // Order_Code
-          customerId: "", // Not available in this sheet
+          customerId: customer_id, // Use customer_id from column 65
           customerName: row[3] || "", // Customer_Name
           customerEmail: row[4] || "", // Email
           orderDate: row[0] || "", // Submission_Timestamp
           status: row[17] || "", // Fulfillment_Status
           total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
-          items: productNames.join(", "),
+          items: products.map(p => p.name).join(", "),
           notes: row[12] || "", // Special_Instructions
           invoice_link: row[61] || "", // invoice_link (BJ)
           payment_link: row[59] || "", // payment_link (BH)
           customer_id,
+          businessName: row[5] || "", // Business_Name
+          phone: row[6] || "", // Phone
+          addressStreet: row[7] || "", // Address_Street
+          addressCity: row[8] || "", // Address_City
+          addressState: row[9] || "", // Address_State
+          addressZIP: row[10] || "", // Address_ZIP
+          products,
         }
       })
     } catch (error) {
@@ -574,6 +603,13 @@ export class GoogleSheetsService {
             invoice_link: (row[61] || "").toString(), // invoice_link
             payment_link: (row[60] || "").toString(), // payment_link
             customer_id: customerId,
+            businessName: row[5] || "",
+            phone: row[6] || "",
+            addressStreet: row[7] || "",
+            addressCity: row[8] || "",
+            addressState: row[9] || "",
+            addressZIP: row[10] || "",
+            products: row[20] && row[20].trim() !== "" ? JSON.parse(row[20]) : [],
           };
         });
 
