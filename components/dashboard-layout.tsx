@@ -5,6 +5,7 @@ import { SidebarNav } from "./sidebar-nav"
 import { MainDashboard } from "./main-dashboard"
 import { InventorySection } from "./inventory-section"
 import { ActiveOrdersSection } from "./active-orders-section"
+import { OrderArchiveSection } from "./order-archive-section"
 import { CustomersSection } from "./customers-section"
 import { AnalyticsSection } from "./analytics-section"
 import { MessagingSection } from "./messaging-section"
@@ -73,15 +74,7 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
           </div>
         )
       case "order-archive":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-white">Order Archive</h2>
-            <p className="text-slate-400">View archived and completed orders</p>
-            <div className="h-64 flex items-center justify-center bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <p className="text-slate-400">Order archive interface - Google Sheets integration needed</p>
-            </div>
-          </div>
-        )
+        return <OrderArchiveSection />
       default:
         return <MainDashboard />
     }
