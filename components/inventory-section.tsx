@@ -318,7 +318,22 @@ export function InventorySection() {
                         <ul className="list-disc ml-4">
                           {getPendingOrdersForItem(item).map(order => (
                             <li key={order.orderId} className="text-xs">
-                              Order #{order.orderId} ({order.customerName})
+                              Order #{order.orderId} (
+                              {order.customer_id ? (
+                                <>
+                                  <Link 
+                                    href={`/customers/${order.customer_id}`}
+                                    className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                                  >
+                                    {order.customerName}
+                                  </Link>
+                                  {" "}
+                                  <span className="text-slate-500">({order.customer_id})</span>
+                                </>
+                              ) : (
+                                order.customerName
+                              )}
+                              )
                             </li>
                           ))}
                         </ul>
