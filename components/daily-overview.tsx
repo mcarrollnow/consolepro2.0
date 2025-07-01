@@ -86,6 +86,9 @@ export function DailyOverview() {
   if (loading) {
     return (
       <div className="space-y-6">
+        <div className="bg-red-600 text-white text-2xl font-bold p-6 rounded-lg mb-6 text-center">
+          DAILY OVERVIEW COMPONENT IS RENDERING
+        </div>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
           <span className="ml-2 text-white">Generating daily overview...</span>
@@ -97,6 +100,9 @@ export function DailyOverview() {
   if (!overview) {
     return (
       <div className="space-y-6">
+        <div className="bg-red-600 text-white text-2xl font-bold p-6 rounded-lg mb-6 text-center">
+          DAILY OVERVIEW COMPONENT IS RENDERING
+        </div>
         <div className="flex items-center justify-center h-64">
           <AlertTriangle className="h-8 w-8 text-red-400" />
           <span className="ml-2 text-white">Failed to load daily overview</span>
@@ -107,6 +113,9 @@ export function DailyOverview() {
 
   return (
     <div className="space-y-6">
+      <div className="bg-red-600 text-white text-2xl font-bold p-6 rounded-lg mb-6 text-center">
+        DAILY OVERVIEW COMPONENT IS RENDERING
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
