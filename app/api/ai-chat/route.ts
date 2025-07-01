@@ -22,14 +22,11 @@ export async function POST(request: Request) {
       apiKey: claudeApiKey,
     })
 
-    // Only send minimal context - let AI request specific data when needed
-    const dataSummary = {
-      hasInventory: !!context?.inventory?.length,
-      hasOrders: !!context?.orders?.length,
-      hasCustomers: !!context?.customers?.length,
-      inventoryCount: context?.inventory?.length || 0,
-      ordersCount: context?.orders?.length || 0,
-      customersCount: context?.customers?.length || 0
+    // Send actual data from Google Sheets instead of just summary
+    const actualData = {
+      inventory: context?.inventory || [],
+      orders: context?.orders || [],
+      customers: context?.customers || []
     }
 
     // Create the prompt for Claude
@@ -116,18 +113,16 @@ When answering questions:
 3. If asked about "inventory" - check Inventory data
 4. If asked about "past orders" or "order history" - check Archived Orders data
 
-Available data sources:
-- Inventory: ${dataSummary.inventoryCount} items available
-- Orders: ${dataSummary.ordersCount} orders available (ACTIVE orders only)
-- Customers: ${dataSummary.customersCount} customers available
+You have access to the actual data below. Use it to answer questions directly.
 
-Respond in a conversational, helpful tone. If you need specific data to answer the question, ask the user to provide it.`
+Respond in a conversational, helpful tone.`
 
     const userPrompt = `User question: ${message}
 
-Data available: ${JSON.stringify(dataSummary, null, 2)}
+Available data:
+${JSON.stringify(actualData, null, 2)}
 
-Please provide a helpful response. If you need specific data to answer the question, ask the user to provide it.`
+Please provide a helpful response based on the actual data above.`
 
     console.log("Sending request to Claude API...")
 
