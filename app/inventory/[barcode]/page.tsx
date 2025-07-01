@@ -20,16 +20,18 @@ function normalizeProductName(name: string) {
 }
 
 async function fetchLiveProductProfile(barcode: string) {
-  // Fetch all data in parallel
-  const [inventoryRes, salesRes, ordersRes] = await Promise.all([
+  // Fetch all data in parallel - include both active and archived orders
+  const [inventoryRes, salesRes, ordersRes, archivedOrdersRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/inventory`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/sales`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/orders?sheet=Orders`, { cache: 'no-store' }),
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/orders?sheet=Archived Orders`, { cache: 'no-store' }),
   ])
-  const [inventory, sales, orders] = await Promise.all([
+  const [inventory, sales, orders, archivedOrders] = await Promise.all([
     inventoryRes.json(),
     salesRes.json(),
     ordersRes.json(),
+    archivedOrdersRes.json(),
   ])
   // Find product
   const product = inventory.find((item: any) => item.barcode === barcode)
@@ -37,16 +39,30 @@ async function fetchLiveProductProfile(barcode: string) {
 
   // Sales for this product
   const productSales = sales.filter((s: any) => s["Product Barcode"] === barcode)
-  // Orders for this product
-  const productOrders = orders.filter((order: any) => Array.isArray(order.products) && order.products.some((p: any) => p.barcode === barcode))
+  
+  // Orders for this product - combine active and archived orders
+  const allOrders = [...orders, ...archivedOrders]
+  const productOrders = allOrders.filter((order: any) => {
+    if (Array.isArray(order.products)) {
+      return order.products.some((p: any) => p.barcode === barcode)
+    }
+    // Also check if the order has the product in the items field
+    return order.items && order.items.toLowerCase().includes(product.product.toLowerCase())
+  })
 
   // Top customers: aggregate by customer_id, but use name/email/phone from order row
   const customerMap: Record<string, { name: string, email: string, phone: string, purchases: number, lastPurchase: string }> = {}
+  
+  console.log(`Processing ${productOrders.length} orders for product ${barcode}`)
+  
   for (const order of productOrders) {
     const customerId = order.customer_id || order.customerId || "Unknown"
     const name = order.customerName || order.customer_name || "Unknown"
     const email = order.customerEmail || order.customer_email || "Unknown"
-    const phone = order.customerPhone || order.customer_phone || ""
+    const phone = order.customerPhone || order.customer_phone || order.phone || ""
+    
+    console.log(`Order ${order.orderId}: customerId=${customerId}, name=${name}, email=${email}`)
+    
     if (!customerMap[customerId]) {
       customerMap[customerId] = {
         name,
@@ -63,6 +79,8 @@ async function fetchLiveProductProfile(barcode: string) {
   }
   const allCustomers = Object.values(customerMap)
   const topCustomers = [...allCustomers].sort((a, b) => b.purchases - a.purchases).slice(0, 5)
+  
+  console.log(`Found ${allCustomers.length} unique customers, top 5:`, topCustomers)
 
   // Frequently bought together
   const togetherMap: Record<string, { name: string, barcode: string, count: number }> = {}
