@@ -408,7 +408,18 @@ export function OrdersSection() {
                       order.customerName
                     )}
                   </TableCell>
-                  <TableCell className="text-slate-300 font-mono text-sm">{order.customer_id || "N/A"}</TableCell>
+                  <TableCell className="text-slate-300 font-mono text-sm">
+                    {order.customer_id ? (
+                      <Link 
+                        href={`/customers/${order.customer_id}/new-profile`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                      >
+                        {order.customer_id}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    )}
+                  </TableCell>
                   <TableCell className="text-slate-300 max-w-xs truncate">{order.items}</TableCell>
                   <TableCell className="text-slate-300">${order.total.toFixed(2)}</TableCell>
                   <TableCell>
