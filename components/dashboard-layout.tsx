@@ -23,6 +23,12 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
   }
 
   const renderSection = () => {
+    // If children are provided, render them directly (for product/customer pages)
+    if (children) {
+      return children
+    }
+    
+    // Otherwise, render based on active section
     switch (activeSection) {
       case "daily-overview":
         return <MainDashboard />
@@ -77,7 +83,7 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
           </div>
         )
       default:
-        return children || <MainDashboard />
+        return <MainDashboard />
     }
   }
 
