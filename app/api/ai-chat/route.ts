@@ -101,7 +101,8 @@ Please provide a helpful response based on the available data.`
     const data = await response.json()
     console.log("Claude API success response received")
     
-    const aiResponse = data.content[0]?.text || "I'm sorry, I couldn't generate a response at this time."
+    // Extract text from the content array format
+    const aiResponse = data.content?.[0]?.text || "I'm sorry, I couldn't generate a response at this time."
 
     return NextResponse.json({
       response: aiResponse,
