@@ -21,17 +21,15 @@ function normalizeProductName(name: string) {
 
 async function fetchLiveProductProfile(barcode: string) {
   // Fetch all data in parallel
-  const [inventoryRes, salesRes, ordersRes, customersRes] = await Promise.all([
+  const [inventoryRes, salesRes, ordersRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/inventory`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/sales`, { cache: 'no-store' }),
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/orders?sheet=Orders`, { cache: 'no-store' }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/customers`, { cache: 'no-store' }),
   ])
-  const [inventory, sales, orders, customers] = await Promise.all([
+  const [inventory, sales, orders] = await Promise.all([
     inventoryRes.json(),
     salesRes.json(),
     ordersRes.json(),
-    customersRes.json(),
   ])
   // Find product
   const product = inventory.find((item: any) => item.barcode === barcode)
@@ -42,28 +40,25 @@ async function fetchLiveProductProfile(barcode: string) {
   // Orders for this product
   const productOrders = orders.filter((order: any) => Array.isArray(order.products) && order.products.some((p: any) => p.barcode === barcode))
 
-  // Build customer lookup
-  const customerLookup: Record<string, { name: string, email: string }> = {}
-  for (const cust of customers) {
-    customerLookup[cust.customer_id] = { name: cust.name, email: cust.email }
-  }
-
-  // Top customers
-  const customerMap: Record<string, { name: string, email: string, purchases: number, lastPurchase: string }> = {}
-  for (const sale of productSales) {
-    const customerId = sale["customer_id"] || "Unknown"
-    const customerInfo = customerLookup[customerId] || { name: customerId, email: customerId }
+  // Top customers: aggregate by customer_id, but use name/email/phone from order row
+  const customerMap: Record<string, { name: string, email: string, phone: string, purchases: number, lastPurchase: string }> = {}
+  for (const order of productOrders) {
+    const customerId = order.customer_id || order.customerId || "Unknown"
+    const name = order.customerName || order.customer_name || "Unknown"
+    const email = order.customerEmail || order.customer_email || "Unknown"
+    const phone = order.customerPhone || order.customer_phone || ""
     if (!customerMap[customerId]) {
       customerMap[customerId] = {
-        name: customerInfo.name,
-        email: customerInfo.email,
+        name,
+        email,
+        phone,
         purchases: 0,
-        lastPurchase: sale["Timestamp"] || ""
+        lastPurchase: order.orderDate || order.order_date || ""
       }
     }
-    customerMap[customerId].purchases += parseInt(sale["Quantity"] || "1")
-    if (sale["Timestamp"] > customerMap[customerId].lastPurchase) {
-      customerMap[customerId].lastPurchase = sale["Timestamp"]
+    customerMap[customerId].purchases += 1
+    if ((order.orderDate || order.order_date || "") > customerMap[customerId].lastPurchase) {
+      customerMap[customerId].lastPurchase = order.orderDate || order.order_date || ""
     }
   }
   const allCustomers = Object.values(customerMap)
@@ -182,6 +177,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
                   <TableRow>
                     <TableHead className="text-slate-300">Name</TableHead>
                     <TableHead className="text-slate-300">Email</TableHead>
+                    <TableHead className="text-slate-300">Phone</TableHead>
                     <TableHead className="text-slate-300">Purchases</TableHead>
                     <TableHead className="text-slate-300">Last Purchase</TableHead>
                   </TableRow>
@@ -191,6 +187,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
                     <TableRow key={i} className="hover:bg-slate-800/60">
                       <TableCell className="text-white font-medium">{c.name}</TableCell>
                       <TableCell className="text-cyan-300 font-mono">{c.email}</TableCell>
+                      <TableCell className="text-cyan-300 font-mono">{c.phone}</TableCell>
                       <TableCell className="text-white">{c.purchases}</TableCell>
                       <TableCell className="text-slate-300 font-mono">{c.lastPurchase}</TableCell>
                     </TableRow>

@@ -51,6 +51,30 @@ export async function GET() {
     // For AI, combine both active and archived orders for trends/history
     const allOrders = [...orders, ...archivedOrders]
 
+    // Build customer lookup from archived orders data (customer info is at end of each row)
+    const customerLookup: Record<string, { name: string, email: string, phone: string }> = {}
+    
+    // Add customers from the customers API
+    for (const cust of customers) {
+      customerLookup[cust.customer_id] = { 
+        name: cust.name, 
+        email: cust.email, 
+        phone: cust.phone 
+      }
+    }
+    
+    // Add/override with customer info from archived orders (more complete)
+    for (const order of archivedOrders) {
+      const customerId = order.customer_id || order.customerId
+      if (customerId && customerId !== "Unknown") {
+        customerLookup[customerId] = {
+          name: order.customerName || order.customer_name || "Unknown",
+          email: order.customerEmail || order.customer_email || "Unknown", 
+          phone: order.customerPhone || order.customer_phone || order.phone || ""
+        }
+      }
+    }
+
     // Initialize Anthropic client
     const anthropic = new Anthropic({
       apiKey: claudeApiKey,

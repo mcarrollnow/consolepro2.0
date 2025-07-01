@@ -86,6 +86,14 @@ INVENTORY SHEET:
 - costPrice: Product cost price
 - salePrice: Product sale price
 
+ARCHIVED ORDERS SHEET:
+- Same structure as Orders sheet, but with customer info at the end of each row
+- customer_id: Customer ID (column 65)
+- customer_name: Customer name (column 66) 
+- customer_email: Customer email (column 67)
+- customer_phone: Customer phone (column 68)
+- All other columns same as Orders sheet
+
 ORDERS SHEET (Active Orders):
 - Submission_Timestamp: Order date/time
 - Order_Code: Unique order ID

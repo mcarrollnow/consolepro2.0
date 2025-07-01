@@ -238,17 +238,20 @@ export class GoogleSheetsService {
     try {
       // Try to read from Archived Orders first, fallback to Orders
       let response
+      let isArchivedOrders = false
       try {
         response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
           range: "Archived Orders!A:BM",
         })
+        isArchivedOrders = true
       } catch (error) {
         console.log("Archived Orders sheet not found, falling back to Orders sheet")
         response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
           range: "Orders!A:BM",
         })
+        isArchivedOrders = false
       }
 
       const rows = response.data.values || []
@@ -272,11 +275,24 @@ export class GoogleSheetsService {
         }
         
         const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
+        
+        // Use customer info from the end of the row for archived orders, original columns for active orders
+        let customerName, customerEmail, customerPhone
+        if (isArchivedOrders) {
+          customerName = (row[65] || "").toString().trim(); // Column 66 = customer_name
+          customerEmail = (row[66] || "").toString().trim(); // Column 67 = customer_email  
+          customerPhone = (row[67] || "").toString().trim(); // Column 68 = customer_phone
+        } else {
+          customerName = row[3] || ""; // Customer_Name
+          customerEmail = row[4] || ""; // Email
+          customerPhone = row[6] || ""; // Phone
+        }
+        
         return {
           orderId: row[1] || "", // Order_Code
           customerId: customer_id, // Use customer_id from column 65
-          customerName: row[3] || "", // Customer_Name
-          customerEmail: row[4] || "", // Email
+          customerName: customerName,
+          customerEmail: customerEmail,
           orderDate: row[0] || "", // Submission_Timestamp
           status: row[17] || "", // Fulfillment_Status
           total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
@@ -286,7 +302,7 @@ export class GoogleSheetsService {
           payment_link: row[59] || "", // payment_link (BH)
           customer_id,
           businessName: row[5] || "", // Business_Name
-          phone: row[6] || "", // Phone
+          phone: customerPhone, // Use the correct phone from customer columns
           addressStreet: row[7] || "", // Address_Street
           addressCity: row[8] || "", // Address_City
           addressState: row[9] || "", // Address_State
@@ -660,11 +676,16 @@ export class GoogleSheetsService {
           // Simple product extraction from Product_1_Name (column 21)
           const productName = (row[20] || "").toString().trim(); // Column 21 = Product_1_Name
           
+          // Use customer info from the end of the row (archived orders format)
+          const customerName = (row[65] || "").toString().trim(); // Column 66 = customer_name
+          const customerEmail = (row[66] || "").toString().trim(); // Column 67 = customer_email  
+          const customerPhone = (row[67] || "").toString().trim(); // Column 68 = customer_phone
+          
           return {
             orderId: (row[1] || "").toString(), // Order_Code
             customerId: customerId,
-            customerName: (row[3] || "").toString(), // Customer_Name
-            customerEmail: (row[4] || "").toString(), // Email
+            customerName: customerName || (row[3] || "").toString(), // Use archived customer name, fallback to original
+            customerEmail: customerEmail || (row[4] || "").toString(), // Use archived customer email, fallback to original
             orderDate: (row[0] || "").toString(), // Submission_Timestamp
             status: (row[16] || "").toString(), // Fulfillment_Status
             total: parseFloat((row[11] || "0").toString().replace(/[^0-9.]/g, "")), // Total_Amount
@@ -674,7 +695,7 @@ export class GoogleSheetsService {
             payment_link: (row[60] || "").toString(), // payment_link
             customer_id: customerId,
             businessName: row[5] || "",
-            phone: row[6] || "",
+            phone: customerPhone || row[6] || "", // Use archived customer phone, fallback to original
             addressStreet: row[7] || "",
             addressCity: row[8] || "",
             addressState: row[9] || "",
