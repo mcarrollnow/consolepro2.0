@@ -276,10 +276,10 @@ export class GoogleSheetsService {
         
         let customer_id, customerName, customerEmail, customerPhone
         if (isArchivedOrders) {
-          customer_id = (row[60] || "").trim(); // customer_id
-          customerName = (row[61] || "").toString().trim(); // customer_name
-          customerEmail = (row[62] || "").toString().trim(); // customer_email
-          customerPhone = (row[63] || "").toString().trim(); // customer_phone
+          customer_id = row[row.length - 4] ? row[row.length - 4].trim() : "";
+          customerName = row[row.length - 3] ? row[row.length - 3].toString().trim() : "";
+          customerEmail = row[row.length - 2] ? row[row.length - 2].toString().trim() : "";
+          customerPhone = row[row.length - 1] ? row[row.length - 1].toString().trim() : "";
         } else {
           customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
           customerName = row[3] || ""; // Customer_Name
