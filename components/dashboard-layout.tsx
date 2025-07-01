@@ -14,8 +14,8 @@ interface DashboardLayoutProps {
   defaultSection?: string
 }
 
-export function DashboardLayout({ children, defaultSection = "daily-overview" }: DashboardLayoutProps) {
-  const [activeSection, setActiveSection] = useState(defaultSection)
+export function DashboardLayout({ children, defaultSection }: DashboardLayoutProps) {
+  const [activeSection, setActiveSection] = useState(defaultSection || "daily-overview")
 
   const handleSectionChange = (section: string) => {
     console.log("Changing section to:", section)
