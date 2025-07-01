@@ -206,8 +206,22 @@ export function CustomersSection() {
               <TableBody>
                 {sortedCustomers.map((customer) => (
                   <TableRow key={customer.customer_id} className="border-slate-700 hover:bg-slate-800/30">
-                    <TableCell className="text-slate-300 font-mono">{customer.customer_id}</TableCell>
-                    <TableCell className="text-white font-medium">{customer.name}</TableCell>
+                    <TableCell className="text-slate-300 font-mono">
+                      <Link 
+                        href={`/customers/${customer.customer_id}`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                      >
+                        {customer.customer_id}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-white font-medium">
+                      <Link 
+                        href={`/customers/${customer.customer_id}`}
+                        className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                      >
+                        {customer.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-slate-300">{customer.email}</TableCell>
                     <TableCell className="text-slate-300">{customer.total_orders}</TableCell>
                     <TableCell className="text-slate-300">{customer.total_spent}</TableCell>

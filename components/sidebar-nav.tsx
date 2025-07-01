@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import {
   Package,
   ShoppingCart,
@@ -25,20 +26,48 @@ interface SidebarNavProps {
 }
 
 const navItems = [
-  { id: "daily-overview", label: "Daily Overview", icon: BarChart3 },
-  { id: "inventory", label: "Inventory", icon: Package },
-  { id: "active-orders", label: "Active Orders", icon: Clock },
-  { id: "order-archive", label: "Order Archive", icon: FileText },
-  { id: "customers", label: "Customers", icon: Users },
-  { id: "invoices", label: "Invoices", icon: FileText },
-  { id: "messaging", label: "Messaging", icon: MessageSquare },
-  { id: "analytics", label: "Analytics", icon: TrendingUp },
-  { id: "emails", label: "Email Center", icon: Mail },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "daily-overview", label: "Daily Overview", icon: BarChart3, path: "/" },
+  { id: "inventory", label: "Inventory", icon: Package, path: "/?section=inventory" },
+  { id: "active-orders", label: "Active Orders", icon: Clock, path: "/?section=active-orders" },
+  { id: "order-archive", label: "Order Archive", icon: FileText, path: "/?section=order-archive" },
+  { id: "customers", label: "Customers", icon: Users, path: "/?section=customers" },
+  { id: "invoices", label: "Invoices", icon: FileText, path: "/?section=invoices" },
+  { id: "messaging", label: "Messaging", icon: MessageSquare, path: "/?section=messaging" },
+  { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/?section=analytics" },
+  { id: "emails", label: "Email Center", icon: Mail, path: "/?section=emails" },
+  { id: "settings", label: "Settings", icon: Settings, path: "/?section=settings" },
 ]
 
 export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // Determine active section based on current path
+  const getCurrentSection = () => {
+    // If we're on a specific page (not the main dashboard), return null
+    if (pathname !== "/" && !pathname.startsWith("/?")) {
+      return null
+    }
+    
+    // Check URL params for section
+    const urlParams = new URLSearchParams(window.location.search)
+    const section = urlParams.get('section')
+    return section || "daily-overview"
+  }
+
+  const currentSection = getCurrentSection()
+
+  const handleSectionClick = (sectionId: string, path: string) => {
+    if (pathname !== "/" && !pathname.startsWith("/?")) {
+      // If we're on a specific page, navigate to the main dashboard with the section
+      router.push(path)
+    } else {
+      // If we're already on the main dashboard, just update the section
+      onSectionChange(sectionId)
+      router.push(path)
+    }
+  }
 
   return (
     <div
@@ -71,13 +100,13 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
       <nav className="p-2 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = activeSection === item.id
+          const isActive = currentSection === item.id
 
           return (
             <Button
               key={item.id}
               variant="ghost"
-              onClick={() => onSectionChange(item.id)}
+              onClick={() => handleSectionClick(item.id, item.path)}
               className={cn(
                 "w-full justify-start text-left transition-all duration-200",
                 collapsed ? "px-2" : "px-3",
