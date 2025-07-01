@@ -161,22 +161,11 @@ export class GoogleSheetsService {
 
   async getOrdersData(): Promise<OrderCustomer[]> {
     try {
-      // Try the Order_Archive sheet first (exact duplicate of Orders sheet structure)
-      let response;
-      try {
-        response = await this.sheets.spreadsheets.values.get({
-          spreadsheetId: this.spreadsheetId,
-          range: "Archived Orders!A:BM", // Same structure as Orders sheet
-        })
-        console.log("Using Archived Orders sheet for order history")
-      } catch (archiveError) {
-        // Fallback to original Orders sheet if Archived Orders doesn't exist
-        console.log("Archived Orders sheet not found, falling back to Orders sheet")
-        response = await this.sheets.spreadsheets.values.get({
-          spreadsheetId: this.spreadsheetId,
-          range: "Orders!A:BM", // Now includes customer_id (column 65 = BM)
-        })
-      }
+      // Main orders section should only show ACTIVE orders from the Orders sheet
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: "Orders!A:BM", // Active orders only
+      })
 
       const rows = response.data.values || []
       if (rows.length === 0) return []
