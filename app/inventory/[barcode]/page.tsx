@@ -234,7 +234,6 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
               width={273}
               height={156}
               style={{ objectFit: 'cover', width: 273, height: 156, borderRadius: 16 }}
-              onError={e => { (e.target as HTMLImageElement).src = '/placeholder.svg' }}
             />
           </div>
           <div className="flex-1">
