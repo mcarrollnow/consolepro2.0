@@ -184,43 +184,56 @@ export class GoogleSheetsService {
       const rows = response.data.values || []
       if (rows.length === 0) return []
 
-      // Skip header row
+      // Header-based mapping
+      const header = rows[0]
+      const headerMap: Record<string, number> = {}
+      header.forEach((col, idx) => { headerMap[col.trim()] = idx })
       const dataRows = rows.slice(1)
 
       return dataRows.map((row): OrderCustomer => {
-        // Extract product details (Product_1_Name at 20, Product_1_Barcode at 21, Product_1_Price at 22, Product_1_Quantity at 23)
+        // Pad row to header length
+        const paddedRow = [...row]
+        while (paddedRow.length < header.length) paddedRow.push("")
+
+        // Product details (use header-based indices)
         const products = []
-        for (let i = 20; i <= 56; i += 4) {
-          if (row[i] && row[i].trim() !== "") {
+        for (let i = headerMap["Product_1_Name"]; i <= headerMap["Product_10_Quantity"]; i += 4) {
+          if (paddedRow[i] && paddedRow[i].trim() !== "") {
             products.push({
-              name: row[i] || "", // Product_X_Name
-              barcode: row[i + 1] || "", // Product_X_Barcode
-              price: parseFloat(row[i + 2] || "0"), // Product_X_Price
-              quantity: parseInt(row[i + 3] || "0"), // Product_X_Quantity
+              name: paddedRow[i] || "",
+              barcode: paddedRow[i + 1] || "",
+              price: parseFloat(paddedRow[i + 2] || "0"),
+              quantity: parseInt(paddedRow[i + 3] || "0"),
             })
           }
         }
         
-        const customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
+        // Customer info (header-based)
+        const customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
+        const customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
+        const customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
+        const businessName = paddedRow[headerMap["Business_Name"]] || ""
+        const customer_id = paddedRow[headerMap["customer_id"]] || ""
+
         return {
-          orderId: row[1] || "", // Order_Code
-          customerId: customer_id, // Use customer_id from column 65
-          customerName: row[3] || "", // Customer_Name
-          customerEmail: row[4] || "", // Email
-          orderDate: row[0] || "", // Submission_Timestamp
-          status: row[17] || "", // Fulfillment_Status
-          total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
+          orderId: paddedRow[headerMap["Order_Code"]] || "",
+          customerId: customer_id,
+          customerName: customerName,
+          customerEmail: customerEmail,
+          orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
+          status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+          total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").replace(/[^0-9.]/g, "")),
           items: products.map(p => p.name).join(", "),
-          notes: row[12] || "", // Special_Instructions
-          invoice_link: row[61] || "", // invoice_link (BJ)
-          payment_link: row[59] || "", // payment_link (BH)
+          notes: paddedRow[headerMap["Special_Instructions"]] || "",
+          invoice_link: paddedRow[headerMap["invoice_link"]] || "",
+          payment_link: paddedRow[headerMap["payment_link"]] || "",
           customer_id,
-          businessName: row[5] || "", // Business_Name
-          phone: row[6] || "", // Phone
-          addressStreet: row[7] || "", // Address_Street
-          addressCity: row[8] || "", // Address_City
-          addressState: row[9] || "", // Address_State
-          addressZIP: row[10] || "", // Address_ZIP
+          businessName: businessName,
+          phone: customerPhone,
+          addressStreet: paddedRow[headerMap["Address_Street"]] || "",
+          addressCity: paddedRow[headerMap["Address_City"]] || "",
+          addressState: paddedRow[headerMap["Address_State"]] || "",
+          addressZIP: paddedRow[headerMap["Address_ZIP"]] || "",
           products,
         }
       })
@@ -282,10 +295,14 @@ export class GoogleSheetsService {
         }
 
         // Customer info (header-based)
+        let customerName, customerEmail, customerPhone, businessName
+        // For archived orders, use lowercase header names
+        customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
+        customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
+        customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
+        businessName = paddedRow[headerMap["Business_Name"]] || ""
+
         const customer_id = paddedRow[headerMap["customer_id"]] || ""
-        const customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
-        const customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
-        const customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
 
         return {
           orderId: paddedRow[headerMap["Order_Code"]] || "",
@@ -300,7 +317,7 @@ export class GoogleSheetsService {
           invoice_link: paddedRow[headerMap["invoice_link"]] || "",
           payment_link: paddedRow[headerMap["payment_link"]] || "",
           customer_id,
-          businessName: paddedRow[headerMap["Business_Name"]] || "",
+          businessName: businessName,
           phone: customerPhone,
           addressStreet: paddedRow[headerMap["Address_Street"]] || "",
           addressCity: paddedRow[headerMap["Address_City"]] || "",
@@ -664,56 +681,67 @@ export class GoogleSheetsService {
         return [];
       }
 
-      // Skip header row
+      // Header-based mapping
+      const header = rows[0];
+      const headerMap: Record<string, number> = {};
+      header.forEach((col, idx) => { headerMap[col.trim()] = idx });
       const dataRows = rows.slice(1);
       console.log(`Processing ${dataRows.length} total rows`);
 
       // Filter and map orders for this specific customer
       const customerOrders = dataRows
         .filter(row => {
-          let orderCustomerId
-          if (isArchivedOrders) {
-            orderCustomerId = (row[60] || "").toString().trim(); // customer_id
-          } else {
-            orderCustomerId = (row[64] || "").toString().trim(); // Column 65 (customer_id)
-          }
+          // Pad row to header length
+          const paddedRow = [...row];
+          while (paddedRow.length < header.length) paddedRow.push("");
+          
+          const orderCustomerId = (paddedRow[headerMap["customer_id"]] || "").toString().trim();
           return orderCustomerId === customerId.trim();
         })
         .map((row): OrderCustomer => {
-          // Simple product extraction from Product_1_Name (column 21)
-          const productName = (row[20] || "").toString().trim(); // Column 21 = Product_1_Name
+          // Pad row to header length
+          const paddedRow = [...row];
+          while (paddedRow.length < header.length) paddedRow.push("");
           
-          let customerName, customerEmail, customerPhone
-          if (isArchivedOrders) {
-            customerName = (row[61] || "").toString().trim(); // customer_name
-            customerEmail = (row[62] || "").toString().trim(); // customer_email
-            customerPhone = (row[63] || "").toString().trim(); // customer_phone
-          } else {
-            customerName = (row[3] || "").toString(); // Customer_Name
-            customerEmail = (row[4] || "").toString(); // Email
-            customerPhone = (row[6] || "").toString(); // Phone
+          // Product details (use header-based indices)
+          const products = [];
+          for (let i = headerMap["Product_1_Name"]; i <= headerMap["Product_10_Quantity"]; i += 4) {
+            if (paddedRow[i] && paddedRow[i].trim() !== "") {
+              products.push({
+                name: paddedRow[i] || "",
+                barcode: paddedRow[i + 1] || "",
+                price: parseFloat(paddedRow[i + 2] || "0"),
+                quantity: parseInt(paddedRow[i + 3] || "0"),
+              });
+            }
           }
           
+          // Customer info (header-based)
+          const customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || "";
+          const customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || "";
+          const customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || "";
+          const businessName = paddedRow[headerMap["Business_Name"]] || "";
+          
           return {
-            orderId: (row[1] || "").toString(), // Order_Code
+            orderId: paddedRow[headerMap["Order_Code"]] || "",
             customerId: customerId,
             customerName: customerName,
             customerEmail: customerEmail,
-            orderDate: (row[0] || "").toString(), // Submission_Timestamp
-            status: (row[16] || "").toString(), // Fulfillment_Status
-            total: parseFloat((row[11] || "0").toString().replace(/[^0-9.]/g, "")), // Total_Amount
-            items: productName,
-            notes: (row[12] || "").toString(), // Special_Instructions
-            invoice_link: (row[58] || "").toString(), // invoice_link
-            payment_link: (row[57] || "").toString(), // payment_link
+            orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
+            status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+            total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").toString().replace(/[^0-9.]/g, "")),
+            items: products.map(p => p.name).join(", "),
+            notes: paddedRow[headerMap["Special_Instructions"]] || "",
+            invoice_link: paddedRow[headerMap["invoice_link"]] || "",
+            payment_link: paddedRow[headerMap["payment_link"]] || "",
             customer_id: customerId,
-            businessName: row[5] || "",
+            businessName: businessName,
             phone: customerPhone,
-            addressStreet: row[7] || "",
-            addressCity: row[8] || "",
-            addressState: row[9] || "",
-            addressZIP: row[10] || "",
-            products: row[20] && row[20].trim() !== "" ? JSON.parse(row[20]) : [],
+            addressStreet: paddedRow[headerMap["Address_Street"]] || "",
+            addressCity: paddedRow[headerMap["Address_City"]] || "",
+            addressState: paddedRow[headerMap["Address_State"]] || "",
+            addressZIP: paddedRow[headerMap["Address_ZIP"]] || "",
+            products: products,
           };
         });
 

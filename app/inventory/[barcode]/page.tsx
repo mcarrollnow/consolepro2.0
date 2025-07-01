@@ -19,6 +19,16 @@ function normalizeProductName(name: string) {
   return name.replace(/\s*\d+\s*mg/gi, '').replace(/\s+/g, '_').toLowerCase().trim()
 }
 
+function getDriveDirectImage(url: string) {
+  // Convert Google Drive 'view' links to direct image links
+  if (!url) return url
+  const match = url.match(/\/file\/d\/([\w-]+)\//)
+  if (match) {
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`
+  }
+  return url
+}
+
 async function fetchLiveProductProfile(barcode: string) {
   // Fetch all data in parallel - include both active and archived orders
   const [inventoryRes, salesRes, ordersRes, archivedOrdersRes] = await Promise.all([
@@ -140,9 +150,8 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
     return <div className="text-red-500 text-center py-10">Error: Product not found for barcode: {barcode}</div>;
   }
 
-  const notionKey = normalizeProductName(product.product)
-  const notionUrl = notionLinks[notionKey]
-  const productImage = notionUrl || product.image || "/placeholder.svg"
+  // Always use product.image, never Notion
+  const productImage = getDriveDirectImage(product.image) || "/placeholder.svg"
   const allEmails = product.allCustomers.map((c: any) => c.email).join(",")
 
   return (
@@ -162,9 +171,9 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
               <span className="text-slate-300 text-lg">Revenue: <b className="text-white">${product.revenue.toLocaleString()}</b></span>
               <Badge className="bg-cyan-700 text-cyan-100 text-base px-4 py-2 rounded-lg">Sales Rank #{product.salesRank}</Badge>
             </div>
-            {notionUrl && (
+            {notionLinks[normalizeProductName(product.product)] && (
               <a
-                href={notionUrl}
+                href={notionLinks[normalizeProductName(product.product)]}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block mt-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition"
