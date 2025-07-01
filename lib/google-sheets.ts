@@ -281,15 +281,23 @@ export class GoogleSheetsService {
         const paddedRow = [...row]
         while (paddedRow.length < header.length) paddedRow.push("")
 
-        // Product details (use header-based indices)
+        // Product details (use header-based indices, robust to column order)
         const products = []
-        for (let i = headerMap["Product_1_Name"]; i <= headerMap["Product_10_Quantity"]; i += 4) {
-          if (paddedRow[i] && paddedRow[i].trim() !== "") {
+        for (let i = 1; i <= 10; i++) {
+          const nameCol = headerMap[`Product_${i}_Name`]
+          const barcodeCol = headerMap[`Product_${i}_Barcode`]
+          const priceCol = headerMap[`Product_${i}_Price`]
+          const qtyCol = headerMap[`Product_${i}_Quantity`]
+          if (
+            nameCol !== undefined && barcodeCol !== undefined &&
+            (paddedRow[nameCol] || paddedRow[barcodeCol]) &&
+            (paddedRow[nameCol]?.trim() !== '' || paddedRow[barcodeCol]?.trim() !== '')
+          ) {
             products.push({
-              name: paddedRow[i] || "",
-              barcode: paddedRow[i + 1] || "",
-              price: parseFloat(paddedRow[i + 2] || "0"),
-              quantity: parseInt(paddedRow[i + 3] || "0"),
+              name: paddedRow[nameCol] || '',
+              barcode: paddedRow[barcodeCol] || '',
+              price: parseFloat(paddedRow[priceCol] || '0'),
+              quantity: parseInt(paddedRow[qtyCol] || '0'),
             })
           }
         }
