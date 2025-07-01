@@ -48,6 +48,68 @@ IMPORTANT DATA SOURCE GUIDELINES:
 - For PAST/HISTORICAL order questions: Check 'Archived Orders' data source
 - For ACTIVE orders: Always check 'Orders' sheet, not archived orders
 
+SHEET STRUCTURES AND COLUMNS:
+
+INVENTORY SHEET:
+- barcode: Product barcode/ID
+- product: Product name
+- category: Product category
+- image: Product image URL
+- initialStock: Starting stock level
+- restockLevel: Minimum stock level before reorder
+- currentStock: Current available stock
+- manualAdjustment: Manual stock adjustments
+- lastUpdated: Last update timestamp
+- costPrice: Product cost price
+- salePrice: Product sale price
+
+ORDERS SHEET (Active Orders):
+- Submission_Timestamp: Order date/time
+- Order_Code: Unique order ID
+- Customer_Name: Customer name
+- Email: Customer email
+- Business_Name: Business name
+- Phone: Customer phone
+- Address_Street: Shipping street address
+- Address_City: Shipping city
+- Address_State: Shipping state
+- Address_ZIP: Shipping ZIP code
+- Total_Amount: Order total
+- Special_Instructions: Order notes
+- Fulfillment_Status: Order status (Processing, Shipped, Delivered)
+- Product_1_Name through Product_10_Name: Product names
+- Product_1_Barcode through Product_10_Barcode: Product barcodes
+- Product_1_Price through Product_10_Price: Product prices
+- Product_1_Quantity through Product_10_Quantity: Product quantities
+- payment_link: Payment link
+- invoice_link: Invoice link
+- customer_id: Customer ID (column 65)
+
+CUSTOMERS SHEET:
+- customer_id: Unique customer ID
+- name: Customer name
+- email: Customer email
+- phone: Customer phone
+- company: Company name
+- address: Customer address
+- first_order_date: First order date
+- last_order_date: Last order date
+- total_orders: Number of orders
+- total_spent: Total amount spent
+- customer_status: Customer status
+- preferred_contact: Preferred contact method
+- customer_notes: Customer notes
+- tags: Customer tags
+- created_date: Customer creation date
+- last_updated: Last update date
+- referred_by: Referral source
+- customer_class: Customer classification
+- square_reference_id: Square reference
+- nickname: Customer nickname
+- birthday: Customer birthday
+- square_customer_id: Square customer ID
+- wix_contact_id: Wix contact ID
+
 When answering questions:
 1. If asked about "active orders" - check the Orders data (not archived)
 2. If asked about "customer orders" - check both Orders and Customers data
