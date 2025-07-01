@@ -227,10 +227,16 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Product Header */}
         <div className="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl">
-          <Avatar className="h-28 w-28 rounded-xl border border-slate-800 bg-slate-800">
-            <AvatarImage src={productImage} alt={product.product} />
-            <AvatarFallback>{product.product?.[0] || "?"}</AvatarFallback>
-          </Avatar>
+          <div style={{ width: 273, height: 156, borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src={productImage}
+              alt={product.product}
+              width={273}
+              height={156}
+              style={{ objectFit: 'cover', width: 273, height: 156, borderRadius: 16 }}
+              onError={e => { (e.target as HTMLImageElement).src = '/placeholder.svg' }}
+            />
+          </div>
           <div className="flex-1">
             <div className="text-3xl font-bold text-white mb-1">{product.product}</div>
             <div className="text-cyan-400 text-sm mb-2 font-mono">Barcode: {product.barcode}</div>
