@@ -63,6 +63,12 @@ async function fetchLiveProductProfile(barcode: string) {
     return order.items && order.items.toLowerCase().includes(product.product.toLowerCase())
   })
 
+  console.log(`Total orders: ${allOrders.length}`)
+  console.log(`Orders containing product ${barcode}: ${productOrders.length}`)
+  if (productOrders.length > 0) {
+    console.log(`Sample order structure:`, productOrders[0])
+  }
+
   // Top customers: aggregate by customer_id, but use name/email/phone from order row
   const customerMap: Record<string, { customerId: string, name: string, email: string, phone: string, purchases: number, lastPurchase: string, orders: any[] }> = {}
   
@@ -101,24 +107,36 @@ async function fetchLiveProductProfile(barcode: string) {
   // Frequently bought together - find products bought in the same orders as this product
   const togetherMap: Record<string, { name: string, barcode: string, count: number }> = {}
   
-  // Get all order IDs that contain this product
-  const orderIdsWithThisProduct = new Set(productOrders.map(order => order.orderId))
+  // Create a map of barcode to product name from inventory
+  const barcodeToName: Record<string, string> = {}
+  inventory.forEach((item: any) => {
+    if (item.barcode && item.product) {
+      barcodeToName[item.barcode] = item.product
+    }
+  })
   
-  // Look through all orders (not just productOrders) to find orders that contain this product
+  console.log(`Looking for frequently bought together products for barcode: ${barcode}`)
+  console.log(`Found ${productOrders.length} orders containing this product`)
+  
+  // Look through all orders to find orders that contain this product
   for (const order of allOrders) {
     // Check if this order contains our target product
     const hasTargetProduct = order.products?.some((p: any) => p.barcode === barcode) || 
                            (order.items && order.items.toLowerCase().includes(product.product.toLowerCase()))
     
     if (hasTargetProduct) {
+      console.log(`Order ${order.orderId} contains target product`)
+      
       // Now look for other products in this same order
       if (order.products && Array.isArray(order.products)) {
         for (const p of order.products) {
-          if (p.barcode && p.barcode !== barcode && p.name) {
+          if (p.barcode && p.barcode !== barcode) {
+            const productName = p.name || barcodeToName[p.barcode] || `Unknown Product (${p.barcode})`
             if (!togetherMap[p.barcode]) {
-              togetherMap[p.barcode] = { name: p.name, barcode: p.barcode, count: 0 }
+              togetherMap[p.barcode] = { name: productName, barcode: p.barcode, count: 0 }
             }
             togetherMap[p.barcode].count += 1
+            console.log(`Found co-purchase: ${productName} (${p.barcode})`)
           }
         }
       }
@@ -126,6 +144,7 @@ async function fetchLiveProductProfile(barcode: string) {
   }
   
   const frequentlyBoughtTogether = Object.values(togetherMap).sort((a, b) => b.count - a.count).slice(0, 5)
+  console.log(`Frequently bought together results:`, frequentlyBoughtTogether)
 
   // Sales trend (by day)
   const salesTrendMap: Record<string, number> = {}
