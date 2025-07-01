@@ -117,6 +117,7 @@ async function fetchLiveProductProfile(barcode: string) {
   
   console.log(`Looking for frequently bought together products for barcode: ${barcode}`)
   console.log(`Found ${productOrders.length} orders containing this product`)
+  console.log(`Total orders available: ${allOrders.length}`)
   
   // Look through all orders to find orders that contain this product
   for (const order of allOrders) {
@@ -126,9 +127,10 @@ async function fetchLiveProductProfile(barcode: string) {
     
     if (hasTargetProduct) {
       console.log(`Order ${order.orderId} contains target product`)
+      console.log(`Order products:`, order.products)
       
       // Now look for other products in this same order
-      if (order.products && Array.isArray(order.products)) {
+      if (order.products && Array.isArray(order.products) && order.products.length > 0) {
         for (const p of order.products) {
           if (p.barcode && p.barcode !== barcode) {
             const productName = p.name || barcodeToName[p.barcode] || `Unknown Product (${p.barcode})`
@@ -139,12 +141,21 @@ async function fetchLiveProductProfile(barcode: string) {
             console.log(`Found co-purchase: ${productName} (${p.barcode})`)
           }
         }
+      } else {
+        console.log(`Order ${order.orderId} has no products array or it's empty:`, order.products)
+        // Fallback: try to parse items field if products array is empty
+        if (order.items && order.items !== product.product) {
+          console.log(`Trying to parse items field: ${order.items}`)
+          // This is a simplified approach - we can't get barcodes from items field
+          // but we can at least show that other items were bought together
+        }
       }
     }
   }
   
   const frequentlyBoughtTogether = Object.values(togetherMap).sort((a, b) => b.count - a.count).slice(0, 5)
   console.log(`Frequently bought together results:`, frequentlyBoughtTogether)
+  console.log(`Together map:`, togetherMap)
 
   // Sales trend (by day)
   const salesTrendMap: Record<string, number> = {}
