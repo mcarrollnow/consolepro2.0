@@ -22,7 +22,7 @@ function normalizeProductName(name: string) {
   return name.replace(/\s*\d+\s*mg/gi, '').replace(/\s+/g, '_').toLowerCase().trim()
 }
 
-function getDriveDirectImage(url: string) {
+export function getDriveDirectImage(url: string) {
   // Convert Google Drive 'view' links to direct image links
   if (!url) return url
   const match = url.match(/\/file\/d\/([\w-]+)\//)

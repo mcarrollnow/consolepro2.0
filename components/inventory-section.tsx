@@ -14,6 +14,7 @@ import type { InventoryItem } from "@/lib/google-sheets"
 import { AIChat } from "./ai-chat"
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
+import { getDriveDirectImage } from "../app/inventory/[barcode]/page"
 
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("")
