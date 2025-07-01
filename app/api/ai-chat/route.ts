@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import Anthropic from "@anthropic-ai/sdk"
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +16,11 @@ export async function POST(request: Request) {
     }
 
     console.log("Claude API key found, proceeding with request")
+
+    // Initialize Anthropic client
+    const anthropic = new Anthropic({
+      apiKey: claudeApiKey,
+    })
 
     // Prepare context data for the AI
     const contextSummary = {
@@ -61,52 +67,32 @@ Please provide a helpful response based on the available data.`
 
     console.log("Sending request to Claude API...")
 
-    // Call Claude API
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": claudeApiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 20000,
-        temperature: 1,
-        messages: [
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": `${systemPrompt}\n\n${userPrompt}`
-              }
-            ]
-          }
-        ]
-      })
+    // Call Claude API using the SDK
+    const msg = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 20000,
+      temperature: 1,
+      messages: [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": `${systemPrompt}\n\n${userPrompt}`
+            }
+          ]
+        }
+      ]
     })
 
-    console.log("Claude API response status:", response.status)
-
-    if (!response.ok) {
-      const errorData = await response.text()
-      console.error("Claude API error response:", errorData)
-      return NextResponse.json(
-        { error: `Claude API error: ${response.status} - ${errorData}` },
-        { status: 500 }
-      )
-    }
-
-    const data = await response.json()
     console.log("Claude API success response received")
     
     // Extract text from the content array format
-    const aiResponse = data.content?.[0]?.text || "I'm sorry, I couldn't generate a response at this time."
+    const aiResponse = msg.content?.[0]?.text || "I'm sorry, I couldn't generate a response at this time."
 
     return NextResponse.json({
       response: aiResponse,
-      usage: data.usage
+      usage: msg.usage
     })
 
   } catch (error) {
