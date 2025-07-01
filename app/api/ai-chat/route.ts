@@ -22,26 +22,18 @@ export async function POST(request: Request) {
       apiKey: claudeApiKey,
     })
 
-    // Prepare context data for the AI
-    const contextSummary = {
-      inventory: {
-        totalItems: context?.inventory?.length || 0,
-        lowStockItems: context?.inventory?.filter((item: any) => item.currentStock <= item.restockLevel)?.length || 0,
-        categories: [...new Set(context?.inventory?.map((item: any) => item.category) || [])]
-      },
-      orders: {
-        totalOrders: context?.orders?.length || 0,
-        recentOrders: context?.orders?.slice(0, 5) || [],
-        totalRevenue: context?.orders?.reduce((sum: number, order: any) => sum + order.total, 0) || 0
-      },
-      customers: {
-        totalCustomers: context?.customers?.length || 0,
-        recentCustomers: context?.customers?.slice(0, 5) || []
-      }
+    // Only send minimal context - let AI request specific data when needed
+    const dataSummary = {
+      hasInventory: !!context?.inventory?.length,
+      hasOrders: !!context?.orders?.length,
+      hasCustomers: !!context?.customers?.length,
+      inventoryCount: context?.inventory?.length || 0,
+      ordersCount: context?.orders?.length || 0,
+      customersCount: context?.customers?.length || 0
     }
 
     // Create the prompt for Claude
-    const systemPrompt = `You are an AI assistant for a business management dashboard. You have access to inventory, orders, and customer data. 
+    const systemPrompt = `You are an AI assistant for a business management dashboard. You have access to inventory, orders, and customer data.
 
 Your role is to help users understand their business data and answer questions about:
 - Inventory levels, low stock items, product categories
@@ -49,21 +41,20 @@ Your role is to help users understand their business data and answer questions a
 - Customer information, order history
 - Business insights and recommendations
 
-Be helpful, concise, and provide actionable insights. If you don't have enough information to answer a question, let the user know what additional data would be helpful.
+IMPORTANT: If you need specific data to answer a question, ask the user to provide it or tell them what data you need. Don't make assumptions about data you don't have.
 
-Current data context:
-- Inventory: ${contextSummary.inventory.totalItems} items, ${contextSummary.inventory.lowStockItems} low stock items
-- Orders: ${contextSummary.orders.totalOrders} total orders, $${contextSummary.orders.totalRevenue.toFixed(2)} total revenue
-- Customers: ${contextSummary.customers.totalCustomers} customers
+Available data sources:
+- Inventory: ${dataSummary.inventoryCount} items available
+- Orders: ${dataSummary.ordersCount} orders available  
+- Customers: ${dataSummary.customersCount} customers available
 
-Respond in a conversational, helpful tone.`
+Respond in a conversational, helpful tone. If you need more specific data, ask for it.`
 
     const userPrompt = `User question: ${message}
 
-Available data:
-${JSON.stringify(context, null, 2)}
+Data available: ${JSON.stringify(dataSummary, null, 2)}
 
-Please provide a helpful response based on the available data.`
+Please provide a helpful response. If you need specific data to answer the question, ask the user to provide it.`
 
     console.log("Sending request to Claude API...")
 
