@@ -34,25 +34,10 @@ function DailyOverviewWidget() {
       try {
         setLoading(true)
         setError(null)
-        // Fetch only from active Orders sheet
-        const ordersRes = await fetch("/api/orders?sheet=Orders")
-        if (!ordersRes.ok) throw new Error("Failed to fetch orders")
-        const orders = await ordersRes.json()
-        // Simulate summary (replace with real summary logic if needed)
-        const pendingOrders = orders.filter((o: any) => (o.Fulfillment_Status || o.status || '').toLowerCase() === 'processing').length
-        const ordersNeedingInvoices = orders.filter((o: any) => !o.invoice_link && !o.invoiceLink).length
-        const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        const recentOrders = orders.filter((o: any) => new Date(o.Submission_Timestamp || o.orderDate) >= thirtyDaysAgo)
-        const thirtyDayRevenue = recentOrders.reduce((sum: number, o: any) => sum + (parseFloat(o.Total_Amount || o.total) || 0), 0)
-        setOverview({
-          summary: {
-            pendingOrders,
-            ordersNeedingInvoices,
-            thirtyDayRevenue
-          },
-          aiInsights: null, // We'll keep this for now, but you can add a fetch to /api/daily-overview if you want AI insight
-          date: new Date().toISOString().split('T')[0]
-        })
+        const response = await fetch("/api/daily-overview")
+        if (!response.ok) throw new Error("Failed to fetch daily overview")
+        const data = await response.json()
+        setOverview(data)
       } catch (err: any) {
         setError(err.message || "Unknown error")
       } finally {
@@ -92,10 +77,10 @@ function DailyOverviewWidget() {
                   <li>You have <span className="text-cyan-300 font-bold">{overview.summary.pendingOrders}</span> pending orders and <span className="text-orange-300 font-bold">{overview.summary.ordersNeedingInvoices}</span> invoices to send.</li>
                   <li>In the last 30 days, you've made <span className="text-green-300 font-bold">${overview.summary.thirtyDayRevenue.toFixed(2)}</span> in revenue.</li>
                 </ul>
-                {/* <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
+                <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
                 <div className="italic text-slate-300 whitespace-pre-line">
                   {overview.aiInsights}
-                </div> */}
+                </div>
                 <div className="text-xs text-slate-500 mt-2">{overview.date}</div>
               </div>
             ) : null}
