@@ -22,11 +22,34 @@ export async function POST(request: Request) {
       apiKey: claudeApiKey,
     })
 
-    // Send actual data from Google Sheets instead of just summary
-    const actualData = {
-      inventory: context?.inventory || [],
-      orders: context?.orders || [],
-      customers: context?.customers || []
+    // Smart data filtering based on question type to avoid token limits
+    const question = message.toLowerCase()
+    let relevantData: any = {}
+
+    // Determine which data to send based on the question
+    if (question.includes('customer') || question.includes('spending') || question.includes('top') || question.includes('paying')) {
+      // For customer questions, send customers data and limited orders data
+      relevantData = {
+        customers: context?.customers || [],
+        orders: context?.orders?.slice(-20) || [] // Only last 20 orders to reduce tokens
+      }
+    } else if (question.includes('inventory') || question.includes('stock') || question.includes('product')) {
+      // For inventory questions, send inventory data only
+      relevantData = {
+        inventory: context?.inventory || []
+      }
+    } else if (question.includes('order') || question.includes('active') || question.includes('recent')) {
+      // For order questions, send orders data only
+      relevantData = {
+        orders: context?.orders || []
+      }
+    } else {
+      // For general questions, send limited data from all sources
+      relevantData = {
+        inventory: context?.inventory?.slice(0, 50) || [], // First 50 items
+        orders: context?.orders?.slice(-20) || [], // Last 20 orders
+        customers: context?.customers?.slice(0, 50) || [] // First 50 customers
+      }
     }
 
     // Create the prompt for Claude
@@ -113,16 +136,16 @@ When answering questions:
 3. If asked about "inventory" - check Inventory data
 4. If asked about "past orders" or "order history" - check Archived Orders data
 
-You have access to the actual data below. Use it to answer questions directly.
+You have access to the relevant data below. Use it to answer questions directly.
 
 Respond in a conversational, helpful tone.`
 
     const userPrompt = `User question: ${message}
 
 Available data:
-${JSON.stringify(actualData, null, 2)}
+${JSON.stringify(relevantData, null, 2)}
 
-Please provide a helpful response based on the actual data above.`
+Please provide a helpful response based on the data above.`
 
     console.log("Sending request to Claude API...")
 
