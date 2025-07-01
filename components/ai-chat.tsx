@@ -72,10 +72,7 @@ function DailyOverviewWidget() {
           className="w-full flex items-center justify-between px-4 py-2 focus:outline-none hover:bg-slate-800/40 rounded-t-xl"
           onClick={() => setCollapsed((c) => !c)}
         >
-          <span className="flex items-center gap-2">
-            <GeoffreyAvatar size={28} />
-            <span className="text-cyan-400 font-bold text-lg">Geoffrey</span>
-          </span>
+          <span className="text-cyan-400 font-bold text-lg">Daily Overview</span>
           {collapsed ? <ChevronRight className="h-5 w-5 text-cyan-400" /> : <ChevronDown className="h-5 w-5 text-cyan-400" />}
         </button>
         {!collapsed && (
