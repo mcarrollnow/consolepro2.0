@@ -70,7 +70,7 @@ Please provide a helpful response based on the available data.`
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-3-sonnet-20240229",
+        model: "claude-3-sonnet",
         max_tokens: 1000,
         messages: [
           {
