@@ -84,7 +84,8 @@ export function AIChat() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to get AI response")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to get AI response")
       }
 
       const data = await response.json()
@@ -99,9 +100,25 @@ export function AIChat() {
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error("Error sending message:", error)
+      
+      // Provide a helpful fallback response
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const fallbackResponse = errorMessage.includes("Claude API key not configured") 
+        ? "I'm not configured yet! Please add your Claude API key to the Vercel environment variables to enable AI chat."
+        : `Sorry, I encountered an error: ${errorMessage}. Please try again or check the console for more details.`
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: fallbackResponse,
+        timestamp: new Date()
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+      
       toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        title: "AI Error",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {

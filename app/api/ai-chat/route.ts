@@ -7,11 +7,14 @@ export async function POST(request: Request) {
     // Get Claude API key from environment
     const claudeApiKey = process.env.CLAUDE_API_KEY
     if (!claudeApiKey) {
+      console.error("Claude API key not found in environment variables")
       return NextResponse.json(
         { error: "Claude API key not configured" },
         { status: 500 }
       )
     }
+
+    console.log("Claude API key found, proceeding with request")
 
     // Prepare context data for the AI
     const contextSummary = {
@@ -56,6 +59,8 @@ ${JSON.stringify(context, null, 2)}
 
 Please provide a helpful response based on the available data.`
 
+    console.log("Sending request to Claude API...")
+
     // Call Claude API
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -76,16 +81,20 @@ Please provide a helpful response based on the available data.`
       })
     })
 
+    console.log("Claude API response status:", response.status)
+
     if (!response.ok) {
       const errorData = await response.text()
-      console.error("Claude API error:", errorData)
+      console.error("Claude API error response:", errorData)
       return NextResponse.json(
-        { error: "Failed to get AI response" },
+        { error: `Claude API error: ${response.status} - ${errorData}` },
         { status: 500 }
       )
     }
 
     const data = await response.json()
+    console.log("Claude API success response received")
+    
     const aiResponse = data.content[0]?.text || "I'm sorry, I couldn't generate a response at this time."
 
     return NextResponse.json({
@@ -96,7 +105,7 @@ Please provide a helpful response based on the available data.`
   } catch (error) {
     console.error("AI chat error:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     )
   }
