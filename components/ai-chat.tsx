@@ -237,9 +237,8 @@ export function AIChat() {
             <ScrollArea className="h-full p-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
-                  <Bot className="h-8 w-8 text-slate-500" />
-                  <p className="text-slate-400 text-sm">Ask me anything about your inventory, orders, or customers!</p>
-                  <p className="text-slate-500 text-xs">Examples: "Show me low stock items", "What are my recent orders?", "Find customer John Smith"</p>
+                  <p className="text-slate-200 text-lg font-semibold">How may I be of service today, sir?</p>
+                  <p className="text-slate-400 text-sm">You may inquire about your inventory, orders, or customers. For example: "Might I trouble you for a summary of recent orders?" or "Which items are frightfully low in stock?"</p>
                 </div>
               ) : (
                 <div className="space-y-4">
