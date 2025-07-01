@@ -23,13 +23,22 @@ function normalizeProductName(name: string) {
 }
 
 export function getDriveDirectImage(url: string) {
-  // Convert Google Drive 'view' links to direct image links
-  if (!url) return url
-  const match = url.match(/\/file\/d\/([\w-]+)\//)
+  if (!url || url.trim() === "") return "/placeholder.svg";
+  // If it's a Google Drive share link, convert it
+  const match = url.match(/\/file\/d\/([\w-]+)\//);
   if (match) {
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
   }
-  return url
+  // If it's a local image path (e.g., Product_Images/filename.jpg), serve from public
+  if (url.startsWith("Product_Images/")) {
+    return `/${url}`;
+  }
+  // If it's already a direct Google Drive link or a valid URL, return as is
+  if (url.startsWith("http")) {
+    return url;
+  }
+  // Fallback to placeholder
+  return "/placeholder.svg";
 }
 
 async function fetchLiveProductProfile(barcode: string) {
