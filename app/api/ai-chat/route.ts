@@ -69,8 +69,8 @@ Please provide a helpful response based on the available data.`
 
     // Call Claude API using the SDK
     const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 20000,
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 8192,
       temperature: 1,
       messages: [
         {
