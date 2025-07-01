@@ -257,55 +257,55 @@ export class GoogleSheetsService {
       const rows = response.data.values || []
       if (rows.length === 0) return []
 
-      // Skip header row
+      // Header-based mapping
+      const header = rows[0]
+      const headerMap: Record<string, number> = {}
+      header.forEach((col, idx) => { headerMap[col.trim()] = idx })
       const dataRows = rows.slice(1)
 
       return dataRows.map((row): OrderCustomer => {
-        // Extract product details (Product_1_Name at 20, Product_1_Barcode at 21, Product_1_Price at 22, Product_1_Quantity at 23)
+        // Pad row to header length
+        const paddedRow = [...row]
+        while (paddedRow.length < header.length) paddedRow.push("")
+
+        // Product details (use header-based indices)
         const products = []
-        for (let i = 20; i <= 56; i += 4) {
-          if (row[i] && row[i].trim() !== "") {
+        for (let i = headerMap["Product_1_Name"]; i <= headerMap["Product_10_Quantity"]; i += 4) {
+          if (paddedRow[i] && paddedRow[i].trim() !== "") {
             products.push({
-              name: row[i] || "", // Product_X_Name
-              barcode: row[i + 1] || "", // Product_X_Barcode
-              price: parseFloat(row[i + 2] || "0"), // Product_X_Price
-              quantity: parseInt(row[i + 3] || "0"), // Product_X_Quantity
+              name: paddedRow[i] || "",
+              barcode: paddedRow[i + 1] || "",
+              price: parseFloat(paddedRow[i + 2] || "0"),
+              quantity: parseInt(paddedRow[i + 3] || "0"),
             })
           }
         }
-        
-        let customer_id, customerName, customerEmail, customerPhone
-        if (isArchivedOrders) {
-          customer_id = row[row.length - 4] ? row[row.length - 4].trim() : "";
-          customerName = row[row.length - 3] ? row[row.length - 3].toString().trim() : "";
-          customerEmail = row[row.length - 2] ? row[row.length - 2].toString().trim() : "";
-          customerPhone = row[row.length - 1] ? row[row.length - 1].toString().trim() : "";
-        } else {
-          customer_id = (row[64] || "").trim(); // Column 65 (customer_id)
-          customerName = row[3] || ""; // Customer_Name
-          customerEmail = row[4] || ""; // Email
-          customerPhone = row[6] || ""; // Phone
-        }
-        
+
+        // Customer info (header-based)
+        const customer_id = paddedRow[headerMap["customer_id"]] || ""
+        const customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
+        const customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
+        const customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
+
         return {
-          orderId: row[1] || "", // Order_Code
-          customerId: customer_id, // Use customer_id
+          orderId: paddedRow[headerMap["Order_Code"]] || "",
+          customerId: customer_id,
           customerName: customerName,
           customerEmail: customerEmail,
-          orderDate: row[0] || "", // Submission_Timestamp
-          status: row[17] || "", // Fulfillment_Status
-          total: parseFloat((row[11] || "0").replace(/[^0-9.]/g, "")), // Total_Amount
+          orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
+          status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+          total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").replace(/[^0-9.]/g, "")),
           items: products.map(p => p.name).join(", "),
-          notes: row[12] || "", // Special_Instructions
-          invoice_link: row[58] || "", // invoice_link
-          payment_link: row[57] || "", // payment_link
+          notes: paddedRow[headerMap["Special_Instructions"]] || "",
+          invoice_link: paddedRow[headerMap["invoice_link"]] || "",
+          payment_link: paddedRow[headerMap["payment_link"]] || "",
           customer_id,
-          businessName: row[5] || "", // Business_Name
-          phone: customerPhone, // Use the correct phone from customer columns
-          addressStreet: row[7] || "", // Address_Street
-          addressCity: row[8] || "", // Address_City
-          addressState: row[9] || "", // Address_State
-          addressZIP: row[10] || "", // Address_ZIP
+          businessName: paddedRow[headerMap["Business_Name"]] || "",
+          phone: customerPhone,
+          addressStreet: paddedRow[headerMap["Address_Street"]] || "",
+          addressCity: paddedRow[headerMap["Address_City"]] || "",
+          addressState: paddedRow[headerMap["Address_State"]] || "",
+          addressZIP: paddedRow[headerMap["Address_ZIP"]] || "",
           products,
         }
       })
