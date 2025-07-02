@@ -415,6 +415,7 @@ export function OrdersSection() {
                 <TableHead className="text-slate-300">Date</TableHead>
                 <TableHead className="text-slate-300">Invoice</TableHead>
                 <TableHead className="text-slate-300">Wix Customer Info</TableHead>
+                <TableHead className="text-slate-300">TEST BUTTON</TableHead>
                 <TableHead className="text-slate-300">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -489,6 +490,9 @@ export function OrdersSection() {
                     >
                       Wix Customer Info
                     </Button>
+                  </TableCell>
+                  <TableCell>
+                    <button>TEST BUTTON</button>
                   </TableCell>
                   <TableCell>
                     <Button
