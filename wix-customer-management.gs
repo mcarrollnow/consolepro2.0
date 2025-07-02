@@ -109,7 +109,7 @@ function handleCreateOrder(data) {
   }
   
   // Generate or get customer ID
-  const customerId = await ensureCustomerExists({
+  const customerId = ensureCustomerExists({
     name: customerName,
     email: customerEmail,
     businessName,
