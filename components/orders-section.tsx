@@ -33,6 +33,11 @@ export function OrdersSection() {
   const [selectedOrderForInvoiceUpdate, setSelectedOrderForInvoiceUpdate] = useState<OrderCustomer | null>(null)
   const [newInvoiceStatus, setNewInvoiceStatus] = useState("")
   const [updatingInvoiceStatus, setUpdatingInvoiceStatus] = useState(false)
+  const [wixDialogOpen, setWixDialogOpen] = useState(false)
+  const [wixContactId, setWixContactId] = useState<string | null>(null)
+  const [wixOrderId, setWixOrderId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   const fetchOrdersData = async () => {
@@ -190,6 +195,33 @@ export function OrdersSection() {
   const processingOrders = ordersData.filter((order) => order.status.toLowerCase() === "processing")
   const shippedOrders = ordersData.filter((order) => order.status.toLowerCase() === "shipped")
   const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0)
+
+  // Function to handle Wix Customer Info button click
+  const handleWixCustomerInfo = async (order: any) => {
+    setError(null)
+    setWixOrderId(order.orderId)
+    if (order.Wix_Contact_ID) {
+      setWixContactId(order.Wix_Contact_ID)
+      setWixDialogOpen(true)
+    } else {
+      setCreating(true)
+      try {
+        // Call your API or Apps Script function to create Wix customer
+        // This is a placeholder; replace with your actual call
+        const result = await fetch(`/api/wix/create-customer-from-order?orderId=${order.orderId}`)
+        const data = await result.json()
+        if (data.wixContactId) {
+          setWixContactId(data.wixContactId)
+        } else {
+          setError(data.error || 'Failed to create Wix customer.')
+        }
+      } catch (e) {
+        setError('Failed to create Wix customer.')
+      }
+      setCreating(false)
+      setWixDialogOpen(true)
+    }
+  }
 
   if (loading) {
     return (
@@ -382,6 +414,7 @@ export function OrdersSection() {
                 <TableHead className="text-slate-300">Status</TableHead>
                 <TableHead className="text-slate-300">Date</TableHead>
                 <TableHead className="text-slate-300">Invoice</TableHead>
+                <TableHead className="text-slate-300">Wix Customer Info</TableHead>
                 <TableHead className="text-slate-300">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -446,6 +479,16 @@ export function OrdersSection() {
                         <CreditCard className="h-3 w-3" />
                       </Button>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleWixCustomerInfo(order)}
+                      className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                    >
+                      Wix Customer Info
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Button
@@ -683,6 +726,34 @@ export function OrdersSection() {
                 </Button>
               </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Wix Customer Info Dialog */}
+      <Dialog open={wixDialogOpen} onOpenChange={setWixDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wix Customer Info</DialogTitle>
+          </DialogHeader>
+          {creating ? (
+            <div className="text-slate-400">Creating Wix customer...</div>
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : wixContactId ? (
+            <div>
+              <div className="mb-2 text-slate-300">Wix Contact ID: <span className="font-mono">{wixContactId}</span></div>
+              <a
+                href={`https://manage.wix.com/dashboard/f2af16bf-a8ba-42f3-a5c4-9425564347ac/contacts/${wixContactId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:underline"
+              >
+                Open in Wix Dashboard
+              </a>
+            </div>
+          ) : (
+            <div className="text-slate-400">No Wix Contact ID found.</div>
           )}
         </DialogContent>
       </Dialog>
