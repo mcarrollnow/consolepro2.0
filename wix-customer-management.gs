@@ -4,16 +4,16 @@
  * Privacy-focused customer management with minimal Wix exposure
  */
 
-// Configuration
+// Configuration - Using existing Wix credentials
 const CONFIG = {
-  SPREADSHEET_ID: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms', // Replace with your actual ID
+  SPREADSHEET_ID: SpreadsheetApp.getActiveSpreadsheet().getId(), // Use active spreadsheet
   ORDERS_SHEET: 'Orders',
   CUSTOMERS_SHEET: 'Customers', 
   ARCHIVED_ORDERS_SHEET: 'Archived Orders',
   INVENTORY_SHEET: 'Product',
   WIX_API_URL: 'https://www.wixapis.com/v1',
-  WIX_API_KEY: 'YOUR_WIX_API_KEY', // Replace with your actual key
-  WIX_SITE_ID: 'YOUR_WIX_SITE_ID' // Replace with your actual site ID
+  WIX_API_KEY: 'IST.eyJraWQiOiJQb3pIX2FDMiIsImFsZyI6IlJTMjU2In0.eyJkYXRhIjoie1wiaWRcIjpcIjE3NjA4OTM5LWNmODItNGNhMi04ZDMwLTdhODZiYjVjMWYxYlwiLFwiaWRlbnRpdHlcIjp7XCJ0eXBlXCI6XCJhcHBsaWNhdGlvblwiLFwiaWRcIjpcIjY5MGJlN2M1LTIwZTgtNDMxNC1hNzY4LTNlYzVlNTc5ZTdlY1wifSxcInRlbmFudFwiOntcInR5cGVcIjpcImFjY291bnRcIixcImlkXCI6XCIzNzQyNTRlZS05MDQ3LTQ0ODYtYTY4Ni00NmVhNjA3YzZmZGFcIn19IiwiaWF0IjoxNzUxNDU0MTkwfQ.FioMCK1Yu4hmuWOah7Ftb_lto52rXrHZdWdXD15mJCite0QmYfcU7M585LKXC9HG79UWrCtatXnPzJZmWaCJmDsYwQnm58EfLLz0K8lkbqC1Iwsr4_5mFFaaYhrKFkQFXjRP9CVnj9TRJAbXq0RV90iVU901FlXcc25cR62uxuk2FVS4l8j7Ax1RWAs_F5Kg6fNC8qj3HL3Kt7Zsot86bQdsd9H8JlGR9evMbJRLL7_L4v8tV3r79gxlDENZReoS5CU42dEHe7yveaD0z8kaG-DssLaWB5ApdnmNp5edMMxUpqBmoMMIYsNinuWGlyIn3DmAgXGQalICXRX-ycr8GQ',
+  WIX_SITE_ID: 'f2af16bf-a8ba-42f3-a5c4-9425564347ac'
 };
 
 /**
@@ -373,54 +373,95 @@ function handleCreateWixCustomer(data) {
     return createResponse(400, { error: 'Missing customerId' });
   }
   
-  // Get customer data (minimal info for Wix)
+  // Get customer data
   const customer = getRowFromSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId);
   if (!customer) {
     return createResponse(404, { error: 'Customer not found' });
   }
   
-  // Only send minimal data to Wix for privacy
-  const wixCustomerData = {
-    contact: {
-      name: {
-        first: customer.name.split(' ')[0] || customer.name,
-        last: customer.name.split(' ').slice(1).join(' ') || ''
-      },
-      email: customer.email,
-      phone: customer.phone || undefined
-    }
-  };
-  
   try {
-    const response = UrlFetchApp.fetch(`${CONFIG.WIX_API_URL}/contacts`, {
-      method: 'POST',
-      headers: {
-        'Authorization': CONFIG.WIX_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      payload: JSON.stringify(wixCustomerData)
+    // Use existing proven Wix contact creation method
+    const wixId = createCustomerInWix(customer);
+    
+    // Update customer with Wix contact ID
+    updateRowInSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
+      wix_contact_id: wixId
     });
     
-    const result = JSON.parse(response.getContentText());
-    
-    if (response.getResponseCode() === 200 || response.getResponseCode() === 201) {
-      // Update customer with Wix contact ID
-      updateRowInSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
-        wix_contact_id: result.contact.id
-      });
-      
-      return createResponse(200, { 
-        wixContactId: result.contact.id,
-        message: 'Wix customer created successfully' 
-      });
-    } else {
-      return createResponse(response.getResponseCode(), { 
-        error: 'Failed to create Wix customer',
-        details: result 
-      });
-    }
+    return createResponse(200, { 
+      wixContactId: wixId,
+      message: 'Wix customer created successfully' 
+    });
   } catch (error) {
     return createResponse(500, { error: 'Wix API error', details: error.message });
+  }
+}
+
+// Use existing proven Wix contact creation method
+function createCustomerInWix(customerData) {
+  const url = 'https://www.wixapis.com/contacts/v4/contacts';
+  const email = safeString(customerData.email);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Invalid or missing email address for customer.');
+  }
+  
+  // Split customerName into first/last
+  let firstName = safeString(customerData.name);
+  let lastName = "";
+  if (firstName && firstName.includes(" ")) {
+    const parts = firstName.split(" ");
+    firstName = safeString(parts[0]);
+    lastName = safeString(parts.slice(1).join(" "));
+  }
+  
+  const wixData = {
+    info: {
+      name: {
+        first: firstName,
+        last: lastName
+      },
+      emails: {
+        items: [{
+          tag: "MAIN",
+          email: email
+        }]
+      },
+      phones: safeString(customerData.phone) ? {
+        items: [{
+          tag: "HOME",
+          countryCode: "US",
+          phone: safeString(customerData.phone)
+        }]
+      } : undefined,
+      addresses: (safeString(customerData.address)) ? {
+        items: [{
+          tag: "SHIPPING",
+          address: {
+            country: "US",
+            addressLine: safeString(customerData.address)
+          }
+        }]
+      } : undefined
+    }
+  };
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Content-Type': 'application/json',
+      'wix-site-id': CONFIG.WIX_SITE_ID
+    },
+    payload: JSON.stringify(wixData)
+  };
+  
+  const response = UrlFetchApp.fetch(url, options);
+  const result = JSON.parse(response.getContentText());
+  
+  if (response.getResponseCode() === 200 || response.getResponseCode() === 201) {
+    return result.contact.id;
+  } else {
+    throw new Error(`Wix API error: ${response.getResponseCode()} - ${response.getContentText()}`);
   }
 }
 
@@ -440,50 +481,109 @@ function handleCreateWixPaymentLink(data) {
     }
   }
   
-  // Create payment link with minimal data
-  const paymentLinkData = {
-    paymentLink: {
-      title: description || `Order ${orderId}`,
-      amount: {
-        amount: parseFloat(amount) * 100, // Convert to cents
-        currency: 'USD'
-      },
-      contactId: wixContactId || undefined,
-      externalReference: orderId
-    }
-  };
-  
   try {
-    const response = UrlFetchApp.fetch(`${CONFIG.WIX_API_URL}/payment-links`, {
-      method: 'POST',
-      headers: {
-        'Authorization': CONFIG.WIX_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      payload: JSON.stringify(paymentLinkData)
+    // Use existing proven payment link creation method
+    const paymentUrl = createWixBillableItemAndPaymentLink(orderId, amount, wixContactId, description);
+    
+    // Update order with payment link
+    updateRowInSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId, {
+      payment_link: paymentUrl
     });
     
-    const result = JSON.parse(response.getContentText());
-    
-    if (response.getResponseCode() === 200 || response.getResponseCode() === 201) {
-      // Update order with payment link
-      updateRowInSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId, {
-        payment_link: result.paymentLink.url
-      });
-      
-      return createResponse(200, { 
-        paymentLink: result.paymentLink.url,
-        message: 'Payment link created successfully' 
-      });
-    } else {
-      return createResponse(response.getResponseCode(), { 
-        error: 'Failed to create payment link',
-        details: result 
-      });
-    }
+    return createResponse(200, { 
+      paymentLink: paymentUrl,
+      message: 'Payment link created successfully' 
+    });
   } catch (error) {
     return createResponse(500, { error: 'Wix API error', details: error.message });
   }
+}
+
+// Use existing proven payment link creation method
+function createWixBillableItemAndPaymentLink(orderId, amount, wixContactId, description) {
+  const itemName = description || "Weight Loss Plan, Customized features, Add-on Consultations";
+  const itemDescription = "This is a payment for your customized plan.";
+  const priceString = parseFloat(amount).toFixed(2);
+
+  // 1. Create Billable Item
+  const billablePayload = {
+    billableItem: {
+      name: itemName,
+      description: itemDescription,
+      price: priceString
+    }
+  };
+  
+  const billableUrl = 'https://www.wixapis.com/billable-items/v1/billable-items';
+  const billableOptions = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Content-Type': 'application/json',
+      'wix-site-id': CONFIG.WIX_SITE_ID
+    },
+    payload: JSON.stringify(billablePayload)
+  };
+  
+  const billableResponse = UrlFetchApp.fetch(billableUrl, billableOptions);
+  const billableResult = JSON.parse(billableResponse.getContentText());
+  const billableItemId = billableResult.billableItem && billableResult.billableItem.id;
+  
+  if (!billableItemId) {
+    throw new Error('Failed to create billable item.');
+  }
+
+  // 2. Create Payment Link using the Billable Item
+  const paymentPayload = {
+    paymentLink: {
+      title: itemName,
+      description: itemDescription,
+      currency: "USD",
+      recipients: wixContactId ? [
+        {
+          sendMethods: ["EMAIL_METHOD"],
+          contactId: wixContactId
+        }
+      ] : undefined,
+      paymentsLimit: 1,
+      type: "ECOM",
+      ecomPaymentLink: {
+        lineItems: [
+          {
+            type: "CATALOG",
+            catalogItem: {
+              quantity: 1,
+              catalogReference: {
+                appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e", // Wix Stores appId
+                catalogItemId: billableItemId
+              }
+            }
+          }
+        ]
+      }
+    }
+  };
+  
+  const paymentUrl = 'https://www.wixapis.com/payment-links/v1/payment-links';
+  const paymentOptions = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Content-Type': 'application/json',
+      'wix-site-id': CONFIG.WIX_SITE_ID
+    },
+    payload: JSON.stringify(paymentPayload)
+  };
+  
+  const paymentResponse = UrlFetchApp.fetch(paymentUrl, paymentOptions);
+  const paymentResult = JSON.parse(paymentResponse.getContentText());
+  const paymentLinkUrl = paymentResult.paymentLink && paymentResult.paymentLink.links && paymentResult.paymentLink.links.url && paymentResult.paymentLink.links.url.url;
+  
+  if (!paymentLinkUrl) {
+    throw new Error('No payment link URL returned.');
+  }
+  
+  return paymentLinkUrl;
 }
 
 function handleSyncCustomerToWix(data) {
@@ -505,6 +605,11 @@ function handleSyncCustomerToWix(data) {
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
+
+// Helper to ensure only valid strings are sent to Wix (from existing setup)
+function safeString(val) {
+  return (typeof val === 'string' && val.trim() !== '') ? val.trim() : undefined;
+}
 
 function ensureCustomerExists(customerData) {
   const { email, name } = customerData;
@@ -714,7 +819,37 @@ function testBackend() {
     console.error('Error accessing Customers sheet:', error);
   }
   
+  // Test Wix connection
+  try {
+    const testResult = testWixConnection();
+    console.log('Wix connection test:', testResult);
+  } catch (error) {
+    console.error('Wix connection test failed:', error);
+  }
+  
   console.log('Backend test completed');
+}
+
+// Test Wix API connection (from existing setup)
+function testWixConnection() {
+  try {
+    const url = 'https://www.wixapis.com/contacts/v4/contacts';
+    const options = {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+        'wix-site-id': CONFIG.WIX_SITE_ID
+      }
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    if (response.getResponseCode() === 200) {
+      return '✅ Wix API connection successful!';
+    } else {
+      return `❌ Wix API connection failed: ${response.getResponseCode()}`;
+    }
+  } catch (error) {
+    return `❌ Wix API connection error: ${error.message}`;
+  }
 }
 
 function setupWebhook() {
