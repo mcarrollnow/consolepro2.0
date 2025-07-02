@@ -43,21 +43,6 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
   const router = useRouter()
   const pathname = usePathname()
 
-  // Determine active section based on current path
-  const getCurrentSection = () => {
-    // If we're on a specific page (not the main dashboard), return null
-    if (pathname !== "/" && !pathname.startsWith("/?")) {
-      return null
-    }
-    
-    // Check URL params for section
-    const urlParams = new URLSearchParams(window.location.search)
-    const section = urlParams.get('section')
-    return section || "daily-overview"
-  }
-
-  const currentSection = getCurrentSection()
-
   const handleSectionClick = (sectionId: string, path: string) => {
     if (pathname !== "/" && !pathname.startsWith("/?")) {
       // If we're on a specific page, navigate to the main dashboard with the section
@@ -100,7 +85,7 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
       <nav className="p-2 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = currentSection === item.id
+          const isActive = activeSection === item.id
 
           return (
             <Button
