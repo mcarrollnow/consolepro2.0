@@ -5,7 +5,7 @@
  */
 
 // Configuration - Using existing Wix credentials
-const CONFIG = {
+const BACKEND_CONFIG = {
   SPREADSHEET_ID: SpreadsheetApp.getActiveSpreadsheet().getId(), // Use active spreadsheet
   ORDERS_SHEET: 'Orders',
   CUSTOMERS_SHEET: 'Customers', 
@@ -84,7 +84,7 @@ function doGet(e) {
 
 function handleGetOrders(data = {}) {
   const { sheet = 'Orders', customerId, status } = data;
-  const sheetName = sheet === 'Archived' ? CONFIG.ARCHIVED_ORDERS_SHEET : CONFIG.ORDERS_SHEET;
+  const sheetName = sheet === 'Archived' ? BACKEND_CONFIG.ARCHIVED_ORDERS_SHEET : BACKEND_CONFIG.ORDERS_SHEET;
   
   const orders = getSheetData(sheetName);
   let filteredOrders = orders;
@@ -139,7 +139,7 @@ function handleCreateOrder(data) {
   };
   
   // Add to Orders sheet
-  const success = addRowToSheet(CONFIG.ORDERS_SHEET, order);
+  const success = addRowToSheet(BACKEND_CONFIG.ORDERS_SHEET, order);
   
   if (success) {
     return createResponse(200, { 
@@ -159,7 +159,7 @@ function handleUpdateOrder(data) {
     return createResponse(400, { error: 'Missing orderId or updates' });
   }
   
-  const success = updateRowInSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId, {
+  const success = updateRowInSheet(BACKEND_CONFIG.ORDERS_SHEET, 'orderId', orderId, {
     ...updates,
     last_updated: new Date().toISOString()
   });
@@ -179,21 +179,21 @@ function handleArchiveOrder(data) {
   }
   
   // Get order from Orders sheet
-  const order = getRowFromSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId);
+  const order = getRowFromSheet(BACKEND_CONFIG.ORDERS_SHEET, 'orderId', orderId);
   
   if (!order) {
     return createResponse(404, { error: 'Order not found' });
   }
   
   // Add to Archived Orders sheet
-  const archiveSuccess = addRowToSheet(CONFIG.ARCHIVED_ORDERS_SHEET, {
+  const archiveSuccess = addRowToSheet(BACKEND_CONFIG.ARCHIVED_ORDERS_SHEET, {
     ...order,
     archived_date: new Date().toISOString()
   });
   
   if (archiveSuccess) {
     // Remove from Orders sheet
-    const deleteSuccess = deleteRowFromSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId);
+    const deleteSuccess = deleteRowFromSheet(BACKEND_CONFIG.ORDERS_SHEET, 'orderId', orderId);
     
     if (deleteSuccess) {
       return createResponse(200, { message: 'Order archived successfully' });
@@ -213,11 +213,11 @@ function handleGetCustomerOrders(data) {
   }
   
   // Get active orders
-  const activeOrders = getSheetData(CONFIG.ORDERS_SHEET)
+  const activeOrders = getSheetData(BACKEND_CONFIG.ORDERS_SHEET)
     .filter(order => order.customer_id === customerId);
   
   // Get archived orders
-  const archivedOrders = getSheetData(CONFIG.ARCHIVED_ORDERS_SHEET)
+  const archivedOrders = getSheetData(BACKEND_CONFIG.ARCHIVED_ORDERS_SHEET)
     .filter(order => order.customer_id === customerId);
   
   return createResponse(200, {
@@ -233,7 +233,7 @@ function handleGetCustomerOrders(data) {
 
 function handleGetCustomers(data = {}) {
   const { customerId, email, status } = data;
-  const customers = getSheetData(CONFIG.CUSTOMERS_SHEET);
+  const customers = getSheetData(BACKEND_CONFIG.CUSTOMERS_SHEET);
   let filteredCustomers = customers;
   
   // Apply filters
@@ -259,7 +259,7 @@ function handleCreateCustomer(data) {
   }
   
   // Check if customer already exists
-  const existingCustomer = getRowFromSheet(CONFIG.CUSTOMERS_SHEET, 'email', email);
+  const existingCustomer = getRowFromSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'email', email);
   if (existingCustomer) {
     return createResponse(409, { error: 'Customer with this email already exists', customerId: existingCustomer.customer_id });
   }
@@ -295,7 +295,7 @@ function handleCreateCustomer(data) {
   };
   
   // Add to Customers sheet
-  const success = addRowToSheet(CONFIG.CUSTOMERS_SHEET, customer);
+  const success = addRowToSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, customer);
   
   if (success) {
     return createResponse(200, { customerId, message: 'Customer created successfully' });
@@ -311,7 +311,7 @@ function handleUpdateCustomer(data) {
     return createResponse(400, { error: 'Missing customerId or updates' });
   }
   
-  const success = updateRowInSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
+  const success = updateRowInSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
     ...updates,
     last_updated: new Date().toISOString()
   });
@@ -329,7 +329,7 @@ function handleUpdateCustomer(data) {
 
 function handleGetInventory(data = {}) {
   const { barcode, category } = data;
-  const inventory = getSheetData(CONFIG.INVENTORY_SHEET);
+  const inventory = getSheetData(BACKEND_CONFIG.INVENTORY_SHEET);
   let filteredInventory = inventory;
   
   // Apply filters
@@ -350,7 +350,7 @@ function handleUpdateInventory(data) {
     return createResponse(400, { error: 'Missing barcode or updates' });
   }
   
-  const success = updateRowInSheet(CONFIG.INVENTORY_SHEET, 'barcode', barcode, {
+  const success = updateRowInSheet(BACKEND_CONFIG.INVENTORY_SHEET, 'barcode', barcode, {
     ...updates,
     lastUpdated: new Date().toISOString()
   });
@@ -374,7 +374,7 @@ function handleCreateWixCustomer(data) {
   }
   
   // Get customer data
-  const customer = getRowFromSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId);
+  const customer = getRowFromSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId);
   if (!customer) {
     return createResponse(404, { error: 'Customer not found' });
   }
@@ -384,7 +384,7 @@ function handleCreateWixCustomer(data) {
     const wixId = createCustomerInWix(customer);
     
     // Update customer with Wix contact ID
-    updateRowInSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
+    updateRowInSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId, {
       wix_contact_id: wixId
     });
     
@@ -448,9 +448,9 @@ function createCustomerInWix(customerData) {
   const options = {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Authorization': `Bearer ${BACKEND_CONFIG.WIX_API_KEY}`,
       'Content-Type': 'application/json',
-      'wix-site-id': CONFIG.WIX_SITE_ID
+      'wix-site-id': BACKEND_CONFIG.WIX_SITE_ID
     },
     payload: JSON.stringify(wixData)
   };
@@ -475,7 +475,7 @@ function handleCreateWixPaymentLink(data) {
   // Get customer Wix contact ID
   let wixContactId = null;
   if (customerId) {
-    const customer = getRowFromSheet(CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId);
+    const customer = getRowFromSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'customer_id', customerId);
     if (customer && customer.wix_contact_id) {
       wixContactId = customer.wix_contact_id;
     }
@@ -486,7 +486,7 @@ function handleCreateWixPaymentLink(data) {
     const paymentUrl = createWixBillableItemAndPaymentLink(orderId, amount, wixContactId, description);
     
     // Update order with payment link
-    updateRowInSheet(CONFIG.ORDERS_SHEET, 'orderId', orderId, {
+    updateRowInSheet(BACKEND_CONFIG.ORDERS_SHEET, 'orderId', orderId, {
       payment_link: paymentUrl
     });
     
@@ -518,9 +518,9 @@ function createWixBillableItemAndPaymentLink(orderId, amount, wixContactId, desc
   const billableOptions = {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Authorization': `Bearer ${BACKEND_CONFIG.WIX_API_KEY}`,
       'Content-Type': 'application/json',
-      'wix-site-id': CONFIG.WIX_SITE_ID
+      'wix-site-id': BACKEND_CONFIG.WIX_SITE_ID
     },
     payload: JSON.stringify(billablePayload)
   };
@@ -568,9 +568,9 @@ function createWixBillableItemAndPaymentLink(orderId, amount, wixContactId, desc
   const paymentOptions = {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
+      'Authorization': `Bearer ${BACKEND_CONFIG.WIX_API_KEY}`,
       'Content-Type': 'application/json',
-      'wix-site-id': CONFIG.WIX_SITE_ID
+      'wix-site-id': BACKEND_CONFIG.WIX_SITE_ID
     },
     payload: JSON.stringify(paymentPayload)
   };
@@ -615,7 +615,7 @@ function ensureCustomerExists(customerData) {
   const { email, name } = customerData;
   
   // Check if customer exists
-  const existingCustomer = getRowFromSheet(CONFIG.CUSTOMERS_SHEET, 'email', email);
+  const existingCustomer = getRowFromSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, 'email', email);
   if (existingCustomer) {
     return existingCustomer.customer_id;
   }
@@ -648,7 +648,7 @@ function ensureCustomerExists(customerData) {
     wix_contact_id: ''
   };
   
-  addRowToSheet(CONFIG.CUSTOMERS_SHEET, customer);
+  addRowToSheet(BACKEND_CONFIG.CUSTOMERS_SHEET, customer);
   return customerId;
 }
 
@@ -667,7 +667,7 @@ function generateOrderId() {
 
 function getSheetData(sheetName) {
   try {
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
+    const sheet = SpreadsheetApp.openById(BACKEND_CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
     if (!sheet) {
       throw new Error(`Sheet ${sheetName} not found`);
     }
@@ -698,7 +698,7 @@ function getRowFromSheet(sheetName, columnName, value) {
 
 function addRowToSheet(sheetName, rowData) {
   try {
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
+    const sheet = SpreadsheetApp.openById(BACKEND_CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
     if (!sheet) {
       throw new Error(`Sheet ${sheetName} not found`);
     }
@@ -716,7 +716,7 @@ function addRowToSheet(sheetName, rowData) {
 
 function updateRowInSheet(sheetName, columnName, value, updates) {
   try {
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
+    const sheet = SpreadsheetApp.openById(BACKEND_CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
     if (!sheet) {
       throw new Error(`Sheet ${sheetName} not found`);
     }
@@ -759,7 +759,7 @@ function updateRowInSheet(sheetName, columnName, value, updates) {
 
 function deleteRowFromSheet(sheetName, columnName, value) {
   try {
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
+    const sheet = SpreadsheetApp.openById(BACKEND_CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
     if (!sheet) {
       throw new Error(`Sheet ${sheetName} not found`);
     }
@@ -802,18 +802,18 @@ function testBackend() {
   console.log('Testing ConsolePro 2.0 Backend...');
   
   // Test configuration
-  console.log('Configuration:', CONFIG);
+  console.log('Configuration:', BACKEND_CONFIG);
   
   // Test sheet access
   try {
-    const orders = getSheetData(CONFIG.ORDERS_SHEET);
+    const orders = getSheetData(BACKEND_CONFIG.ORDERS_SHEET);
     console.log(`Orders sheet has ${orders.length} rows`);
   } catch (error) {
     console.error('Error accessing Orders sheet:', error);
   }
   
   try {
-    const customers = getSheetData(CONFIG.CUSTOMERS_SHEET);
+    const customers = getSheetData(BACKEND_CONFIG.CUSTOMERS_SHEET);
     console.log(`Customers sheet has ${customers.length} rows`);
   } catch (error) {
     console.error('Error accessing Customers sheet:', error);
@@ -837,8 +837,8 @@ function testWixConnection() {
     const options = {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${CONFIG.WIX_API_KEY}`,
-        'wix-site-id': CONFIG.WIX_SITE_ID
+              'Authorization': `Bearer ${BACKEND_CONFIG.WIX_API_KEY}`,
+      'wix-site-id': BACKEND_CONFIG.WIX_SITE_ID
       }
     };
     const response = UrlFetchApp.fetch(url, options);
