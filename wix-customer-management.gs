@@ -788,10 +788,14 @@ function deleteRowFromSheet(sheetName, columnName, value) {
 }
 
 function createResponse(statusCode, data) {
+  // Google Apps Script doesn't support custom status codes in web apps
+  // We'll return 200 and include status in the response body
   return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setStatusCode(statusCode);
+    .createTextOutput(JSON.stringify({
+      ...data,
+      _statusCode: statusCode
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================================================
