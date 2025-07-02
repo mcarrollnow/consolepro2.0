@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Users, Search, UserPlus, Star, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 
+const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL;
+
 export function CustomersSection() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null)
@@ -80,6 +82,24 @@ export function CustomersSection() {
         return "bg-slate-500/20 text-slate-400 border-slate-500/30"
     }
   }
+
+  const handleCreateWixCustomer = async (customerId: string) => {
+    if (!APPS_SCRIPT_URL) {
+      alert("Apps Script URL is not set.");
+      return;
+    }
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "createWixCustomerFromProfile", customerId }),
+      });
+      const data = await res.json();
+      alert(data.result || "Wix customer creation triggered.");
+    } catch (error) {
+      alert("Failed to create Wix customer: " + error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -238,6 +258,14 @@ export function CustomersSection() {
                       >
                         View Profile
                       </Link>
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleCreateWixCustomer(customer.customer_id)}
+                        className="bg-cyan-700 hover:bg-cyan-600 text-white px-2 py-1 rounded text-xs"
+                      >
+                        Create Wix Customer
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))}

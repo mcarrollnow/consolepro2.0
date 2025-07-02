@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast"
 import type { OrderCustomer } from "@/lib/google-sheets"
 import Link from "next/link"
 
+const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL;
+
 export function OrdersSection() {
   const [searchTerm, setSearchTerm] = useState("")
   const [ordersData, setOrdersData] = useState<OrderCustomer[]>([])
@@ -222,6 +224,24 @@ export function OrdersSection() {
       setWixDialogOpen(true)
     }
   }
+
+  const handleCreateWixCustomer = async (orderId: string) => {
+    if (!APPS_SCRIPT_URL) {
+      alert("Apps Script URL is not set.");
+      return;
+    }
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "createWixCustomerFromOrder", orderId }),
+      });
+      const data = await res.json();
+      alert(data.result || "Wix customer creation triggered.");
+    } catch (error) {
+      alert("Failed to create Wix customer: " + error);
+    }
+  };
 
   if (loading) {
     return (
@@ -492,7 +512,12 @@ export function OrdersSection() {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <button>TEST BUTTON</button>
+                    <button
+                      onClick={() => handleCreateWixCustomer(order.orderId)}
+                      className="bg-cyan-700 hover:bg-cyan-600 text-white px-2 py-1 rounded text-xs"
+                    >
+                      Create Wix Customer
+                    </button>
                   </TableCell>
                   <TableCell>
                     <Button
