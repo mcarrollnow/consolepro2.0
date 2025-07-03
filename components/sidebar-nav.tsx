@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BarChart3,
+  Percent,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -31,6 +32,7 @@ const navItems = [
   { id: "active-orders", label: "Active Orders", icon: Clock, path: "/?section=active-orders" },
   { id: "order-archive", label: "Order Archive", icon: FileText, path: "/?section=order-archive" },
   { id: "customers", label: "Customers", icon: Users, path: "/?section=customers" },
+  { id: "discount-codes", label: "Discount Codes", icon: Percent, path: "/?section=discount-codes" },
   { id: "invoices", label: "Invoices", icon: FileText, path: "/?section=invoices" },
   { id: "messaging", label: "Messaging", icon: MessageSquare, path: "/?section=messaging" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/?section=analytics" },

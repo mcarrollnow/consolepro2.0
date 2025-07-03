@@ -9,6 +9,7 @@ import { OrderArchiveSection } from "./order-archive-section"
 import { CustomersSection } from "./customers-section"
 import { AnalyticsSection } from "./analytics-section"
 import { MessagingSection } from "./messaging-section"
+import { DiscountCodesSection } from "./discount-codes-section"
 
 interface DashboardLayoutProps {
   children?: React.ReactNode
@@ -39,6 +40,8 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
         return <ActiveOrdersSection />
       case "customers":
         return <CustomersSection />
+      case "discount-codes":
+        return <DiscountCodesSection />
       case "analytics":
         return <AnalyticsSection />
       case "messaging":
