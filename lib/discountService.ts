@@ -275,7 +275,7 @@ export class ConsoleDiscountService {
     try {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: 'ConsoleDiscountCodes!A:O',
+        range: 'DiscountCodes!A:O',
       });
 
       const rows = response.data.values || [];
