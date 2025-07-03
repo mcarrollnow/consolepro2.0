@@ -62,12 +62,12 @@ export class ConsoleDiscountService {
     ];
 
     try {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: 'ConsoleDiscountCodes!A:O',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: [discountRow] },
-      });
+          await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: 'DiscountCodes!A:O',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [discountRow] },
+    });
     } catch (error: any) {
       // If the sheet doesn't exist, throw a helpful error
       if (error.code === 400 && error.message?.includes('Unable to parse range')) {
@@ -92,7 +92,7 @@ export class ConsoleDiscountService {
       // Get discount code
       const discountResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: 'ConsoleDiscountCodes!A:O',
+        range: 'DiscountCodes!A:O',
       });
 
       const discountRows = discountResponse.data.values || [];
@@ -222,7 +222,7 @@ export class ConsoleDiscountService {
     // Get discount code to update usage count
     const discountResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'ConsoleDiscountCodes!A:O',
+      range: 'DiscountCodes!A:O',
     });
 
     const discountRows = discountResponse.data.values || [];
@@ -239,12 +239,12 @@ export class ConsoleDiscountService {
     const newUsedCount = parseInt(discountRow[7]) + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `ConsoleDiscountCodes!H${discountRowIndex + 2}`,
+      range: `DiscountCodes!H${discountRowIndex + 2}`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [[newUsedCount]] },
     });
 
-    // Record usage in ConsoleDiscountCodeUsage sheet
+    // Record usage in DiscountCodeUsage sheet
     const usageRow = [
       usage.id,
       usage.discountCodeId,
@@ -257,7 +257,7 @@ export class ConsoleDiscountService {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'ConsoleDiscountCodeUsage!A:G',
+      range: 'DiscountCodeUsage!A:G',
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [usageRow] },
     });
@@ -320,7 +320,7 @@ export class ConsoleDiscountService {
     try {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: 'ConsoleDiscountCodeUsage!A:G',
+        range: 'DiscountCodeUsage!A:G',
       });
 
       const rows = response.data.values || [];
@@ -357,7 +357,7 @@ export class ConsoleDiscountService {
     // Find the row index for the discount code
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'ConsoleDiscountCodes!A:O',
+      range: 'DiscountCodes!A:O',
     });
 
     const rows = response.data.values || [];
