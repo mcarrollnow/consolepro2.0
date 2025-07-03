@@ -61,12 +61,20 @@ export class ConsoleDiscountService {
       discountCode.updatedAt.toISOString(),
     ];
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: 'ConsoleDiscountCodes!A:O',
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [discountRow] },
-    });
+    try {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'ConsoleDiscountCodes!A:O',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [discountRow] },
+      });
+    } catch (error: any) {
+      // If the sheet doesn't exist, throw a helpful error
+      if (error.code === 400 && error.message?.includes('Unable to parse range')) {
+        throw new Error('ConsoleDiscountCodes sheet does not exist. Please run the setup first.');
+      }
+      throw error;
+    }
 
     return discountCode;
   }
@@ -80,14 +88,15 @@ export class ConsoleDiscountService {
       throw new Error('GOOGLE_SPREADSHEET_ID is not set in environment variables.');
     }
 
-    // Get discount code
-    const discountResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'ConsoleDiscountCodes!A:O',
-    });
+    try {
+      // Get discount code
+      const discountResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'ConsoleDiscountCodes!A:O',
+      });
 
-    const discountRows = discountResponse.data.values || [];
-    const discountCode = discountRows.find(row => row[1] === code.toUpperCase());
+      const discountRows = discountResponse.data.values || [];
+      const discountCode = discountRows.find(row => row[1] === code.toUpperCase());
 
     if (!discountCode) {
       return {
@@ -176,6 +185,18 @@ export class ConsoleDiscountService {
       message: `Discount applied: $${discountAmount.toFixed(2)}`,
       discountCode: discount,
     };
+    } catch (error: any) {
+      // If the sheet doesn't exist, return invalid code
+      if (error.code === 400 && error.message?.includes('Unable to parse range')) {
+        console.log('ConsoleDiscountCodes sheet does not exist yet. Returning invalid code.');
+        return {
+          isValid: false,
+          discountAmount: 0,
+          message: 'Invalid discount code.',
+        };
+      }
+      throw error;
+    }
   }
 
   static async applyDiscountCode(code: string, orderCode: string, customerEmail: string, orderTotal: number, discountAmount: number): Promise<void> {
@@ -251,31 +272,40 @@ export class ConsoleDiscountService {
       throw new Error('GOOGLE_SPREADSHEET_ID is not set in environment variables.');
     }
 
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'ConsoleDiscountCodes!A:O',
-    });
+    try {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'ConsoleDiscountCodes!A:O',
+      });
 
-    const rows = response.data.values || [];
-    if (rows.length <= 1) return []; // No data or only header
+      const rows = response.data.values || [];
+      if (rows.length <= 1) return []; // No data or only header
 
-    return rows.slice(1).map(row => ({
-      id: row[0],
-      code: row[1],
-      type: row[2] as 'percentage' | 'fixed',
-      value: parseFloat(row[3]),
-      minOrderAmount: row[4] ? parseFloat(row[4]) : undefined,
-      maxDiscount: row[5] ? parseFloat(row[5]) : undefined,
-      usageLimit: parseInt(row[6]),
-      usedCount: parseInt(row[7]),
-      validFrom: new Date(row[8]),
-      validUntil: new Date(row[9]),
-      isActive: row[10] === 'TRUE',
-      description: row[11],
-      createdBy: row[12],
-      createdAt: new Date(row[13]),
-      updatedAt: new Date(row[14]),
-    }));
+      return rows.slice(1).map(row => ({
+        id: row[0],
+        code: row[1],
+        type: row[2] as 'percentage' | 'fixed',
+        value: parseFloat(row[3]),
+        minOrderAmount: row[4] ? parseFloat(row[4]) : undefined,
+        maxDiscount: row[5] ? parseFloat(row[5]) : undefined,
+        usageLimit: parseInt(row[6]),
+        usedCount: parseInt(row[7]),
+        validFrom: new Date(row[8]),
+        validUntil: new Date(row[9]),
+        isActive: row[10] === 'TRUE',
+        description: row[11],
+        createdBy: row[12],
+        createdAt: new Date(row[13]),
+        updatedAt: new Date(row[14]),
+      }));
+    } catch (error: any) {
+      // If the sheet doesn't exist, return empty array
+      if (error.code === 400 && error.message?.includes('Unable to parse range')) {
+        console.log('ConsoleDiscountCodes sheet does not exist yet. Returning empty discount codes.');
+        return [];
+      }
+      throw error;
+    }
   }
 
   static async getDiscountCodeUsage(): Promise<DiscountCodeUsage[]> {
@@ -287,23 +317,32 @@ export class ConsoleDiscountService {
       throw new Error('GOOGLE_SPREADSHEET_ID is not set in environment variables.');
     }
 
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'ConsoleDiscountCodeUsage!A:G',
-    });
+    try {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'ConsoleDiscountCodeUsage!A:G',
+      });
 
-    const rows = response.data.values || [];
-    if (rows.length <= 1) return []; // No data or only header
+      const rows = response.data.values || [];
+      if (rows.length <= 1) return []; // No data or only header
 
-    return rows.slice(1).map(row => ({
-      id: row[0],
-      discountCodeId: row[1],
-      orderCode: row[2],
-      customerEmail: row[3],
-      discountAmount: parseFloat(row[4]),
-      orderTotal: parseFloat(row[5]),
-      usedAt: new Date(row[6]),
-    }));
+      return rows.slice(1).map(row => ({
+        id: row[0],
+        discountCodeId: row[1],
+        orderCode: row[2],
+        customerEmail: row[3],
+        discountAmount: parseFloat(row[4]),
+        orderTotal: parseFloat(row[5]),
+        usedAt: new Date(row[6]),
+      }));
+    } catch (error: any) {
+      // If the sheet doesn't exist, return empty array
+      if (error.code === 400 && error.message?.includes('Unable to parse range')) {
+        console.log('ConsoleDiscountCodeUsage sheet does not exist yet. Returning empty usage data.');
+        return [];
+      }
+      throw error;
+    }
   }
 
   static async toggleDiscountCodeStatus(codeId: string, isActive: boolean): Promise<boolean> {
