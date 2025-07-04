@@ -426,10 +426,18 @@ export class GoogleSheetsService {
   }
 
   async generateCustomerId(customerName: string, email: string): Promise<string> {
-    // Use email as customer_id
-    // Clean the email to make it URL-safe and remove special characters
-    const cleanEmail = email.toLowerCase().replace(/[^a-z0-9@._-]/g, '').replace(/[^a-z0-9._-]/g, '_')
-    return cleanEmail
+    // Check if customer already exists
+    const orders = await this.getOrdersData()
+    const existingCustomer = orders.find((order) => order.customerEmail.toLowerCase() === email.toLowerCase())
+
+    if (existingCustomer) {
+      return existingCustomer.customerId
+    }
+
+    // Generate new customer ID
+    const timestamp = Date.now().toString(36)
+    const random = Math.random().toString(36).substr(2, 5)
+    return `CUST-${timestamp}-${random}`.toUpperCase()
   }
 
   async getCustomersData(): Promise<Customer[]> {
