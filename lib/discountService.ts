@@ -1,5 +1,6 @@
 import { DiscountCode, DiscountCodeUsage, DiscountValidationResult, CreateDiscountCodeRequest } from './types/discount';
 import { GoogleSheetsService } from './google-sheets';
+import type { Customer } from './types';
 
 export class ConsoleDiscountService {
   private static generateId(): string {

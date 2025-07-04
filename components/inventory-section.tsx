@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label"
 import { Plus, Search, Package, AlertTriangle, Edit, RefreshCw, Copy, MessageCircle, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { InventoryItem } from "@/lib/google-sheets"
+import type { InventoryItem } from "@/lib/types"
 
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"

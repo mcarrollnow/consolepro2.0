@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Search, Clock, CheckCircle, Package, MapPin, Calendar, DollarSign, User, Mail } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { OrderCustomer } from "@/lib/google-sheets"
+import type { OrderCustomer } from "@/lib/types"
 import Link from "next/link"
 
 export function OrderArchiveSection() {

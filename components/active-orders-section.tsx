@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Package, MapPin } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { OrderCustomer } from "@/lib/google-sheets"
-import { getUnifiedOrderStatus } from "@/lib/google-sheets"
+import type { OrderCustomer } from "@/lib/types"
+import { getUnifiedOrderStatus } from "@/lib/types"
 import Link from "next/link"
 
 export function ActiveOrdersSection() {
