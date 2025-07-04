@@ -40,6 +40,46 @@ interface ProductInfo {
   price?: string
 }
 
+const bpc157Info: ProductInfo = {
+  name: "BPC-157",
+  scientificName: "Body Protection Compound 157 (PL 14736)",
+  category: "Tissue Repair Peptide",
+  description: "BPC-157 is a synthetic pentadecapeptide derived from a protective protein found in gastric juice, known as Body Protection Compound. This 15-amino-acid sequence is optimized for stability and bioactivity, particularly in gastrointestinal and musculoskeletal contexts, where it promotes tissue repair and angiogenesis through multiple pathways.",
+  benefits: [
+    "50% faster tendon healing in animal studies",
+    "60% faster gastric ulcer recovery",
+    "Enhanced angiogenesis and tissue repair",
+    "Reduced inflammation without systemic effects",
+    "Promotes fibroblast migration and collagen production",
+    "Safe at high doses (>100 µg/kg/day in rats)",
+    "No hepatic, renal, or neurological toxicities",
+    "Potential neurological and cardiovascular benefits"
+  ],
+  dosage: "200-800 mcg per day (research-based dosing)",
+  halfLife: "Less than 30 minutes",
+  administration: "Subcutaneous, intraperitoneal, or oral routes",
+  sideEffects: [
+    "No significant side effects reported in animal studies",
+    "Well-tolerated at therapeutic doses",
+    "No hepatic, renal, or neurological toxicities",
+    "Limited long-term human data available"
+  ],
+  contraindications: [
+    "Not approved for human therapeutic use",
+    "Research use only with IRB/IACUC oversight",
+    "No specific contraindications beyond regulatory limits",
+    "Limited human safety data"
+  ],
+  researchStatus: "Preclinical (Animal Studies Only)",
+  imageUrl: "/bpc157.png",
+  gradientImageUrl: "/bpc-157-gradient.jpg",
+  molecularWeight: "1,419.6 Da",
+  sequence: "Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val",
+  storage: "Store at -20°C, avoid repeated freeze-thaw cycles",
+  availability: "Available",
+  price: "$199.99 per vial"
+}
+
 const cagrilintideInfo: ProductInfo = {
   name: "Cagrilintide",
   scientificName: "Cagrilintide (AMG 133)",
@@ -84,7 +124,7 @@ const cagrilintideInfo: ProductInfo = {
 }
 
 export function ProductInformationSection() {
-  const [selectedProduct, setSelectedProduct] = useState<ProductInfo>(cagrilintideInfo)
+  const [selectedProduct, setSelectedProduct] = useState<ProductInfo>(bpc157Info)
 
   return (
     <div className="space-y-6">
@@ -106,6 +146,14 @@ export function ProductInformationSection() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
+            <Button
+              variant={selectedProduct.name === "BPC-157" ? "default" : "outline"}
+              onClick={() => setSelectedProduct(bpc157Info)}
+              className="flex items-center gap-2"
+            >
+              <Pill className="h-4 w-4" />
+              BPC-157
+            </Button>
             <Button
               variant={selectedProduct.name === "Cagrilintide" ? "default" : "outline"}
               onClick={() => setSelectedProduct(cagrilintideInfo)}
@@ -224,56 +272,129 @@ export function ProductInformationSection() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-white mb-2">Standard Dosing Schedule (16-week escalation)</h4>
-                    <div className="bg-slate-900/50 p-4 rounded-lg space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Week 1-4:</span>
-                        <span className="text-white font-medium">0.25 mg once weekly</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Week 5-8:</span>
-                        <span className="text-white font-medium">0.5 mg once weekly</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Week 9-12:</span>
-                        <span className="text-white font-medium">1.0 mg once weekly</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Week 13-16:</span>
-                        <span className="text-white font-medium">1.7 mg once weekly</span>
-                      </div>
-                      <div className="flex justify-between items-center border-t border-slate-700/50 pt-2">
-                        <span className="text-slate-400">Week 17 onwards:</span>
-                        <span className="text-white font-medium">2.4 mg once weekly (maintenance)</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-white mb-2">Administration Method</h4>
-                    <p className="text-slate-300">{selectedProduct.administration}</p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-white mb-2">Dosing Options</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
-                        <div>
-                          <span className="text-white font-medium">Monotherapy:</span>
-                          <span className="text-slate-300 text-sm"> Studied at 0.3, 0.6, 1.2, 2.4, and 4.5 mg weekly</span>
+                  {selectedProduct.name === "BPC-157" ? (
+                    <>
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Research-Based Dosing Guidelines</h4>
+                        <div className="bg-slate-900/50 p-4 rounded-lg space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Low Dose:</span>
+                            <span className="text-white font-medium">200-400 mcg per day</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Standard Dose:</span>
+                            <span className="text-white font-medium">400-600 mcg per day</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">High Dose:</span>
+                            <span className="text-white font-medium">600-800 mcg per day</span>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-slate-700/50 pt-2">
+                            <span className="text-slate-400">Animal Research:</span>
+                            <span className="text-white font-medium">10 mcg/kg/day in rats</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
-                        <div>
-                          <span className="text-white font-medium">Combination (CagriSema):</span>
-                          <span className="text-slate-300 text-sm"> 2.4 mg weekly with semaglutide 2.4 mg</span>
+                      
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Administration Methods</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="text-white font-medium">Subcutaneous:</span>
+                              <span className="text-slate-300 text-sm"> Preferred method for optimal absorption</span>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="text-white font-medium">Oral:</span>
+                              <span className="text-slate-300 text-sm"> Effective for gut health applications</span>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="text-white font-medium">Intraperitoneal:</span>
+                              <span className="text-slate-300 text-sm"> Alternative injection route</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Treatment Duration</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Acute Healing:</span>
+                            <span className="text-white font-medium">2-4 weeks</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Chronic Conditions:</span>
+                            <span className="text-white font-medium">4-8 weeks</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Maximum Studied:</span>
+                            <span className="text-white font-medium">14+ days in animals</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Standard Dosing Schedule (16-week escalation)</h4>
+                        <div className="bg-slate-900/50 p-4 rounded-lg space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Week 1-4:</span>
+                            <span className="text-white font-medium">0.25 mg once weekly</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Week 5-8:</span>
+                            <span className="text-white font-medium">0.5 mg once weekly</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Week 9-12:</span>
+                            <span className="text-white font-medium">1.0 mg once weekly</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Week 13-16:</span>
+                            <span className="text-white font-medium">1.7 mg once weekly</span>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-slate-700/50 pt-2">
+                            <span className="text-slate-400">Week 17 onwards:</span>
+                            <span className="text-white font-medium">2.4 mg once weekly (maintenance)</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Administration Method</h4>
+                        <p className="text-slate-300">{selectedProduct.administration}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-white mb-2">Dosing Options</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="text-white font-medium">Monotherapy:</span>
+                              <span className="text-slate-300 text-sm"> Studied at 0.3, 0.6, 1.2, 2.4, and 4.5 mg weekly</span>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="text-white font-medium">Combination (CagriSema):</span>
+                              <span className="text-slate-300 text-sm"> 2.4 mg weekly with semaglutide 2.4 mg</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -392,9 +513,64 @@ export function ProductInformationSection() {
                         {selectedProduct.researchStatus}
                       </Badge>
                     </div>
-                    <p className="text-slate-300 text-sm">
-                      This product is currently in clinical development. All information provided is based on available research data and should not be considered as medical advice.
-                    </p>
+                    
+                    {selectedProduct.name === "BPC-157" ? (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-white mb-2">Key Research Findings</h4>
+                          <div className="bg-slate-900/50 p-3 rounded-lg space-y-2">
+                            <div className="flex items-start gap-2">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
+                              <span className="text-slate-300 text-sm">50% faster tendon healing in rats (Sikiric et al., 2017)</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
+                              <span className="text-slate-300 text-sm">60% faster gastric ulcer recovery</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
+                              <span className="text-slate-300 text-sm">Enhanced angiogenesis and tissue repair</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0" />
+                              <span className="text-slate-300 text-sm">No toxicity at >100 µg/kg/day in rats</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-white mb-2">Mechanism of Action</h4>
+                          <p className="text-slate-300 text-sm">
+                            BPC-157 promotes tissue repair through upregulation of VEGF, EGF, and nitric oxide synthesis. 
+                            It enhances fibroblast migration, collagen production, and endothelial cell proliferation without 
+                            systemic growth effects.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-white mb-2">Animal Models Tested</h4>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Rats</Badge>
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Mice</Badge>
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Rabbits</Badge>
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Cell Cultures</Badge>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-white mb-2">Research Limitations</h4>
+                          <p className="text-slate-300 text-sm">
+                            Limited to preclinical animal models. No human clinical trials conducted. 
+                            Small sample sizes (10-20 rats per group). Long-term safety data needed.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-300 text-sm">
+                        This product is currently in clinical development. All information provided is based on available research data and should not be considered as medical advice.
+                      </p>
+                    )}
+                    
                     <Button variant="outline" className="w-full">
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View Research Papers

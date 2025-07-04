@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)https://embed.molview.org/v1/?mode=balls&cid=92432 -->
+<html><!--
+This file is part of MolView (http://molview.org)
+Copyright (c) 2014-2023 Herman Bergwerf
+--><!--
+This embedding page requires the following files:
+- build/molview-embed.min.css
+- build/molview-base.min.js
+- build/molview-core.min.js
+- build/molview-embed.min.js
+- jmol/**
+
+Query parameters:
+- smiles = resolve SMILES string
+- cid = load CID
+- pdbid = load PDBID
+- codid = load CIF from COD
+- mode = balls || stick || vdw || wireframe || line
+- chainType = ribbon || cylinders || btube || ctrace || bonds (alias of chainBonds=true)
+- chainBonds = true || false
+- chainColor = ss || spectrum || chain || residue || polarity || bfactor
+- bg = black || gray || white
+--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<title>MolView</title>
+
+		<!-- CSS -->
+		<link type="text/css" rel="stylesheet" href="./css(1)">
+		<link type="text/css" rel="stylesheet" href="./molview-embed.min.css" media="screen">
+
+		<!-- JS -->
+		<script type="text/javascript" src="./molview-base.min.js"></script>
+		<script type="text/javascript" src="./molview-core.min.js"></script>
+		<script type="text/javascript" src="./molview-embed.min.js"></script>
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="./js"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', 'G-XB95HZ8NES');
+		</script>
+
+		<!-- Setup -->
+		<script type="text/javascript">
+			Model.JSmol.hq = true;
+			MolView.touch = false;
+			MolView.mobile = false;
+			MolView.layout = 'layout-vsplit';
+			Request.CIR.available = true;
+			Request.API_ROOT = "http://molview.org/";
+		</script>
+	</head>
+	<body id="model" class="" style="background: rgb(0, 0, 0);">
+		<div id="chemdoodle" class="render-engine full-cover" style="display: none;"><canvas id="chemdoodle-canvas"></canvas></div>
+		<div id="jsmol" class="render-engine full-cover" style="display: none;"></div>
+		<div id="glmol" class="render-engine full-cover" style="display: block;"><canvas width="640" height="480" style="width: 320px; height: 240px;"></canvas></div>
+		<div id="messages"><div class="message alert-message"><div class="message-text">Failed to load structure from its database</div><button class="message-close-btn">OK</button></div></div>
+	
+
+</body></html>
