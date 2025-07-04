@@ -55,7 +55,7 @@ export function OrderArchiveSection() {
       order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.customerId && order.customerId.toLowerCase().includes(searchTerm.toLowerCase())),
+              (order.customer_id && order.customer_id.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const getStatusIcon = (status: string) => {
@@ -244,14 +244,14 @@ export function OrderArchiveSection() {
                       <div className="space-y-1">
                         <div className="text-white font-medium">
                           <Link 
-                            href={`/customers/${order.customerId}`}
+                            href={`/customers/${order.customer_id}`}
                             className="text-cyan-400 hover:text-cyan-300 hover:underline"
                           >
                             {order.customerName}
                           </Link>
                         </div>
                         <div className="text-xs text-slate-400">
-                          ID: {order.customerId}
+                          ID: {order.customer_id}
                         </div>
                       </div>
                     </TableCell>
@@ -320,7 +320,7 @@ export function OrderArchiveSection() {
                     <div className="flex justify-between">
                       <span className="text-slate-300">Name:</span>
                       <Link 
-                        href={`/customers/${selectedOrder.customerId}`}
+                        href={`/customers/${selectedOrder.customer_id}`}
                         className="text-cyan-400 hover:text-cyan-300 hover:underline"
                       >
                         {selectedOrder.customerName}
@@ -328,7 +328,7 @@ export function OrderArchiveSection() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-300">ID:</span>
-                      <span className="text-white font-mono">{selectedOrder.customerId}</span>
+                      <span className="text-white font-mono">{selectedOrder.customer_id}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-300">Email:</span>

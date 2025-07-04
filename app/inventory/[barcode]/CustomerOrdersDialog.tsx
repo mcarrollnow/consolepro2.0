@@ -10,7 +10,7 @@ import Link from "next/link"
 
 interface CustomerOrdersDialogProps {
   customer: {
-    customerId: string
+    customer_id: string
     name: string
     email: string
     phone: string
@@ -71,7 +71,7 @@ export function CustomerOrdersDialog({ customer, productName }: CustomerOrdersDi
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-slate-400">Customer ID</p>
-                <p className="text-white font-mono">{customer.customerId}</p>
+                <p className="text-white font-mono">{customer.customer_id}</p>
               </div>
               <div>
                 <p className="text-slate-400">Name</p>
@@ -92,7 +92,7 @@ export function CustomerOrdersDialog({ customer, productName }: CustomerOrdersDi
                   <span className="text-slate-400">Total Purchases: <span className="text-white font-bold">{customer.purchases}</span></span>
                   <span className="text-slate-400">Last Purchase: <span className="text-white font-mono">{customer.lastPurchase}</span></span>
                 </div>
-                <Link href={`/customers/${customer.customerId}`}>
+                <Link href={`/customers/${customer.customer_id}`}>
                   <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
                     View Full Profile
                   </Button>

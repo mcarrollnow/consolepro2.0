@@ -80,7 +80,7 @@ async function fetchLiveProductProfile(barcode: string) {
   }
 
   // Top customers: aggregate by customer_id, but use name/email/phone from order row
-  const customerMap: Record<string, { customerId: string, name: string, email: string, phone: string, purchases: number, lastPurchase: string, orders: any[] }> = {}
+  const customerMap: Record<string, { customer_id: string, name: string, email: string, phone: string, purchases: number, lastPurchase: string, orders: any[] }> = {}
   
   console.log(`Processing ${productOrders.length} orders for product ${barcode}`)
   
@@ -94,7 +94,7 @@ async function fetchLiveProductProfile(barcode: string) {
     
     if (!customerMap[customerId]) {
       customerMap[customerId] = {
-        customerId,
+        customer_id: customerId,
         name,
         email,
         phone,
@@ -329,7 +329,7 @@ export default async function ProductDetailPage({ params }: { params: { barcode?
                 <TableRow key={i} className="hover:bg-slate-800/60">
                   <TableCell className="text-white font-medium">
                     <Link 
-                      href={`/customers/${c.customerId}`}
+                      href={`/customers/${c.customer_id}`}
                       className="text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer"
                     >
                       {c.name}
