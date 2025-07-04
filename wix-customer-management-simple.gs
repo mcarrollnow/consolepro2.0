@@ -365,10 +365,10 @@ function ensureCustomerExists(customerData) {
 }
 
 function generateCustomerId(name, email) {
-  const timestamp = new Date().getTime();
-  const namePart = name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
-  const emailPart = email.split('@')[0].substring(0, 3).toUpperCase();
-  return `CUST_${namePart}${emailPart}_${timestamp}`;
+  // Use email as customer_id
+  // Clean the email to make it URL-safe and remove special characters
+  const cleanEmail = email.toLowerCase().replace(/[^a-z0-9@._-]/g, '').replace(/[^a-z0-9._-]/g, '_');
+  return cleanEmail;
 }
 
 function generateOrderId() {
