@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     // Build query parameters
     const queryParams: Stripe.InvoiceListParams = {
       limit: Math.min(limit, 100), // Cap at 100 for performance
-      expand: ['data.customer'], // Only expand customer data
+      expand: ['data.customer', 'data.subscription'], // Expand full data for maximum visibility
     }
 
     if (status) {
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
         name: typeof invoice.customer === 'object' ? invoice.customer.name : null,
         email: typeof invoice.customer === 'object' ? invoice.customer.email : null,
       },
-      subscription_id: typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id || null,
+      subscription_id: invoice.subscription,
       description: invoice.description,
       metadata: invoice.metadata,
       lines: invoice.lines.data.map(line => ({
