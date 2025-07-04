@@ -178,7 +178,7 @@ export class GoogleSheetsService {
       // Active orders from the Orders sheet
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:BM", // Active orders only
+        range: "Orders!A:BN", // Updated to match new structure
       })
 
       const rows = response.data.values || []
@@ -208,10 +208,10 @@ export class GoogleSheetsService {
           }
         }
         
-        // Customer info (header-based)
-        const customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
-        const customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
-        const customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
+        // Customer info (header-based) - Updated for new structure
+        const customerName = paddedRow[headerMap["Customer_Name"]] || paddedRow[headerMap["customer_name"]] || ""
+        const customerEmail = paddedRow[headerMap["Email"]] || paddedRow[headerMap["customer_email"]] || ""
+        const customerPhone = paddedRow[headerMap["Phone"]] || paddedRow[headerMap["customer_phone"]] || ""
         const businessName = paddedRow[headerMap["Business_Name"]] || ""
         const customer_id = paddedRow[headerMap["customer_id"]] || ""
 
@@ -262,7 +262,7 @@ export class GoogleSheetsService {
         console.log("Archived Orders sheet not found, falling back to Orders sheet")
         response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
-          range: "Orders!A:BM",
+          range: "Orders!A:BN",  // Updated to match new structure
         })
         isArchivedOrders = false
       }
@@ -302,12 +302,12 @@ export class GoogleSheetsService {
           }
         }
 
-        // Customer info (header-based)
+        // Customer info (header-based) - Updated for new structure
         let customerName, customerEmail, customerPhone, businessName
-        // For archived orders, use lowercase header names
-        customerName = paddedRow[headerMap["customer_name"]] || paddedRow[headerMap["Customer_Name"]] || ""
-        customerEmail = paddedRow[headerMap["customer_email"]] || paddedRow[headerMap["Email"]] || ""
-        customerPhone = paddedRow[headerMap["customer_phone"]] || paddedRow[headerMap["Phone"]] || ""
+        // Use the new structure: Customer_Name (D), customer_id (E), Email (F), Business_Name (G), Phone (H)
+        customerName = paddedRow[headerMap["Customer_Name"]] || paddedRow[headerMap["customer_name"]] || ""
+        customerEmail = paddedRow[headerMap["Email"]] || paddedRow[headerMap["customer_email"]] || ""
+        customerPhone = paddedRow[headerMap["Phone"]] || paddedRow[headerMap["customer_phone"]] || ""
         businessName = paddedRow[headerMap["Business_Name"]] || ""
 
         const customer_id = paddedRow[headerMap["customer_id"]] || ""
@@ -397,23 +397,48 @@ export class GoogleSheetsService {
       // Generate new order ID
       const orderId = `ORD-${Date.now()}`
 
+      // Build the row according to the NEW Orders sheet structure
       const values = [
         [
-          orderId,
-          order.customerId,
-          order.customerName,
-          order.customerEmail,
-          order.orderDate,
-          order.status,
-          order.total,
-          order.items,
-          order.notes,
+          new Date().toISOString(),                    // Submission_Timestamp (A)
+          orderId,                                     // Order_Code (B)
+          "RETAIL_TRANSACTION",                        // Record_Type (C)
+          order.customerName,                          // Customer_Name (D)
+          order.customerId,                            // customer_id (E) ← KEY CHANGE!
+          order.customerEmail,                         // Email (F)
+          order.businessName || "",                    // Business_Name (G)
+          order.phone || "",                           // Phone (H)
+          order.addressStreet || "",                   // Address_Street (I)
+          order.addressCity || "",                     // Address_City (J)
+          order.addressState || "",                    // Address_State (K)
+          order.addressZIP || "",                      // Address_ZIP (L)
+          order.total,                                 // Total_Amount (M)
+          order.notes || "",                           // Special_Instructions (N)
+          "RETAIL",                                    // Order_Type (O)
+          "consolepro_api",                           // Submission_Source (P)
+          "PENDING",                                   // Payment_Status (Q)
+          order.status || "PENDING",                   // Fulfillment_Status (R)
+          "PENDING",                                   // Invoice_Status (S)
+          "SUBMITTED",                                 // Lifecycle_Stage (T)
+          new Date().toISOString(),                    // Last_Updated (U)
+          // Product columns (V-AO) - fill with first product if available
+          order.products?.[0]?.name || "",             // Product_1_Name (V)
+          order.products?.[0]?.barcode || "",          // Product_1_Barcode (W)
+          order.products?.[0]?.price || "",            // Product_1_Price (X)
+          order.products?.[0]?.quantity || "",         // Product_1_Quantity (Y)
+          order.products?.[1]?.name || "",             // Product_2_Name (Z)
+          order.products?.[1]?.barcode || "",          // Product_2_Barcode (AA)
+          order.products?.[1]?.price || "",            // Product_2_Price (AB)
+          order.products?.[1]?.quantity || "",         // Product_2_Quantity (AC)
+          // Continue for products 3-10 (empty for now)
+          "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 
+          "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",  // payment_link through Shipping_Address_ZIP
         ],
       ]
 
       await this.sheets.spreadsheets.values.append({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:I",
+        range: "Orders!A:BN",  // Updated range to cover all columns in new structure
         valueInputOption: "RAW",
         requestBody: { values },
       })
@@ -501,7 +526,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:T", // Match the actual Orders sheet structure
+        range: "Orders!A:BN", // Updated to match new structure
       })
 
       const rows = response.data.values || []
@@ -657,7 +682,7 @@ export class GoogleSheetsService {
       // Get all orders data to find the row
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "Orders!A:BH", // Covers all columns
+        range: "Orders!A:BN", // Updated to match new structure
       })
 
       const rows = response.data.values || []
@@ -729,7 +754,7 @@ export class GoogleSheetsService {
         console.log("Archived Orders not found, using Orders sheet");
         response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
-          range: "Orders!A:BM",
+          range: "Orders!A:BN",
         });
         isArchivedOrders = false;
       }
@@ -838,7 +863,7 @@ export class GoogleSheetsService {
     // Get all orders
     const response = await this.sheets.spreadsheets.values.get({
       spreadsheetId: this.spreadsheetId,
-      range: 'Orders!A:BM',
+              range: 'Orders!A:BN',
     });
     const rows = response.data.values || [];
     const header = rows[0];
