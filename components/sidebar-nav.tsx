@@ -46,6 +46,7 @@ const navItems = [
       { id: "aod-9604", label: "AOD-9604", icon: Pill, path: "/aod-9604" },
       { id: "epithalon", label: "Epithalon", icon: Pill, path: "/epithalon" },
       { id: "ghk-cu", label: "GHK-Cu", icon: Pill, path: "/ghk-cu" },
+      { id: "ghrp-2", label: "GHRP-2", icon: Pill, path: "/ghrp-2" },
     ]
   },
   { id: "emails", label: "Email Center", icon: Mail, path: "/?section=emails" },
