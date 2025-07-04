@@ -10,6 +10,7 @@ import { CustomersSection } from "./customers-section"
 import { AnalyticsSection } from "./analytics-section"
 import { MessagingSection } from "./messaging-section"
 import { DiscountCodesSection } from "./discount-codes-section"
+import InvoicesSection from "./invoices-section"
 
 interface DashboardLayoutProps {
   children?: React.ReactNode
@@ -49,11 +50,9 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
       case "invoices":
         return (
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-white">Invoices & Purchase Orders</h2>
-            <p className="text-slate-400">Google Sheets integration for invoice management</p>
-            <div className="h-64 flex items-center justify-center bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <p className="text-slate-400">Invoice management interface - Google Sheets integration needed</p>
-            </div>
+            <h2 className="text-3xl font-bold text-white">Stripe Invoices</h2>
+            <p className="text-slate-400">View and manage Stripe invoices with read-only access</p>
+            <InvoicesSection />
           </div>
         )
       case "emails":

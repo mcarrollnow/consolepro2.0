@@ -22,6 +22,8 @@ export interface OrderCustomer {
   customerEmail: string
   orderDate: string
   status: string
+  invoiceStatus?: string
+  paymentStatus?: string
   total: number
   items: string
   notes: string
@@ -222,6 +224,8 @@ export class GoogleSheetsService {
           customerEmail: customerEmail,
           orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
           status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+          invoiceStatus: paddedRow[headerMap["Invoice_Status"]] || "",
+          paymentStatus: paddedRow[headerMap["Payment_Status"]] || "",
           total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").replace(/[^0-9.]/g, "")),
           items: products.map(p => p.name).join(", "),
           notes: paddedRow[headerMap["Special_Instructions"]] || "",
@@ -319,6 +323,8 @@ export class GoogleSheetsService {
           customerEmail: customerEmail,
           orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
           status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+          invoiceStatus: paddedRow[headerMap["Invoice_Status"]] || "",
+          paymentStatus: paddedRow[headerMap["Payment_Status"]] || "",
           total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").replace(/[^0-9.]/g, "")),
           items: products.map(p => p.name).join(", "),
           notes: paddedRow[headerMap["Special_Instructions"]] || "",
@@ -704,8 +710,8 @@ export class GoogleSheetsService {
       // Calculate the actual row number (add 2 to account for header row and 0-based index)
       const actualRowNumber = orderRowIndex + 2
 
-      // Update Invoice_Status column (column R, which is index 17)
-      const updateRange = `Orders!R${actualRowNumber}`
+      // Update Invoice_Status column (column S, which is index 18)
+      const updateRange = `Orders!S${actualRowNumber}`
       
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: this.spreadsheetId,
@@ -716,8 +722,8 @@ export class GoogleSheetsService {
         }
       })
 
-      // Also update the Last_Updated column (column T, which is index 19)
-      const lastUpdatedRange = `Orders!T${actualRowNumber}`
+      // Also update the Last_Updated column (column U, which is index 20)
+      const lastUpdatedRange = `Orders!U${actualRowNumber}`
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: this.spreadsheetId,
         range: lastUpdatedRange,
@@ -731,6 +737,125 @@ export class GoogleSheetsService {
       return true
     } catch (error) {
       console.error("Error updating invoice status:", error)
+      return false
+    }
+  }
+
+  async updatePaymentStatus(orderCode: string, paymentStatus: string): Promise<boolean> {
+    try {
+      console.log(`Updating payment status for order ${orderCode} to ${paymentStatus}`)
+      
+      // Get all orders data to find the row
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: "Orders!A:BN",
+      })
+
+      const rows = response.data.values || []
+      if (rows.length === 0) {
+        console.error("No data found in Orders sheet")
+        return false
+      }
+
+      // Find the row with the matching order code (Order_Code is in column B, index 1)
+      const headerRow = rows[0]
+      const dataRows = rows.slice(1)
+      const orderRowIndex = dataRows.findIndex(row => row[1] === orderCode)
+
+      if (orderRowIndex === -1) {
+        console.error(`Order not found: ${orderCode}`)
+        return false
+      }
+
+      // Calculate the actual row number (add 2 to account for header row and 0-based index)
+      const actualRowNumber = orderRowIndex + 2
+
+      // Update Payment_Status column (column Q, which is index 16)
+      const updateRange = `Orders!Q${actualRowNumber}`
+      
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: updateRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[paymentStatus]]
+        }
+      })
+
+      // Also update the Last_Updated column (column U, which is index 20)
+      const lastUpdatedRange = `Orders!U${actualRowNumber}`
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: lastUpdatedRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[new Date().toISOString()]]
+        }
+      })
+
+      console.log(`Successfully updated payment status for order ${orderCode} to ${paymentStatus}`)
+      return true
+    } catch (error) {
+      console.error("Error updating payment status:", error)
+      return false
+    }
+  }
+
+  async updateInvoiceStatusWithLink(orderCode: string, invoiceLink: string): Promise<boolean> {
+    try {
+      console.log(`Updating invoice link for order ${orderCode} to ${invoiceLink}`)
+      
+      // Get all orders data to find the row
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: "Orders!A:BN",
+      })
+
+      const rows = response.data.values || []
+      if (rows.length === 0) {
+        console.error("No data found in Orders sheet")
+        return false
+      }
+
+      // Find the row with the matching order code (Order_Code is in column B, index 1)
+      const headerRow = rows[0]
+      const dataRows = rows.slice(1)
+      const orderRowIndex = dataRows.findIndex(row => row[1] === orderCode)
+
+      if (orderRowIndex === -1) {
+        console.error(`Order not found: ${orderCode}`)
+        return false
+      }
+
+      // Calculate the actual row number (add 2 to account for header row and 0-based index)
+      const actualRowNumber = orderRowIndex + 2
+
+      // Update Invoice_Status column (column S, which is index 18) to "SENT"
+      const statusUpdateRange = `Orders!S${actualRowNumber}`
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: statusUpdateRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[invoiceLink]]
+        }
+      })
+
+      // Also update the Last_Updated column (column U, which is index 20)
+      const lastUpdatedRange = `Orders!U${actualRowNumber}`
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: lastUpdatedRange,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[new Date().toISOString()]]
+        }
+      })
+
+      console.log(`Successfully updated invoice link for order ${orderCode} to ${invoiceLink}`)
+      return true
+    } catch (error) {
+      console.error("Error updating invoice link:", error)
       return false
     }
   }
@@ -813,6 +938,8 @@ export class GoogleSheetsService {
             customerEmail: customerEmail,
             orderDate: paddedRow[headerMap["Submission_Timestamp"]] || "",
             status: paddedRow[headerMap["Fulfillment_Status"]] || "",
+            invoiceStatus: paddedRow[headerMap["Invoice_Status"]] || "",
+            paymentStatus: paddedRow[headerMap["Payment_Status"]] || "",
             total: parseFloat((paddedRow[headerMap["Total_Amount"]] || "0").toString().replace(/[^0-9.]/g, "")),
             items: products.map(p => p.name).join(", "),
             notes: paddedRow[headerMap["Special_Instructions"]] || "",
@@ -889,6 +1016,32 @@ export class GoogleSheetsService {
       },
     });
   }
+}
+
+// Function to determine unified order status based on sheet data
+export function getUnifiedOrderStatus(order: OrderCustomer): string {
+  // Check if it's a new order (no invoice link and no payment status)
+  if (!order.invoice_link && !order.paymentStatus) {
+    return "NEW"
+  }
+  
+  // Check if invoice has been sent (invoice_link exists)
+  if (order.invoice_link && !order.paymentStatus) {
+    return "INVOICE SENT"
+  }
+  
+  // Check if invoice is overdue
+  if (order.invoiceStatus === "OVERDUE") {
+    return "Invoice Overdue"
+  }
+  
+  // Check if payment has been received (payment timestamp exists)
+  if (order.paymentStatus && order.paymentStatus !== "PENDING") {
+    return "Paid-Ready to Ship"
+  }
+  
+  // Default fallback
+  return "NEW"
 }
 
 export const googleSheetsService = new GoogleSheetsService()

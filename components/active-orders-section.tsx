@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Package, MapPin } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { OrderCustomer } from "@/lib/google-sheets"
+import { getUnifiedOrderStatus } from "@/lib/google-sheets"
 import Link from "next/link"
 
 export function ActiveOrdersSection() {
@@ -95,6 +96,36 @@ export function ActiveOrdersSection() {
         return "bg-green-500/20 text-green-400 border-green-500/30"
       default:
         return "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    }
+  }
+
+  const getUnifiedStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "new":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+      case "invoice sent":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+      case "paid-ready to ship":
+        return "bg-green-500/20 text-green-400 border-green-500/30"
+      case "invoice overdue":
+        return "bg-red-500/20 text-red-400 border-red-500/30"
+      default:
+        return "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    }
+  }
+
+  const getUnifiedStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "new":
+        return <Plus className="h-4 w-4" />
+      case "invoice sent":
+        return <CreditCard className="h-4 w-4" />
+      case "paid-ready to ship":
+        return <CheckCircle className="h-4 w-4" />
+      case "invoice overdue":
+        return <AlertCircle className="h-4 w-4" />
+      default:
+        return <Package className="h-4 w-4" />
     }
   }
 
@@ -313,8 +344,7 @@ export function ActiveOrdersSection() {
                   <TableHead className="text-slate-300 font-medium">Customer ID</TableHead>
                   <TableHead className="text-slate-300 font-medium">Items</TableHead>
                   <TableHead className="text-slate-300 font-medium">Total</TableHead>
-                  <TableHead className="text-slate-300 font-medium">Status</TableHead>
-                  <TableHead className="text-slate-300 font-medium">Invoice Status</TableHead>
+                  <TableHead className="text-slate-300 font-medium">Order Status</TableHead>
                   <TableHead className="text-slate-300 font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -356,20 +386,17 @@ export function ActiveOrdersSection() {
                     <TableCell className="text-slate-300 max-w-xs truncate">{order.items}</TableCell>
                     <TableCell className="text-slate-300">${order.total.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Badge className={`${getStatusColor(order.status)} border`}>
-                        <span className="flex items-center space-x-1">
-                          {getStatusIcon(order.status)}
-                          <span>{order.status}</span>
-                        </span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={order.invoiceStatus === "Paid" ? "default" : "secondary"}
-                        className={order.invoiceStatus === "Paid" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-orange-500/20 text-orange-400 border-orange-500/30"}
-                      >
-                        {order.invoiceStatus || "Pending"}
-                      </Badge>
+                      {(() => {
+                        const unifiedStatus = getUnifiedOrderStatus(order)
+                        return (
+                          <Badge className={`${getUnifiedStatusColor(unifiedStatus)} border`}>
+                            <span className="flex items-center space-x-1">
+                              {getUnifiedStatusIcon(unifiedStatus)}
+                              <span>{unifiedStatus}</span>
+                            </span>
+                          </Badge>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -563,22 +590,18 @@ export function ActiveOrdersSection() {
                     <span className="text-white font-mono">{selectedOrder.orderId}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Status:</span>
-                    <Badge className={`${getStatusColor(selectedOrder.status)} border`}>
-                      <span className="flex items-center space-x-1">
-                        {getStatusIcon(selectedOrder.status)}
-                        <span>{selectedOrder.status}</span>
-                      </span>
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Invoice Status:</span>
-                    <Badge 
-                      variant={selectedOrder.invoiceStatus === "Paid" ? "default" : "secondary"}
-                      className={selectedOrder.invoiceStatus === "Paid" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-orange-500/20 text-orange-400 border-orange-500/30"}
-                    >
-                      {selectedOrder.invoiceStatus || "Pending"}
-                    </Badge>
+                    <span className="text-slate-400">Order Status:</span>
+                    {(() => {
+                      const unifiedStatus = getUnifiedOrderStatus(selectedOrder)
+                      return (
+                        <Badge className={`${getUnifiedStatusColor(unifiedStatus)} border`}>
+                          <span className="flex items-center space-x-1">
+                            {getUnifiedStatusIcon(unifiedStatus)}
+                            <span>{unifiedStatus}</span>
+                          </span>
+                        </Badge>
+                      )
+                    })()}
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Total:</span>
