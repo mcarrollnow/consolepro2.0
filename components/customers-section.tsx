@@ -83,24 +83,6 @@ export function CustomersSection() {
     }
   }
 
-  const handleCreateWixCustomer = async (customerId: string) => {
-    if (!APPS_SCRIPT_URL) {
-      alert("Apps Script URL is not set.");
-      return;
-    }
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "createWixCustomerFromProfile", customerId }),
-      });
-      const data = await res.json();
-      alert(data.result || "Wix customer creation triggered.");
-    } catch (error) {
-      alert("Failed to create Wix customer: " + error);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -258,14 +240,6 @@ export function CustomersSection() {
                       >
                         View Profile
                       </Link>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => handleCreateWixCustomer(customer.customer_id)}
-                        className="bg-cyan-700 hover:bg-cyan-600 text-white px-2 py-1 rounded text-xs"
-                      >
-                        Create Wix Customer
-                      </button>
                     </TableCell>
                   </TableRow>
                 ))}

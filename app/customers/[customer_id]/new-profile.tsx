@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Star, Package, Calendar, DollarSign } from "lucide-react";
 
 // Fetch customer data by ID
 async function getCustomer(customer_id: string) {
@@ -50,38 +53,101 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "processing":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+      case "shipped":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+      case "delivered":
+        return "bg-green-500/20 text-green-400 border-green-500/30"
+      default:
+        return "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    }
+  }
+
+  const getCustomerStatusColor = (status: string) => {
+    switch (status) {
+      case "VIP":
+        return "bg-purple-500/20 text-purple-400 border-purple-500/30"
+      case "Regular":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+      case "New":
+        return "bg-green-500/20 text-green-400 border-green-500/30"
+      default:
+        return "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    }
+  }
+
   const CustomerProfileContent = () => (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-white">Customer Profile</h2>
-        <Link href="/customers" className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded shadow">Back to Customers</Link>
+        <div>
+          <h2 className="text-3xl font-bold text-white">Customer Profile</h2>
+          <p className="text-slate-400 mt-1">Customer ID: {customer.customer_id}</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Link href="/customers">
+            <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+              Back to Customers
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-6">
-            <p className="text-slate-400 text-sm">Total Orders</p>
-            <p className="text-2xl font-bold text-white">{totalOrders}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm">Total Orders</p>
+                <p className="text-2xl font-bold text-white">{totalOrders}</p>
+              </div>
+              <div className="p-2 bg-cyan-500/20 rounded-lg">
+                <Package className="h-6 w-6 text-cyan-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-6">
-            <p className="text-slate-400 text-sm">Total Spent</p>
-            <p className="text-2xl font-bold text-green-400">${totalSpent.toFixed(2)}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm">Total Spent</p>
+                <p className="text-2xl font-bold text-green-400">${totalSpent.toFixed(2)}</p>
+              </div>
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <DollarSign className="h-6 w-6 text-green-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-6">
-            <p className="text-slate-400 text-sm">First Order</p>
-            <p className="text-2xl font-bold text-white">{firstOrderDate}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm">First Order</p>
+                <p className="text-2xl font-bold text-white">{firstOrderDate}</p>
+              </div>
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Calendar className="h-6 w-6 text-blue-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-6">
-            <p className="text-slate-400 text-sm">Last Order</p>
-            <p className="text-2xl font-bold text-white">{lastOrderDate}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm">Last Order</p>
+                <p className="text-2xl font-bold text-white">{lastOrderDate}</p>
+              </div>
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Calendar className="h-6 w-6 text-purple-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -116,7 +182,7 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-slate-400 text-sm">Customer ID</p>
-              <p className="text-white">{customer.customer_id}</p>
+              <p className="text-white font-mono">{customer.customer_id}</p>
             </div>
             <div>
               <p className="text-slate-400 text-sm">Name</p>
@@ -124,11 +190,11 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
             </div>
             <div>
               <p className="text-slate-400 text-sm">Email</p>
-              <p className="text-white">{customer.email}</p>
+              <p className="text-cyan-300 font-mono">{customer.email}</p>
             </div>
             <div>
               <p className="text-slate-400 text-sm">Phone</p>
-              <p className="text-white">{customer.phone}</p>
+              <p className="text-cyan-300 font-mono">{customer.phone}</p>
             </div>
             <div>
               <p className="text-slate-400 text-sm">Company</p>
@@ -136,7 +202,10 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
             </div>
             <div>
               <p className="text-slate-400 text-sm">Status</p>
-              <p className="text-white">{customer.customer_status}</p>
+              <Badge className={getCustomerStatusColor(customer.customer_status)}>
+                {customer.customer_status === "VIP" && <Star className="h-3 w-3 mr-1" />}
+                {customer.customer_status}
+              </Badge>
             </div>
             <div>
               <p className="text-slate-400 text-sm">Tags</p>
@@ -148,11 +217,11 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
             </div>
             <div>
               <p className="text-slate-400 text-sm">Wix Contact ID</p>
-              <p className="text-white">{customer.wix_contact_id || "Not set"}</p>
+              <p className="text-white font-mono">{customer.wix_contact_id || "Not set"}</p>
             </div>
             <div>
               <p className="text-slate-400 text-sm">Square Customer ID</p>
-              <p className="text-white">{customer.square_customer_id || "Not set"}</p>
+              <p className="text-white font-mono">{customer.square_customer_id || "Not set"}</p>
             </div>
           </div>
           <div className="mt-4">
@@ -178,7 +247,7 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-slate-700">
                   <TableHead className="text-slate-300">Order ID</TableHead>
                   <TableHead className="text-slate-300">Date</TableHead>
                   <TableHead className="text-slate-300">Status</TableHead>
@@ -189,13 +258,18 @@ export default async function CustomerNewProfilePage({ params }: { params: { cus
               </TableHeader>
               <TableBody>
                 {customerOrders.map((order: any) => (
-                  <TableRow key={order.orderId}>
-                    <TableCell className="text-slate-300 font-mono text-xs">{order.orderId}</TableCell>
+                  <TableRow key={order.orderId} className="border-slate-700 hover:bg-slate-800/30">
+                    <TableCell className="text-cyan-300 font-mono text-xs">{order.orderId}</TableCell>
                     <TableCell className="text-slate-300">{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-slate-300">{order.status || "N/A"}</TableCell>
-                    <TableCell className="text-slate-300">${order.total?.toFixed(2) || "0.00"}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(order.status)}>
+                        <Package className="h-3 w-3 mr-1" />
+                        {order.status || "N/A"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-green-400 font-bold">${order.total?.toFixed(2) || "0.00"}</TableCell>
                     <TableCell className="text-slate-300">{order.items || "N/A"}</TableCell>
-                    <TableCell className="text-slate-300">{order.notes || "N/A"}</TableCell>
+                    <TableCell className="text-slate-400 text-sm max-w-xs truncate">{order.notes || "N/A"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
