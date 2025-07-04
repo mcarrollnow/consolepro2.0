@@ -83,6 +83,18 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
         />
       )}
       
+      {/* Floating Mobile Toggle Button */}
+      {isMobile && collapsed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(false)}
+          className="fixed top-4 left-4 z-50 bg-slate-800/90 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/90 shadow-lg"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      )}
+      
       <div
         className={cn(
           "relative h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 transition-all duration-300 z-50",
