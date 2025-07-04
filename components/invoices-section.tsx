@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ExternalLink, Download, RefreshCw, Search, Send, Eye, ChevronDown, MessageSquare, Mail, Share2 } from "lucide-react"
+import { ExternalLink, Download, RefreshCw, Search, Send, Eye, ChevronDown, MessageSquare, Mail, Share2, Archive, FileDown, X } from "lucide-react"
 import { toast } from "sonner"
 
 interface StripeInvoice {
@@ -58,6 +58,8 @@ export default function InvoicesSection() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [limit, setLimit] = useState(50)
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set())
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   const fetchInvoices = async () => {
     try {
@@ -132,6 +134,51 @@ export default function InvoicesSection() {
       invoice.description?.toLowerCase().includes(searchLower)
     )
   })
+
+  const handleSelectInvoice = (invoiceId: string) => {
+    const newSelected = new Set(selectedInvoices)
+    if (newSelected.has(invoiceId)) {
+      newSelected.delete(invoiceId)
+    } else {
+      newSelected.add(invoiceId)
+    }
+    setSelectedInvoices(newSelected)
+    setIsSelectionMode(true)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedInvoices.size === filteredInvoices.length) {
+      setSelectedInvoices(new Set())
+      setIsSelectionMode(false)
+    } else {
+      const allIds = new Set(filteredInvoices.map(invoice => invoice.id))
+      setSelectedInvoices(allIds)
+      setIsSelectionMode(true)
+    }
+  }
+
+  const handleBulkAction = (action: 'archive' | 'export' | 'send' | 'cancel') => {
+    const selectedInvoiceList = filteredInvoices.filter(invoice => selectedInvoices.has(invoice.id))
+    
+    switch (action) {
+      case 'archive':
+        toast.success(`Archiving ${selectedInvoiceList.length} invoices...`)
+        // TODO: Implement archive functionality
+        break
+      case 'export':
+        toast.success(`Exporting ${selectedInvoiceList.length} invoices...`)
+        // TODO: Implement export functionality
+        break
+      case 'send':
+        toast.success(`Sending ${selectedInvoiceList.length} invoices...`)
+        // TODO: Implement bulk send functionality
+        break
+      case 'cancel':
+        setSelectedInvoices(new Set())
+        setIsSelectionMode(false)
+        break
+    }
+  }
 
   const handleSendInvoice = (type: 'text' | 'email' | 'share', invoice: StripeInvoice) => {
     const invoiceUrl = invoice.hosted_invoice_url || invoice.invoice_pdf
@@ -273,11 +320,73 @@ export default function InvoicesSection() {
           </Select>
         </div>
 
+        {/* Bulk Actions Sub-menu */}
+        {isSelectionMode && (
+          <div className="mb-4 p-3 bg-gray-800/50 border border-gray-600 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-300">
+                  {selectedInvoices.size} invoice{selectedInvoices.size !== 1 ? 's' : ''} selected
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkAction('archive')}
+                    className="text-black bg-white border-gray-600 hover:bg-gray-100"
+                  >
+                    <Archive className="h-4 w-4 mr-1" />
+                    Archive
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkAction('export')}
+                    className="text-black bg-white border-gray-600 hover:bg-gray-100"
+                  >
+                    <FileDown className="h-4 w-4 mr-1" />
+                    Export
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkAction('send')}
+                    className="text-black bg-white border-gray-600 hover:bg-gray-100"
+                  >
+                    <Send className="h-4 w-4 mr-1" />
+                    Send
+                  </Button>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleBulkAction('cancel')}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Invoices Table */}
         <div className="rounded-md border border-gray-700">
           <Table>
             <TableHeader>
               <TableRow className="border-gray-700">
+                <TableHead className="text-white border-gray-700 w-12">
+                  <div className="flex items-center justify-center">
+                    <div
+                      className={`w-4 h-4 border-2 border-white/50 rounded cursor-pointer transition-all duration-200 ${
+                        selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0
+                          ? 'bg-white/50'
+                          : 'bg-transparent'
+                      }`}
+                      onClick={handleSelectAll}
+                    />
+                  </div>
+                </TableHead>
                 <TableHead className="text-white border-gray-700">Invoice #</TableHead>
                 <TableHead className="text-white border-gray-700">Customer</TableHead>
                 <TableHead className="text-white border-gray-700">Status</TableHead>
@@ -292,13 +401,29 @@ export default function InvoicesSection() {
             <TableBody>
               {filteredInvoices.length === 0 ? (
                 <TableRow className="border-gray-700">
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-400 border-gray-700">
+                  <TableCell colSpan={10} className="text-center py-8 text-gray-400 border-gray-700">
                     No invoices found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id} className="border-gray-700 hover:bg-gray-800">
+                  <TableRow key={invoice.id} className="border-gray-700 hover:bg-gray-800 group">
+                    <TableCell className="border-gray-700">
+                      <div className="flex items-center justify-center">
+                        <div
+                          className={`w-4 h-4 border-2 border-white/50 rounded cursor-pointer transition-all duration-200 ${
+                            selectedInvoices.has(invoice.id) || isSelectionMode
+                              ? 'opacity-100'
+                              : 'opacity-0 group-hover:opacity-100'
+                          } ${
+                            selectedInvoices.has(invoice.id)
+                              ? 'bg-white/50'
+                              : 'bg-transparent'
+                          }`}
+                          onClick={() => handleSelectInvoice(invoice.id)}
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium text-white border-gray-700">
                       {invoice.number || invoice.id.slice(-8)}
                     </TableCell>
