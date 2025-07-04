@@ -426,18 +426,34 @@ export class GoogleSheetsService {
   }
 
   async generateCustomerId(customerName: string, email: string): Promise<string> {
-    // Check if customer already exists
-    const orders = await this.getOrdersData()
-    const existingCustomer = orders.find((order) => order.customerEmail.toLowerCase() === email.toLowerCase())
+    // First, check if customer already exists in Customers sheet
+    try {
+      const customers = await this.getCustomersData()
+      const existingCustomer = customers.find((customer) => customer.email.toLowerCase() === email.toLowerCase())
+      
+      if (existingCustomer) {
+        console.log(`Found existing customer: ${existingCustomer.customer_id} for email: ${email}`)
+        return existingCustomer.customer_id
+      }
+    } catch (error) {
+      console.log("Could not check Customers sheet, falling back to Orders sheet")
+    }
 
-    if (existingCustomer) {
-      return existingCustomer.customerId
+    // Fallback: Check if customer already exists in Orders
+    const orders = await this.getOrdersData()
+    const existingOrder = orders.find((order) => order.customerEmail.toLowerCase() === email.toLowerCase())
+
+    if (existingOrder) {
+      console.log(`Found existing order with customer: ${existingOrder.customerId} for email: ${email}`)
+      return existingOrder.customerId
     }
 
     // Generate new customer ID
     const timestamp = Date.now().toString(36)
     const random = Math.random().toString(36).substr(2, 5)
-    return `CUST-${timestamp}-${random}`.toUpperCase()
+    const newCustomerId = `CUST-${timestamp}-${random}`.toUpperCase()
+    console.log(`Generated new customer ID: ${newCustomerId} for email: ${email}`)
+    return newCustomerId
   }
 
   async getCustomersData(): Promise<Customer[]> {
@@ -565,7 +581,7 @@ export class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.inventorySheetId,
-        range: "Sales!A:F", // Timestamp, Product Barcode, Quantity, Product, customer_id, Order_Code
+        range: "Sales!A:J", // Updated to cover all 10 columns: Timestamp, Product Barcode, Quantity, Product, customer_id, Customer_Name, Email, Order_Code, Wix_Order_Number, Wix_Contact_Id
       })
       const rows = response.data.values || []
       if (rows.length === 0) return []
@@ -583,12 +599,47 @@ export class GoogleSheetsService {
     }
   }
 
-  async addSale({ barcode, quantity, timestamp, product = "", customer_id = "", order_code = "" }: { barcode: string, quantity: number, timestamp: string, product?: string, customer_id?: string, order_code?: string }): Promise<boolean> {
+  async addSale({ 
+    barcode, 
+    quantity, 
+    timestamp, 
+    product = "", 
+    customer_id = "", 
+    order_code = "",
+    customer_name = "",
+    email = "",
+    wix_order_number = "",
+    wix_contact_id = ""
+  }: { 
+    barcode: string, 
+    quantity: number, 
+    timestamp: string, 
+    product?: string, 
+    customer_id?: string, 
+    order_code?: string,
+    customer_name?: string,
+    email?: string,
+    wix_order_number?: string,
+    wix_contact_id?: string
+  }): Promise<boolean> {
     try {
-      const values = [[timestamp, barcode, quantity, product, customer_id, order_code]]
+      // Updated to match the new Sales sheet structure with all columns
+      const values = [[
+        timestamp, 
+        barcode, 
+        quantity, 
+        product, 
+        customer_id, 
+        customer_name, 
+        email, 
+        order_code, 
+        wix_order_number, 
+        wix_contact_id
+      ]]
+      
       await this.sheets.spreadsheets.values.append({
         spreadsheetId: this.inventorySheetId,
-        range: "Sales!A:F",
+        range: "Sales!A:J", // Updated to cover all 10 columns
         valueInputOption: "RAW",
         requestBody: { values },
       })

@@ -36,6 +36,26 @@ export async function POST(request: Request) {
 
     const orderId = await googleSheetsService.addNewOrder(newOrder)
 
+    // Also add sales records to inventory sheet for each product
+    if (orderData.products && Array.isArray(orderData.products)) {
+      for (const product of orderData.products) {
+        if (product.barcode && product.quantity > 0) {
+          await googleSheetsService.addSale({
+            barcode: product.barcode,
+            quantity: product.quantity,
+            timestamp: new Date().toISOString(),
+            product: product.name,
+            customer_id: customerId,
+            order_code: orderId,
+            customer_name: orderData.customerName,
+            email: orderData.customerEmail,
+            wix_order_number: "", // Will be filled by Google Apps Script
+            wix_contact_id: "" // Will be filled by Google Apps Script
+          })
+        }
+      }
+    }
+
     return NextResponse.json({ orderId, customerId })
   } catch (error) {
     console.error("Error creating order:", error)
