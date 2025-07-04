@@ -218,7 +218,7 @@ export function ActiveOrdersSection() {
     } else {
       const price = priceList[product.barcode] || 0
       setSelectedProducts(prev => [...prev, {
-        name: product.name,
+        name: product.product,
         barcode: product.barcode,
         price,
         quantity: 1
@@ -813,7 +813,7 @@ export function ActiveOrdersSection() {
                       onClick={() => addProductToOrder(product)}
                     >
                       <div className="flex-1">
-                        <div className="text-white font-medium">{product.name}</div>
+                        <div className="text-white font-medium">{product.product}</div>
                         <div className="text-slate-300 text-sm">Barcode: {product.barcode}</div>
                         <div className="text-cyan-400 text-sm">
                           ${priceList[product.barcode]?.toFixed(2) || "0.00"}
