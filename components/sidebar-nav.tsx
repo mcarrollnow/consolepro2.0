@@ -18,6 +18,7 @@ import {
   Percent,
   Sparkles,
   X,
+  Pill,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -40,6 +41,7 @@ const navItems = [
   { id: "invoices", label: "Invoices", icon: FileText, path: "/?section=invoices" },
   { id: "messaging", label: "Messaging", icon: MessageSquare, path: "/?section=messaging" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/?section=analytics" },
+  { id: "product-information", label: "Product Info", icon: Pill, path: "/?section=product-information" },
   { id: "emails", label: "Email Center", icon: Mail, path: "/?section=emails" },
   { id: "settings", label: "Settings", icon: Settings, path: "/?section=settings" },
 ]

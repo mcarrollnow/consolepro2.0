@@ -12,6 +12,7 @@ import { MessagingSection } from "./messaging-section"
 import { DiscountCodesSection } from "./discount-codes-section"
 import InvoicesSection from "./invoices-section"
 import { LatestUpdatesSection } from "./latest-updates-section"
+import { ProductInformationSection } from "./product-information-section"
 
 interface DashboardLayoutProps {
   children?: React.ReactNode
@@ -50,6 +51,8 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
         return <AnalyticsSection />
       case "messaging":
         return <MessagingSection />
+      case "product-information":
+        return <ProductInformationSection />
       case "invoices":
         return (
           <div className="space-y-6">
