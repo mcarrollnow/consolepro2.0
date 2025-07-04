@@ -51,9 +51,11 @@ const cagrilintideInfo: ProductInfo = {
     "Reduced appetite and food intake",
     "Enhanced satiety signals",
     "Potential cardiovascular benefits",
-    "Long-acting formulation requiring weekly administration"
+    "Long-acting formulation requiring weekly administration",
+    "Gradual dose escalation improves tolerability",
+    "Minimizes gastrointestinal side effects"
   ],
-  dosage: "2.4 mg once weekly (subcutaneous injection)",
+  dosage: "2.4 mg once weekly (maintenance dose after 16-week escalation)",
   halfLife: "Approximately 7-8 days",
   administration: "Subcutaneous injection in the abdomen, thigh, or upper arm",
   sideEffects: [
@@ -218,11 +220,60 @@ export function ProductInformationSection() {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Clock className="h-5 w-5 text-cyan-400" />
-                    Administration
+                    Administration & Dosing
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-slate-300">{selectedProduct.administration}</p>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-white mb-2">Standard Dosing Schedule (16-week escalation)</h4>
+                    <div className="bg-slate-900/50 p-4 rounded-lg space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Week 1-4:</span>
+                        <span className="text-white font-medium">0.25 mg once weekly</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Week 5-8:</span>
+                        <span className="text-white font-medium">0.5 mg once weekly</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Week 9-12:</span>
+                        <span className="text-white font-medium">1.0 mg once weekly</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Week 13-16:</span>
+                        <span className="text-white font-medium">1.7 mg once weekly</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t border-slate-700/50 pt-2">
+                        <span className="text-slate-400">Week 17 onwards:</span>
+                        <span className="text-white font-medium">2.4 mg once weekly (maintenance)</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-white mb-2">Administration Method</h4>
+                    <p className="text-slate-300">{selectedProduct.administration}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-white mb-2">Dosing Options</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                        <div>
+                          <span className="text-white font-medium">Monotherapy:</span>
+                          <span className="text-slate-300 text-sm"> Studied at 0.3, 0.6, 1.2, 2.4, and 4.5 mg weekly</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0" />
+                        <div>
+                          <span className="text-white font-medium">Combination (CagriSema):</span>
+                          <span className="text-slate-300 text-sm"> 2.4 mg weekly with semaglutide 2.4 mg</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

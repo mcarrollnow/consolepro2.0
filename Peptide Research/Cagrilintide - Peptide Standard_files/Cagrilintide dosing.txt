@@ -1,0 +1,15 @@
+i lovBased on the clinical trial data, here are the standard dosing schedules for cagrilintide:
+Phase 2/3 Standard Dosing Schedule
+The most commonly used dosing protocol involves a 16-week dose escalation period:
+Week 1-4: 0.25 mg once weekly
+Week 5-8: 0.5 mg once weekly
+Week 9-12: 1.0 mg once weekly
+Week 13-16: 1.7 mg once weekly
+Week 17 onwards: 2.4 mg once weekly (maintenance dose) Peptides.orgPeptides.org
+Monotherapy Dosing Range
+In phase 2 trials as monotherapy, cagrilintide has been studied at doses of 0.3, 0.6, 1.2, 2.4, and 4.5 mg once weekly, with a 26-week treatment period including up to 6 weeks of dose escalation PubMedScienceDirect.
+Combination Therapy (CagriSema)
+When combined with semaglutide 2.4 mg (called CagriSema), both drugs follow the same escalation schedule, reaching 2.4 mg weekly for each component after 16 weeks Peptides.orgScienceDirect. In some studies, researchers may consider increasing cagrilintide to 4.5 mg weekly after week 21 if deemed appropriate Cagrilintide | Dosage Guideline.
+Administration Details
+Cagrilintide is administered as a once-weekly subcutaneous injection, typically in the abdomen, due to its extended half-life Peptides.orgPatchMD. The maximum dose studied is 4.5 mg weekly when used alone, or 2.4 mg weekly when combined with semaglutide Cagrilintide | Dosage Guideline.
+The gradual dose escalation approach is designed to improve tolerability and minimize gastrointestinal side effects, which are the most common adverse events reported in clinical trials.
