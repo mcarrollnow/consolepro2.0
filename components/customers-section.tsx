@@ -103,7 +103,7 @@ export function CustomersSection() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="customers">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -176,11 +176,13 @@ export function CustomersSection() {
       </div>
 
       {/* AI Customer Intelligence Widget */}
-      <AICustomerIntelligenceWidget 
-        customers={customers}
-        orders={[]} // We'll need to fetch orders data for this
-        archivedOrders={[]} // We'll need to fetch archived orders data for this
-      />
+      <div data-ai-widget="customers">
+        <AICustomerIntelligenceWidget 
+          customers={customers}
+          orders={[]} // We'll need to fetch orders data for this
+          archivedOrders={[]} // We'll need to fetch archived orders data for this
+        />
+      </div>
 
       {/* Customers Table */}
       <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">

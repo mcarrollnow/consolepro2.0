@@ -11,7 +11,7 @@ export function MainDashboard() {
   const [dailyOverviewCollapsed, setDailyOverviewCollapsed] = useState(true)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="ai-chat">
       {/* AI Chat with Geoffrey - Primary Focus */}
       <div className="mb-8">
         <AIChat />

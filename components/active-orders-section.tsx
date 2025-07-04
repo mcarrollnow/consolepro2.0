@@ -10,11 +10,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Package, MapPin } from "lucide-react"
+import { Plus, Search, Truck, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Package, MapPin, X, ShoppingCart } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { OrderCustomer } from "@/lib/types"
 import { getUnifiedOrderStatus } from "@/lib/types"
 import Link from "next/link"
+
+interface Product {
+  barcode: string
+  name: string
+  price: number
+  category: string
+}
+
+interface OrderProduct {
+  name: string
+  barcode: string
+  price: number
+  quantity: number
+}
 
 export function ActiveOrdersSection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,19 +37,30 @@ export function ActiveOrdersSection() {
   const [selectedOrder, setSelectedOrder] = useState<OrderCustomer | null>(null)
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false)
   const [isOrderDetailsDialogOpen, setIsOrderDetailsDialogOpen] = useState(false)
-  const [newOrder, setNewOrder] = useState({
-    customerName: "",
-    customerEmail: "",
-    items: "",
-    total: 0,
-    notes: "",
-  })
   const [isInvoiceStatusDialogOpen, setIsInvoiceStatusDialogOpen] = useState(false)
   const [selectedOrderForInvoiceUpdate, setSelectedOrderForInvoiceUpdate] = useState<OrderCustomer | null>(null)
   const [newInvoiceStatus, setNewInvoiceStatus] = useState("")
   const [updatingInvoiceStatus, setUpdatingInvoiceStatus] = useState(false)
   const [creatingStripeInvoice, setCreatingStripeInvoice] = useState<string | null>(null)
   const { toast } = useToast()
+
+  // New Order Form State
+  const [orderType, setOrderType] = useState<"B2B" | "RETAIL">("RETAIL")
+  const [inventoryData, setInventoryData] = useState<Product[]>([])
+  const [priceList, setPriceList] = useState<Record<string, number>>({})
+  const [selectedProducts, setSelectedProducts] = useState<OrderProduct[]>([])
+  const [newOrder, setNewOrder] = useState({
+    customerName: "",
+    customerEmail: "",
+    businessName: "",
+    phone: "",
+    addressStreet: "",
+    addressCity: "",
+    addressState: "",
+    addressZIP: "",
+    specialInstructions: "",
+  })
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false)
 
   const fetchActiveOrdersData = async () => {
     try {
@@ -63,9 +88,54 @@ export function ActiveOrdersSection() {
     }
   }
 
+  const fetchInventoryData = async () => {
+    try {
+      const response = await fetch("/api/inventory")
+      if (response.ok) {
+        const data = await response.json()
+        setInventoryData(data)
+      }
+    } catch (error) {
+      console.error("Error fetching inventory:", error)
+    }
+  }
+
+  const loadPriceList = async () => {
+    try {
+      const priceListFile = orderType === "B2B" ? "b2b_product_price_list.csv" : "retail_product_price_list.csv"
+      const response = await fetch(`/${priceListFile}`)
+      if (response.ok) {
+        const csvText = await response.text()
+        const lines = csvText.split('\n').slice(1) // Skip header
+        const priceMap: Record<string, number> = {}
+        
+        lines.forEach(line => {
+          const [barcode, name, price] = line.split(',')
+          if (barcode && price) {
+            const cleanPrice = parseFloat(price.replace(/[^0-9.]/g, ''))
+            if (!isNaN(cleanPrice)) {
+              priceMap[barcode.trim()] = cleanPrice
+            }
+          }
+        })
+        
+        setPriceList(priceMap)
+      }
+    } catch (error) {
+      console.error("Error loading price list:", error)
+    }
+  }
+
   useEffect(() => {
     fetchActiveOrdersData()
   }, [])
+
+  useEffect(() => {
+    if (isNewOrderDialogOpen) {
+      fetchInventoryData()
+      loadPriceList()
+    }
+  }, [isNewOrderDialogOpen, orderType])
 
   const filteredOrders = ordersData.filter(
     (order) =>
@@ -135,12 +205,97 @@ export function ActiveOrdersSection() {
     setIsOrderDetailsDialogOpen(true)
   }
 
+  const addProductToOrder = (product: Product) => {
+    const existingProduct = selectedProducts.find(p => p.barcode === product.barcode)
+    if (existingProduct) {
+      setSelectedProducts(prev => 
+        prev.map(p => 
+          p.barcode === product.barcode 
+            ? { ...p, quantity: p.quantity + 1 }
+            : p
+        )
+      )
+    } else {
+      const price = priceList[product.barcode] || 0
+      setSelectedProducts(prev => [...prev, {
+        name: product.name,
+        barcode: product.barcode,
+        price,
+        quantity: 1
+      }])
+    }
+  }
+
+  const removeProductFromOrder = (barcode: string) => {
+    setSelectedProducts(prev => prev.filter(p => p.barcode !== barcode))
+  }
+
+  const updateProductQuantity = (barcode: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeProductFromOrder(barcode)
+      return
+    }
+    setSelectedProducts(prev => 
+      prev.map(p => 
+        p.barcode === barcode 
+          ? { ...p, quantity }
+          : p
+      )
+    )
+  }
+
+  const calculateTotal = () => {
+    return selectedProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0)
+  }
+
+  const generateOrderCode = () => {
+    const prefix = orderType === "B2B" ? "B2B" : "RTL"
+    const date = new Date().toISOString().slice(5, 7) + new Date().toISOString().slice(8, 10) // MM-DD
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+    return `${prefix}-${date}-${random}-1`
+  }
+
   const handleCreateOrder = async () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one product to the order",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!newOrder.customerName || !newOrder.customerEmail) {
+      toast({
+        title: "Error",
+        description: "Customer name and email are required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsCreatingOrder(true)
     try {
+      const orderData = {
+        customerName: newOrder.customerName,
+        customerEmail: newOrder.customerEmail,
+        businessName: newOrder.businessName,
+        phone: newOrder.phone,
+        addressStreet: newOrder.addressStreet,
+        addressCity: newOrder.addressCity,
+        addressState: newOrder.addressState,
+        addressZIP: newOrder.addressZIP,
+        notes: newOrder.specialInstructions,
+        total: calculateTotal(),
+        products: selectedProducts,
+        orderType,
+        orderCode: generateOrderCode(),
+      }
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newOrder),
+        body: JSON.stringify(orderData),
       })
 
       if (response.ok) {
@@ -150,12 +305,13 @@ export function ActiveOrdersSection() {
           description: `Order ${result.orderId} created successfully`,
         })
         setIsNewOrderDialogOpen(false)
-        setNewOrder({ customerName: "", customerEmail: "", items: "", total: 0, notes: "" })
-        fetchActiveOrdersData() // Refresh data
+        resetNewOrderForm()
+        fetchActiveOrdersData()
       } else {
+        const error = await response.json()
         toast({
           title: "Error",
-          description: "Failed to create order",
+          description: error.error || "Failed to create order",
           variant: "destructive",
         })
       }
@@ -166,7 +322,25 @@ export function ActiveOrdersSection() {
         description: "Failed to create order",
         variant: "destructive",
       })
+    } finally {
+      setIsCreatingOrder(false)
     }
+  }
+
+  const resetNewOrderForm = () => {
+    setNewOrder({
+      customerName: "",
+      customerEmail: "",
+      businessName: "",
+      phone: "",
+      addressStreet: "",
+      addressCity: "",
+      addressState: "",
+      addressZIP: "",
+      specialInstructions: "",
+    })
+    setSelectedProducts([])
+    setOrderType("RETAIL")
   }
 
   const handleUpdateInvoiceStatus = async () => {
@@ -192,7 +366,7 @@ export function ActiveOrdersSection() {
         setIsInvoiceStatusDialogOpen(false)
         setSelectedOrderForInvoiceUpdate(null)
         setNewInvoiceStatus("")
-        fetchActiveOrdersData() // Refresh data to show updated status
+        fetchActiveOrdersData()
       } else {
         const error = await response.json()
         toast({
@@ -258,7 +432,6 @@ export function ActiveOrdersSection() {
           description: `Invoice created successfully for order ${orderId}` 
         });
         
-        // Refresh the orders data to show updated invoice status
         fetchActiveOrdersData()
       } else {
         const error = await response.json();
@@ -291,7 +464,7 @@ export function ActiveOrdersSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="active-orders">
       {/* Header with stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-slate-800/50 border-slate-700">
@@ -491,75 +664,243 @@ export function ActiveOrdersSection() {
         </CardContent>
       </Card>
 
-      {/* New Order Dialog */}
+      {/* Enhanced New Order Dialog */}
       <Dialog open={isNewOrderDialogOpen} onOpenChange={setIsNewOrderDialogOpen}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Order</DialogTitle>
+            <DialogTitle className="text-2xl">Create New Order</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="customerName">Customer Name</Label>
-              <Input
-                id="customerName"
-                value={newOrder.customerName}
-                onChange={(e) => setNewOrder({ ...newOrder, customerName: e.target.value })}
-                className="bg-slate-700 border-slate-600 text-white"
-              />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column - Customer Information */}
+            <div className="space-y-4">
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Order Type</h3>
+                <div className="flex space-x-4">
+                  <Button
+                    variant={orderType === "RETAIL" ? "default" : "outline"}
+                    onClick={() => setOrderType("RETAIL")}
+                    className={orderType === "RETAIL" ? "bg-cyan-600 hover:bg-cyan-700" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                  >
+                    Retail
+                  </Button>
+                  <Button
+                    variant={orderType === "B2B" ? "default" : "outline"}
+                    onClick={() => setOrderType("B2B")}
+                    className={orderType === "B2B" ? "bg-purple-600 hover:bg-purple-700" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                  >
+                    B2B
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Customer Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="customerName">Customer Name *</Label>
+                    <Input
+                      id="customerName"
+                      value={newOrder.customerName}
+                      onChange={(e) => setNewOrder({ ...newOrder, customerName: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="Enter customer name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="customerEmail">Email *</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      value={newOrder.customerEmail}
+                      onChange={(e) => setNewOrder({ ...newOrder, customerEmail: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="businessName">Business Name</Label>
+                    <Input
+                      id="businessName"
+                      value={newOrder.businessName}
+                      onChange={(e) => setNewOrder({ ...newOrder, businessName: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="Enter business name (optional)"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={newOrder.phone}
+                      onChange={(e) => setNewOrder({ ...newOrder, phone: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Shipping Address</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="addressStreet">Street Address</Label>
+                    <Input
+                      id="addressStreet"
+                      value={newOrder.addressStreet}
+                      onChange={(e) => setNewOrder({ ...newOrder, addressStreet: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="Enter street address"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="addressCity">City</Label>
+                      <Input
+                        id="addressCity"
+                        value={newOrder.addressCity}
+                        onChange={(e) => setNewOrder({ ...newOrder, addressCity: e.target.value })}
+                        className="bg-slate-700 border-slate-600 text-white"
+                        placeholder="City"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="addressState">State</Label>
+                      <Input
+                        id="addressState"
+                        value={newOrder.addressState}
+                        onChange={(e) => setNewOrder({ ...newOrder, addressState: e.target.value })}
+                        className="bg-slate-700 border-slate-600 text-white"
+                        placeholder="State"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="addressZIP">ZIP Code</Label>
+                    <Input
+                      id="addressZIP"
+                      value={newOrder.addressZIP}
+                      onChange={(e) => setNewOrder({ ...newOrder, addressZIP: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      placeholder="ZIP code"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Special Instructions</h3>
+                <Textarea
+                  value={newOrder.specialInstructions}
+                  onChange={(e) => setNewOrder({ ...newOrder, specialInstructions: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  rows={3}
+                  placeholder="Enter any special instructions or notes"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="customerEmail">Customer Email</Label>
-              <Input
-                id="customerEmail"
-                type="email"
-                value={newOrder.customerEmail}
-                onChange={(e) => setNewOrder({ ...newOrder, customerEmail: e.target.value })}
-                className="bg-slate-700 border-slate-600 text-white"
-              />
+
+            {/* Right Column - Product Selection */}
+            <div className="space-y-4">
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Product Selection</h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {inventoryData.map((product) => (
+                    <div
+                      key={product.barcode}
+                      className="flex items-center justify-between p-2 bg-slate-600/50 rounded hover:bg-slate-600/70 cursor-pointer"
+                      onClick={() => addProductToOrder(product)}
+                    >
+                      <div className="flex-1">
+                        <div className="text-white font-medium">{product.name}</div>
+                        <div className="text-slate-300 text-sm">Barcode: {product.barcode}</div>
+                        <div className="text-cyan-400 text-sm">
+                          ${priceList[product.barcode]?.toFixed(2) || "0.00"}
+                        </div>
+                      </div>
+                      <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700">
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-4">Selected Products</h3>
+                {selectedProducts.length === 0 ? (
+                  <p className="text-slate-400 text-center py-4">No products selected</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedProducts.map((product) => (
+                      <div key={product.barcode} className="flex items-center justify-between p-2 bg-slate-600/50 rounded">
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{product.name}</div>
+                          <div className="text-slate-300 text-sm">Barcode: {product.barcode}</div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={product.quantity}
+                            onChange={(e) => updateProductQuantity(product.barcode, parseInt(e.target.value) || 1)}
+                            className="w-16 bg-slate-700 border-slate-600 text-white text-center"
+                          />
+                          <div className="text-cyan-400 font-medium">
+                            ${(product.price * product.quantity).toFixed(2)}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeProductFromOrder(product.barcode)}
+                            className="border-red-500 text-red-400 hover:bg-red-500/10"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t border-slate-600 pt-2 mt-4">
+                      <div className="flex justify-between text-lg font-bold">
+                        <span className="text-white">Total:</span>
+                        <span className="text-cyan-400">${calculateTotal().toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <Label htmlFor="items">Items</Label>
-              <Textarea
-                id="items"
-                value={newOrder.items}
-                onChange={(e) => setNewOrder({ ...newOrder, items: e.target.value })}
-                className="bg-slate-700 border-slate-600 text-white"
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label htmlFor="total">Total</Label>
-              <Input
-                id="total"
-                type="number"
-                step="0.01"
-                value={newOrder.total}
-                onChange={(e) => setNewOrder({ ...newOrder, total: parseFloat(e.target.value) || 0 })}
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={newOrder.notes}
-                onChange={(e) => setNewOrder({ ...newOrder, notes: e.target.value })}
-                className="bg-slate-700 border-slate-600 text-white"
-                rows={2}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsNewOrderDialogOpen(false)}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleCreateOrder} className="bg-cyan-600 hover:bg-cyan-700">
-                Create Order
-              </Button>
-            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t border-slate-700">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsNewOrderDialogOpen(false)
+                resetNewOrderForm()
+              }}
+              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateOrder} 
+              disabled={isCreatingOrder || selectedProducts.length === 0}
+              className="bg-cyan-600 hover:bg-cyan-700"
+            >
+              {isCreatingOrder ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Order...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Create Order
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

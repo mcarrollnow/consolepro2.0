@@ -76,7 +76,7 @@ function DailyOverviewWidget() {
           className="w-full flex items-center justify-between px-4 py-2 focus:outline-none hover:bg-slate-800/40 rounded-t-xl"
           onClick={() => setCollapsed((c) => !c)}
         >
-          <span className="text-cyan-400 font-bold text-lg">Daily Overview</span>
+          <span className="text-cyan-400 font-bold text-base md:text-lg">Daily Overview</span>
           {collapsed ? <ChevronRight className="h-5 w-5 text-cyan-400" /> : <ChevronDown className="h-5 w-5 text-cyan-400" />}
         </button>
         {!collapsed && (
@@ -89,7 +89,7 @@ function DailyOverviewWidget() {
             ) : error ? (
               <div className="text-red-400 text-sm">{error}</div>
             ) : overview ? (
-              <div className="text-slate-200 text-base space-y-2">
+              <div className="text-slate-200 text-sm md:text-base space-y-2">
                 <div className="font-semibold">{greeting}</div>
                 <div>{intro}</div>
                 <ul className="list-disc ml-6">
@@ -97,7 +97,7 @@ function DailyOverviewWidget() {
                   <li>In the last 30 days, you've made <span className="text-green-300 font-bold">${overview.summary.thirtyDayRevenue.toFixed(2)}</span> in revenue.</li>
                 </ul>
                 <div className="mt-2 text-cyan-300 font-semibold">AI Insight:</div>
-                <div className="italic text-slate-300 whitespace-pre-line">
+                <div className="italic text-slate-300 whitespace-pre-line text-sm">
                   {overview.aiInsights}
                 </div>
                 <div className="text-xs text-slate-500 mt-2">{overview.date}</div>
@@ -381,7 +381,7 @@ export function AIChat() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Chat Messages */}
-          <div className="h-64 border border-slate-700/50 rounded-lg bg-slate-900/50">
+          <div className="h-48 md:h-64 border border-slate-700/50 rounded-lg bg-slate-900/50">
             <ScrollArea className="h-full p-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
@@ -402,25 +402,25 @@ export function AIChat() {
                       className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
+                        className={`max-w-[85%] rounded-lg p-3 ${
                           message.role === "user"
                             ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30"
                             : "bg-slate-700/50 text-slate-200 border border-slate-600/50"
                         }`}
                       >
-                        <div className="flex items-start space-x-2">
+                        <div className="flex items-start space-x-2 min-w-0">
                           {message.role === "assistant" && (
                             <GeoffreyAvatar size={20} />
                           )}
-                          <div className="flex-1">
-                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm whitespace-pre-wrap break-words overflow-hidden">{message.content}</p>
                             {message.action && (
                               <div className="mt-2 p-2 bg-slate-800/50 rounded border border-slate-600/50">
                                 <p className="text-xs text-cyan-400 font-semibold">
                                   Action: {message.action.type.replace('_', ' ').toUpperCase()}
                                 </p>
                                 {message.action.data && (
-                                  <p className="text-xs text-slate-400">
+                                  <p className="text-xs text-slate-400 break-words">
                                     {JSON.stringify(message.action.data, null, 2)}
                                   </p>
                                 )}
@@ -460,13 +460,13 @@ export function AIChat() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about inventory, orders, customers, discount codes, or execute actions..."
-              className="flex-1 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+              className="flex-1 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 text-sm"
               disabled={isLoading}
             />
             <Button
               onClick={sendMessage}
               disabled={isLoading || !inputValue.trim()}
-              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 flex-shrink-0"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

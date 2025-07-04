@@ -197,7 +197,7 @@ export function DiscountCodesSection() {
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="discount-codes">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

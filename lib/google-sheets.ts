@@ -398,19 +398,29 @@ export class GoogleSheetsService {
     }
   }
 
-  async addNewOrder(order: Omit<OrderCustomer, "orderId">): Promise<string> {
+  async addNewOrder(order: Omit<OrderCustomer, "orderId"> & {
+    orderCode?: string
+    recordType?: string
+    orderType?: string
+    products?: Array<{
+      name: string
+      barcode: string
+      price: number
+      quantity: number
+    }>
+  }): Promise<string> {
     try {
-      // Generate new order ID
-      const orderId = `ORD-${Date.now()}`
+      // Generate new order ID if not provided
+      const orderId = order.orderCode || `ORD-${Date.now()}`
 
-      // Build the row according to the NEW Orders sheet structure
+      // Build the row according to the Orders sheet structure
       const values = [
         [
           new Date().toISOString(),                    // Submission_Timestamp (A)
           orderId,                                     // Order_Code (B)
-          "RETAIL_TRANSACTION",                        // Record_Type (C)
+          order.recordType || "RETAIL_TRANSACTION",    // Record_Type (C)
           order.customerName,                          // Customer_Name (D)
-          order.customerId,                            // customer_id (E) ← KEY CHANGE!
+          order.customerId,                            // customer_id (E)
           order.customerEmail,                         // Email (F)
           order.businessName || "",                    // Business_Name (G)
           order.phone || "",                           // Phone (H)
@@ -418,25 +428,56 @@ export class GoogleSheetsService {
           order.addressCity || "",                     // Address_City (J)
           order.addressState || "",                    // Address_State (K)
           order.addressZIP || "",                      // Address_ZIP (L)
-          order.total,                                 // Total_Amount (M)
+          `$ ${order.total.toFixed(2)}`,               // Total_Amount (M) - formatted with $ and space
           order.notes || "",                           // Special_Instructions (N)
-          "RETAIL",                                    // Order_Type (O)
+          order.orderType || "RETAIL",                 // Order_Type (O)
           "consolepro_api",                           // Submission_Source (P)
           "PENDING",                                   // Payment_Status (Q)
-          order.status || "PENDING",                   // Fulfillment_Status (R)
+          "PENDING",                                   // Fulfillment_Status (R)
           "PENDING",                                   // Invoice_Status (S)
           "SUBMITTED",                                 // Lifecycle_Stage (T)
           new Date().toISOString(),                    // Last_Updated (U)
-          // Product columns (V-AO) - fill with first product if available
+          // Product columns (V-AO) - fill with products if available
           order.products?.[0]?.name || "",             // Product_1_Name (V)
           order.products?.[0]?.barcode || "",          // Product_1_Barcode (W)
-          order.products?.[0]?.price || "",            // Product_1_Price (X)
+          order.products?.[0]?.price?.toFixed(2) || "", // Product_1_Price (X)
           order.products?.[0]?.quantity || "",         // Product_1_Quantity (Y)
           order.products?.[1]?.name || "",             // Product_2_Name (Z)
           order.products?.[1]?.barcode || "",          // Product_2_Barcode (AA)
-          order.products?.[1]?.price || "",            // Product_2_Price (AB)
+          order.products?.[1]?.price?.toFixed(2) || "", // Product_2_Price (AB)
           order.products?.[1]?.quantity || "",         // Product_2_Quantity (AC)
-          // Continue for products 3-10 (empty for now)
+          order.products?.[2]?.name || "",             // Product_3_Name (AD)
+          order.products?.[2]?.barcode || "",          // Product_3_Barcode (AE)
+          order.products?.[2]?.price?.toFixed(2) || "", // Product_3_Price (AF)
+          order.products?.[2]?.quantity || "",         // Product_3_Quantity (AG)
+          order.products?.[3]?.name || "",             // Product_4_Name (AH)
+          order.products?.[3]?.barcode || "",          // Product_4_Barcode (AI)
+          order.products?.[3]?.price?.toFixed(2) || "", // Product_4_Price (AJ)
+          order.products?.[3]?.quantity || "",         // Product_4_Quantity (AK)
+          order.products?.[4]?.name || "",             // Product_5_Name (AL)
+          order.products?.[4]?.barcode || "",          // Product_5_Barcode (AM)
+          order.products?.[4]?.price?.toFixed(2) || "", // Product_5_Price (AN)
+          order.products?.[4]?.quantity || "",         // Product_5_Quantity (AO)
+          order.products?.[5]?.name || "",             // Product_6_Name (AP)
+          order.products?.[5]?.barcode || "",          // Product_6_Barcode (AQ)
+          order.products?.[5]?.price?.toFixed(2) || "", // Product_6_Price (AR)
+          order.products?.[5]?.quantity || "",         // Product_6_Quantity (AS)
+          order.products?.[6]?.name || "",             // Product_7_Name (AT)
+          order.products?.[6]?.barcode || "",          // Product_7_Barcode (AU)
+          order.products?.[6]?.price?.toFixed(2) || "", // Product_7_Price (AV)
+          order.products?.[6]?.quantity || "",         // Product_7_Quantity (AW)
+          order.products?.[7]?.name || "",             // Product_8_Name (AX)
+          order.products?.[7]?.barcode || "",          // Product_8_Barcode (AY)
+          order.products?.[7]?.price?.toFixed(2) || "", // Product_8_Price (AZ)
+          order.products?.[7]?.quantity || "",         // Product_8_Quantity (BA)
+          order.products?.[8]?.name || "",             // Product_9_Name (BB)
+          order.products?.[8]?.barcode || "",          // Product_9_Barcode (BC)
+          order.products?.[8]?.price?.toFixed(2) || "", // Product_9_Price (BD)
+          order.products?.[8]?.quantity || "",         // Product_9_Quantity (BE)
+          order.products?.[9]?.name || "",             // Product_10_Name (BF)
+          order.products?.[9]?.barcode || "",          // Product_10_Barcode (BG)
+          order.products?.[9]?.price?.toFixed(2) || "", // Product_10_Price (BH)
+          order.products?.[9]?.quantity || "",         // Product_10_Quantity (BI)
           "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 
           "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",  // payment_link through Shipping_Address_ZIP
         ],

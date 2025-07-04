@@ -16,59 +16,93 @@ export interface InventoryItem {
 
 export interface OrderCustomer {
   orderId: string
-  orderDate: string
+  customerId: string
   customerName: string
   customerEmail: string
+  orderDate: string
+  status: string
+  invoiceStatus?: string
+  paymentStatus?: string
+  total: number
+  items: string
+  notes: string
+  invoice_link?: string
+  payment_link?: string
+  customer_id?: string
+  // Additional fields for detailed order view
   businessName?: string
   phone?: string
-  address?: {
-    street: string
-    city: string
-    state: string
-    zip: string
-  }
-  total: number
-  status: string
-  specialInstructions?: string
-  products: Array<{
+  addressStreet?: string
+  addressCity?: string
+  addressState?: string
+  addressZIP?: string
+  // Product details
+  products?: Array<{
     name: string
     barcode: string
     price: number
     quantity: number
   }>
-  paymentLink?: string
+  // Legacy field mappings
   invoiceLink?: string
-  customerId?: string
-  // Unified status fields
-  invoice_status?: string
-  payment_status?: string
-  fulfillment_status?: string
+  paymentLink?: string
+  address?: {
+    street?: string
+    city?: string
+    state?: string
+    zip?: string
+  }
+  shippingAddress?: string
+  productDetails?: Array<{
+    name: string
+    barcode: string
+    price: number
+    quantity: number
+  }>
 }
 
 export interface Customer {
   customer_id: string
-  name: string
-  email: string
-  phone: string
-  company?: string
-  address?: string
-  first_order_date?: string
-  last_order_date?: string
-  total_orders?: number
-  total_spent?: number
-  customer_status?: string
-  preferred_contact?: string
-  customer_notes?: string
-  tags?: string
-  created_date?: string
-  last_updated?: string
-  referred_by?: string
-  customer_class?: string
-  square_reference_id?: string
-  nickname?: string
-  birthday?: string
-  square_customer_id?: string
-  wix_contact_id?: string
+  customerName: string
+  customerEmail: string
+  phone?: string
+  businessName?: string
+  address?: {
+    street?: string
+    city?: string
+    state?: string
+    zip?: string
+  }
+  totalOrders: number
+  totalSpent: number
+  lastOrderDate?: string
+  orderHistory?: OrderCustomer[]
+}
+
+export interface DiscountCode {
+  id: string
+  code: string
+  description: string
+  discountType: 'percentage' | 'fixed'
+  discountValue: number
+  validFrom: Date
+  validUntil: Date
+  maxUses: number
+  currentUses: number
+  isActive: boolean
+  applicableProducts?: string[]
+  minimumOrderAmount?: number
+}
+
+export interface DiscountUsage {
+  id: string
+  discountCode: string
+  customerId: string
+  customerName: string
+  orderId: string
+  usedAt: Date
+  discountAmount: number
+  orderTotal: number
 }
 
 export interface SalesRecord {
@@ -95,15 +129,38 @@ export interface PurchaseRecord {
 
 // Utility function that can be used client-side
 export function getUnifiedOrderStatus(order: OrderCustomer): string {
-  // Priority order: payment_status > invoice_status > fulfillment_status > status
-  if (order.payment_status) {
-    return order.payment_status
+  // Check invoice status first
+  if (order.invoiceStatus) {
+    const status = order.invoiceStatus.toLowerCase()
+    if (status.includes('paid') || status.includes('complete')) {
+      return 'paid-ready to ship'
+    } else if (status.includes('sent')) {
+      return 'invoice sent'
+    } else if (status.includes('overdue')) {
+      return 'invoice overdue'
+    }
   }
-  if (order.invoice_status) {
-    return order.invoice_status
+
+  // Check payment status
+  if (order.paymentStatus) {
+    const status = order.paymentStatus.toLowerCase()
+    if (status.includes('paid') || status.includes('complete')) {
+      return 'paid-ready to ship'
+    } else if (status.includes('pending')) {
+      return 'invoice sent'
+    }
   }
-  if (order.fulfillment_status) {
-    return order.fulfillment_status
+
+  // Check fulfillment status
+  if (order.status) {
+    const status = order.status.toLowerCase()
+    if (status.includes('shipped') || status.includes('delivered')) {
+      return 'paid-ready to ship'
+    } else if (status.includes('processing') || status.includes('pending')) {
+      return 'invoice sent'
+    }
   }
-  return order.status || "Processing"
+
+  // Default to new if no status found
+  return 'new'
 } 

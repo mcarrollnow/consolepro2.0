@@ -48,7 +48,7 @@ export function AnalyticsSection() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="analytics">
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-white">Analytics & Trends</h2>

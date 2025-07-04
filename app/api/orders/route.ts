@@ -27,14 +27,31 @@ export async function POST(request: Request) {
     // Generate customer ID if new customer
     const customerId = await googleSheetsService.generateCustomerId(orderData.customerName, orderData.customerEmail)
 
-    const newOrder = {
-      ...orderData,
+    // Format the order data according to the Orders sheet structure
+    const formattedOrder = {
+      customerName: orderData.customerName,
+      customerEmail: orderData.customerEmail,
       customerId,
+      businessName: orderData.businessName || "",
+      phone: orderData.phone || "",
+      addressStreet: orderData.addressStreet || "",
+      addressCity: orderData.addressCity || "",
+      addressState: orderData.addressState || "",
+      addressZIP: orderData.addressZIP || "",
+      notes: orderData.notes || "",
+      total: orderData.total,
+      products: orderData.products || [],
+      orderType: orderData.orderType || "RETAIL",
+      orderCode: orderData.orderCode || `ORD-${Date.now()}`,
+      recordType: orderData.orderType === "B2B" ? "B2B_ORDER" : "RETAIL_TRANSACTION",
+      // Required properties for OrderCustomer interface
+      orderId: orderData.orderCode || `ORD-${Date.now()}`,
       orderDate: new Date().toISOString(),
-      status: "Processing",
+      status: "PENDING",
+      items: orderData.products?.map((p: any) => p.name).join(", ") || "",
     }
 
-    const orderId = await googleSheetsService.addNewOrder(newOrder)
+    const orderId = await googleSheetsService.addNewOrder(formattedOrder)
 
     // Also add sales records to inventory sheet for each product
     if (orderData.products && Array.isArray(orderData.products)) {

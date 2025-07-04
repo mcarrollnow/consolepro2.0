@@ -205,7 +205,7 @@ export function InventorySection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-section="inventory">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -277,12 +277,14 @@ export function InventorySection() {
       </div>
 
       {/* AI Inventory Insights Widget */}
-      <AIInventoryInsightsWidget 
-        inventory={inventoryData}
-        orders={ordersData}
-        purchases={purchases}
-        sales={sales}
-      />
+      <div data-ai-widget="inventory">
+        <AIInventoryInsightsWidget 
+          inventory={inventoryData}
+          orders={ordersData}
+          purchases={purchases}
+          sales={sales}
+        />
+      </div>
 
       {/* Filtered inventory view */}
       {(activeView === 'low' || activeView === 'out') && (

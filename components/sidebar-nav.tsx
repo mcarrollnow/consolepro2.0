@@ -16,10 +16,12 @@ import {
   ChevronRight,
   BarChart3,
   Percent,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface SidebarNavProps {
   activeSection: string
@@ -28,6 +30,7 @@ interface SidebarNavProps {
 
 const navItems = [
   { id: "daily-overview", label: "Daily Overview", icon: BarChart3, path: "/" },
+  { id: "latest-updates", label: "Latest Updates", icon: Sparkles, path: "/?section=latest-updates" },
   { id: "inventory", label: "Inventory", icon: Package, path: "/?section=inventory" },
   { id: "active-orders", label: "Active Orders", icon: Clock, path: "/?section=active-orders" },
   { id: "order-archive", label: "Order Archive", icon: FileText, path: "/?section=order-archive" },
@@ -44,6 +47,14 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
   const [collapsed, setCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const isMobile = useIsMobile()
+
+  // Auto-collapse on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setCollapsed(true)
+    }
+  }, [isMobile])
 
   const handleSectionClick = (sectionId: string, path: string) => {
     if (pathname !== "/" && !pathname.startsWith("/?")) {
@@ -60,7 +71,8 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
     <div
       className={cn(
         "relative h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
+        collapsed ? "w-12" : "w-64",
+        isMobile && collapsed && "w-12"
       )}
     >
       {/* Glow effect */}
@@ -68,7 +80,7 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-        {!collapsed && (
+        {!collapsed && !isMobile && (
           <Link href="/" className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent hover:from-cyan-300 hover:to-purple-300 transition-colors">
             Dashboard
           </Link>
@@ -101,6 +113,7 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
                   ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30 shadow-lg shadow-cyan-500/10"
                   : "text-slate-400 hover:text-white hover:bg-slate-800/50",
               )}
+              title={collapsed ? item.label : undefined}
             >
               <Icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
               {!collapsed && <span>{item.label}</span>}

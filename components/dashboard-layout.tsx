@@ -11,6 +11,7 @@ import { AnalyticsSection } from "./analytics-section"
 import { MessagingSection } from "./messaging-section"
 import { DiscountCodesSection } from "./discount-codes-section"
 import InvoicesSection from "./invoices-section"
+import { LatestUpdatesSection } from "./latest-updates-section"
 
 interface DashboardLayoutProps {
   children?: React.ReactNode
@@ -35,6 +36,8 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
     switch (activeSection) {
       case "daily-overview":
         return <MainDashboard />
+      case "latest-updates":
+        return <LatestUpdatesSection />
       case "inventory":
         return <InventorySection />
       case "active-orders":
@@ -91,7 +94,7 @@ export function DashboardLayout({ children, defaultSection }: DashboardLayoutPro
       <div className="flex relative z-10">
         <SidebarNav activeSection={activeSection} onSectionChange={handleSectionChange} />
 
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
           <div className="max-w-7xl mx-auto">{renderSection()}</div>
         </main>
       </div>
