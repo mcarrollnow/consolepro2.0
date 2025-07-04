@@ -157,22 +157,107 @@ export default function InvoicesSection() {
     }
   }
 
-  const handleBulkAction = (action: 'archive' | 'export' | 'send' | 'cancel') => {
+  const handleBulkAction = async (action: 'archive' | 'export' | 'send' | 'cancel') => {
     const selectedInvoiceList = filteredInvoices.filter(invoice => selectedInvoices.has(invoice.id))
     
     switch (action) {
       case 'archive':
-        toast.success(`Archiving ${selectedInvoiceList.length} invoices...`)
-        // TODO: Implement archive functionality
+        try {
+          toast.loading(`Archiving ${selectedInvoiceList.length} invoices...`)
+          
+          // Call API to archive invoices
+          const response = await fetch('/api/invoices/bulk-archive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoiceIds: selectedInvoiceList.map(inv => inv.id) })
+          })
+          
+          if (response.ok) {
+            toast.success(`Successfully archived ${selectedInvoiceList.length} invoices`)
+            setSelectedInvoices(new Set())
+            setIsSelectionMode(false)
+            fetchInvoices() // Refresh the list
+          } else {
+            const error = await response.json()
+            toast.error(`Failed to archive invoices: ${error.message}`)
+          }
+        } catch (error) {
+          toast.error('Failed to archive invoices')
+          console.error('Archive error:', error)
+        }
         break
+        
       case 'export':
-        toast.success(`Exporting ${selectedInvoiceList.length} invoices...`)
-        // TODO: Implement export functionality
+        try {
+          // Create CSV data
+          const csvData = [
+            ['Invoice #', 'Customer', 'Status', 'Amount Due', 'Amount Paid', 'Created', 'Due Date'],
+            ...selectedInvoiceList.map(invoice => [
+              invoice.number || invoice.id.slice(-8),
+              invoice.customer.name || 'Unknown',
+              invoice.status,
+              formatCurrency(invoice.amount_due, invoice.currency),
+              formatCurrency(invoice.amount_paid, invoice.currency),
+              formatDate(invoice.created),
+              invoice.due_date ? formatDate(invoice.due_date) : 'No due date'
+            ])
+          ]
+          
+          // Convert to CSV string
+          const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+          
+          // Create and download file
+          const blob = new Blob([csvContent], { type: 'text/csv' })
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `invoices-export-${new Date().toISOString().split('T')[0]}.csv`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          window.URL.revokeObjectURL(url)
+          
+          toast.success(`Exported ${selectedInvoiceList.length} invoices to CSV`)
+          setSelectedInvoices(new Set())
+          setIsSelectionMode(false)
+        } catch (error) {
+          toast.error('Failed to export invoices')
+          console.error('Export error:', error)
+        }
         break
+        
       case 'send':
-        toast.success(`Sending ${selectedInvoiceList.length} invoices...`)
-        // TODO: Implement bulk send functionality
+        try {
+          toast.loading(`Preparing to send ${selectedInvoiceList.length} invoices...`)
+          
+          // Call API to bulk send invoices
+          const response = await fetch('/api/invoices/bulk-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              invoices: selectedInvoiceList.map(inv => ({
+                id: inv.id,
+                customerEmail: inv.customer.email,
+                customerName: inv.customer.name,
+                invoiceUrl: inv.hosted_invoice_url || inv.invoice_pdf
+              }))
+            })
+          })
+          
+          if (response.ok) {
+            toast.success(`Successfully sent ${selectedInvoiceList.length} invoices`)
+            setSelectedInvoices(new Set())
+            setIsSelectionMode(false)
+          } else {
+            const error = await response.json()
+            toast.error(`Failed to send invoices: ${error.message}`)
+          }
+        } catch (error) {
+          toast.error('Failed to send invoices')
+          console.error('Send error:', error)
+        }
         break
+        
       case 'cancel':
         setSelectedInvoices(new Set())
         setIsSelectionMode(false)
