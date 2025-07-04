@@ -54,7 +54,8 @@ The AOD-9604 implementation serves as the complete reference for all future pept
 1. **Create page file**: Generate `app/[peptide-name]/page.tsx` following the AOD-9604 template
 2. **Structure the data**: Create a comprehensive `ProductInfo` object with all extracted information
 3. **Implement tabs**: Include Overview, Dosing, Safety, and Technical tabs
-4. **Add all sections**:
+4. **Add sidebar toggle**: Include mobile sidebar toggle button in top-left corner for all peptide pages
+5. **Add all sections**:
    - Product image and basic info
    - Quick stats (half-life, dosage, molecular weight, research status)
    - Key features and benefits
@@ -137,7 +138,7 @@ Based on the Peptide Research directory, process these peptides in order:
 3. **Cagrilintide**  (Already completed)
 4. **Epithalon** (Already completed)
 5. **GHK-Cu** (Already completed)
-6. **GHRP-2**
+6. **GHRP-2** (Already completed)
 7. **HCG**
 8. **Hexarelin**
 9. **HGH**
@@ -174,6 +175,7 @@ Based on the Peptide Research directory, process these peptides in order:
 - **Responsive design**: Ensure mobile compatibility
 - **Consistent styling**: Match the established design system
 - **Proper navigation**: Include working sidebar links
+- **Sidebar toggle**: Include mobile sidebar toggle button in top-left corner for all peptide pages
 - **Image optimization**: Use appropriate image formats and sizes
 - **SEO friendly**: Include proper meta tags and structure
 
