@@ -336,7 +336,7 @@ export default function InvoicesSection() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-white border-gray-600 hover:bg-gray-700"
+                              className="text-black bg-white border-gray-600 hover:bg-gray-100"
                             >
                               <Send className="h-4 w-4 mr-1" />
                               Send
@@ -376,7 +376,7 @@ export default function InvoicesSection() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-white border-gray-600 hover:bg-gray-700"
+                          className="text-black bg-white border-gray-600 hover:bg-gray-100"
                           onClick={() => window.open(invoice.hosted_invoice_url!, '_blank')}
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -386,7 +386,7 @@ export default function InvoicesSection() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-white border-gray-600 hover:bg-gray-700"
+                          className="text-black bg-white border-gray-600 hover:bg-gray-100"
                           onClick={() => window.open(invoice.invoice_pdf!, '_blank')}
                         >
                           <Download className="h-4 w-4 mr-1" />
