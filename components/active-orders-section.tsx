@@ -34,6 +34,7 @@ export function ActiveOrdersSection() {
   const [selectedOrderForInvoiceUpdate, setSelectedOrderForInvoiceUpdate] = useState<OrderCustomer | null>(null)
   const [newInvoiceStatus, setNewInvoiceStatus] = useState("")
   const [updatingInvoiceStatus, setUpdatingInvoiceStatus] = useState(false)
+  const [creatingStripeInvoice, setCreatingStripeInvoice] = useState<string | null>(null)
   const { toast } = useToast()
 
   const fetchActiveOrdersData = async () => {
@@ -241,6 +242,43 @@ export function ActiveOrdersSection() {
     }
   };
 
+  const handleCreateStripeInvoice = async (orderId: string) => {
+    try {
+      setCreatingStripeInvoice(orderId)
+      const response = await fetch("/api/orders/create-stripe-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json()
+        toast({ 
+          title: "Stripe Invoice Created", 
+          description: `Invoice created successfully for order ${orderId}` 
+        });
+        
+        // Refresh the orders data to show updated invoice status
+        fetchActiveOrdersData()
+      } else {
+        const error = await response.json();
+        toast({ 
+          title: "Error", 
+          description: error.error || "Failed to create Stripe invoice", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to create Stripe invoice", 
+        variant: "destructive" 
+      });
+    } finally {
+      setCreatingStripeInvoice(null)
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -415,6 +453,19 @@ export function ActiveOrdersSection() {
                           className="border-slate-600 text-slate-300 hover:bg-slate-700 h-8 px-2"
                         >
                           Invoice
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCreateStripeInvoice(order.orderId)}
+                          disabled={creatingStripeInvoice === order.orderId}
+                          className="border-purple-600 text-purple-300 hover:bg-purple-700 h-8 px-2"
+                        >
+                          {creatingStripeInvoice === order.orderId ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            "Stripe Invoice"
+                          )}
                         </Button>
                         <Button
                           size="sm"
