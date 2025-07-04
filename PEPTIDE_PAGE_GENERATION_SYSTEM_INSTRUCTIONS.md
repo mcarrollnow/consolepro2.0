@@ -9,6 +9,7 @@ You are tasked with automatically generating comprehensive product pages for eve
 - **PUSH TO GIT**: Every peptide page must be successfully committed and pushed before moving to the next
 - **NEW CHAT PER PEPTIDE**: Start a fresh chat for each new peptide to maintain memory efficiency
 - **FOLLOW EXACT PATTERN**: Use the AOD-9604 implementation as the template for all peptides
+-**DOCUMENT COMPLETION OF PEPTIDE**: When you complete each peptide page, document your completion by adding (Already completed) to the right of the Peptide on the Peptide List you are following to complete. Save this document so that the next chat will start at the next one in queue.
 
 ## Reference Implementation
 The AOD-9604 implementation serves as the complete reference for all future peptide pages. This implementation demonstrates:
@@ -134,8 +135,8 @@ Based on the Peptide Research directory, process these peptides in order:
 1. **AOD-9604** ✅ (Already completed)
 2. **BPC-157** (Already completed)
 3. **Cagrilintide**  (Already completed)
-4. **Epithalon**
-5. **GHK-Cu**
+4. **Epithalon** (Already completed)
+5. **GHK-Cu** (Already completed)
 6. **GHRP-2**
 7. **HCG**
 8. **Hexarelin**
