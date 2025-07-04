@@ -356,16 +356,17 @@ export default function InvoicesSection() {
                     <Send className="h-4 w-4 mr-1" />
                     Send
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkAction('cancel')}
+                    className="text-black bg-white border-gray-600 hover:bg-gray-100"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleBulkAction('cancel')}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         )}
