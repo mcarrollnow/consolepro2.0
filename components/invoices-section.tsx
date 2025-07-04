@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ExternalLink, Download, RefreshCw, Search } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ExternalLink, Download, RefreshCw, Search, Send, Eye, ChevronDown, MessageSquare, Mail, Share2 } from "lucide-react"
 import { toast } from "sonner"
 
 interface StripeInvoice {
@@ -132,6 +133,62 @@ export default function InvoicesSection() {
     )
   })
 
+  const handleSendInvoice = (type: 'text' | 'email' | 'share', invoice: StripeInvoice) => {
+    const invoiceUrl = invoice.hosted_invoice_url || invoice.invoice_pdf
+    if (!invoiceUrl) {
+      toast.error('No invoice URL available')
+      return
+    }
+
+    const customerName = invoice.customer.name || 'Customer'
+    const invoiceNumber = invoice.number || invoice.id.slice(-8)
+    const amount = formatCurrency(invoice.amount_due, invoice.currency)
+    
+    const message = `Invoice ${invoiceNumber} for ${customerName} - Amount: ${amount}\n\nView invoice: ${invoiceUrl}`
+
+    switch (type) {
+      case 'text':
+        // Open native SMS app
+        const smsUrl = `sms:?body=${encodeURIComponent(message)}`
+        window.open(smsUrl, '_blank')
+        break
+        
+      case 'email':
+        // Open native email app
+        const emailSubject = `Invoice ${invoiceNumber} - ${customerName}`
+        const emailBody = `Hello,\n\nPlease find attached the invoice ${invoiceNumber} for ${customerName}.\n\nAmount: ${amount}\n\nView invoice: ${invoiceUrl}\n\nBest regards`
+        const emailUrl = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+        window.open(emailUrl, '_blank')
+        break
+        
+      case 'share':
+        // Use Web Share API if available, fallback to copy to clipboard
+        if (navigator.share) {
+          navigator.share({
+            title: `Invoice ${invoiceNumber}`,
+            text: message,
+            url: invoiceUrl
+          }).catch((error) => {
+            console.log('Error sharing:', error)
+            // Fallback to copy to clipboard
+            navigator.clipboard.writeText(message).then(() => {
+              toast.success('Invoice link copied to clipboard')
+            }).catch(() => {
+              toast.error('Failed to copy to clipboard')
+            })
+          })
+        } else {
+          // Fallback to copy to clipboard
+          navigator.clipboard.writeText(message).then(() => {
+            toast.success('Invoice link copied to clipboard')
+          }).catch(() => {
+            toast.error('Failed to copy to clipboard')
+          })
+        }
+        break
+    }
+  }
+
   if (loading) {
     return (
       <Card className="bg-[#181818] text-white border-gray-700">
@@ -228,13 +285,14 @@ export default function InvoicesSection() {
                 <TableHead className="text-white border-gray-700">Amount Paid</TableHead>
                 <TableHead className="text-white border-gray-700">Created</TableHead>
                 <TableHead className="text-white border-gray-700">Due Date</TableHead>
-                <TableHead className="text-white border-gray-700">Actions</TableHead>
+                <TableHead className="text-white border-gray-700">Send Invoice</TableHead>
+                <TableHead className="text-white border-gray-700">View Invoice</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredInvoices.length === 0 ? (
                 <TableRow className="border-gray-700">
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-400 border-gray-700">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-400 border-gray-700">
                     No invoices found
                   </TableCell>
                 </TableRow>
@@ -272,28 +330,71 @@ export default function InvoicesSection() {
                       {invoice.due_date ? formatDate(invoice.due_date) : 'No due date'}
                     </TableCell>
                     <TableCell className="border-gray-700">
-                      <div className="flex gap-2">
-                        {invoice.hosted_invoice_url && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-white border-gray-600 hover:bg-gray-700"
-                            onClick={() => window.open(invoice.hosted_invoice_url!, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {invoice.invoice_pdf && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-white border-gray-600 hover:bg-gray-700"
-                            onClick={() => window.open(invoice.invoice_pdf!, '_blank')}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      {(invoice.hosted_invoice_url || invoice.invoice_pdf) ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-white border-gray-600 hover:bg-gray-700"
+                            >
+                              <Send className="h-4 w-4 mr-1" />
+                              Send
+                              <ChevronDown className="h-4 w-4 ml-1" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="bg-gray-800 border-gray-600">
+                            <DropdownMenuItem 
+                              onClick={() => handleSendInvoice('text', invoice)}
+                              className="text-white hover:bg-gray-700"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Text
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleSendInvoice('email', invoice)}
+                              className="text-white hover:bg-gray-700"
+                            >
+                              <Mail className="h-4 w-4 mr-2" />
+                              Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleSendInvoice('share', invoice)}
+                              className="text-white hover:bg-gray-700"
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-gray-500 text-sm">No URL</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="border-gray-700">
+                      {invoice.hosted_invoice_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-white border-gray-600 hover:bg-gray-700"
+                          onClick={() => window.open(invoice.hosted_invoice_url!, '_blank')}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      ) : invoice.invoice_pdf ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-white border-gray-600 hover:bg-gray-700"
+                          onClick={() => window.open(invoice.invoice_pdf!, '_blank')}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
+                      ) : (
+                        <span className="text-gray-500 text-sm">N/A</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
