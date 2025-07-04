@@ -276,7 +276,7 @@ export default function InvoicesSection() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-white">
           <span>Stripe Invoices</span>
-          <Button onClick={fetchInvoices} variant="outline" size="sm" className="text-white border-gray-600 hover:bg-gray-700">
+          <Button onClick={fetchInvoices} variant="outline" size="sm" className="text-black bg-white border-gray-600 hover:bg-gray-100">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
