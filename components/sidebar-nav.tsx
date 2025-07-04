@@ -41,7 +41,11 @@ const navItems = [
   { id: "invoices", label: "Invoices", icon: FileText, path: "/?section=invoices" },
   { id: "messaging", label: "Messaging", icon: MessageSquare, path: "/?section=messaging" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/?section=analytics" },
-  { id: "product-information", label: "Product Info", icon: Pill, path: "/?section=product-information" },
+  { id: "product-information", label: "Product Info", icon: Pill, path: "/?section=product-information",
+    subItems: [
+      { id: "aod-9604", label: "AOD-9604", icon: Pill, path: "/aod-9604" },
+    ]
+  },
   { id: "emails", label: "Email Center", icon: Mail, path: "/?section=emails" },
   { id: "settings", label: "Settings", icon: Settings, path: "/?section=settings" },
 ]
@@ -147,25 +151,44 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
             const isActive = activeSection === item.id
 
             return (
-              <Button
-                key={item.id}
-                variant="ghost"
-                onClick={() => handleSectionClick(item.id, item.path)}
-                className={cn(
-                  "w-full justify-start text-left transition-all duration-200",
-                  collapsed ? "px-2" : "px-3",
-                  isActive
-                    ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30 shadow-lg shadow-cyan-500/10"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50",
+              <div key={item.id}>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSectionClick(item.id, item.path)}
+                  className={cn(
+                    "w-full justify-start text-left transition-all duration-200",
+                    collapsed ? "px-2" : "px-3",
+                    isActive
+                      ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30 shadow-lg shadow-cyan-500/10"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50",
+                  )}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
+                  {!collapsed && <span>{item.label}</span>}
+                  {isActive && (
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-400 rounded-l" />
+                  )}
+                </Button>
+                {/* Render subItems if present and not collapsed */}
+                {item.subItems && !collapsed && (
+                  <div className="ml-8 space-y-1">
+                    {item.subItems.map((sub) => (
+                      <Link key={sub.id} href={sub.path} legacyBehavior>
+                        <a
+                          className={cn(
+                            "block px-3 py-2 rounded text-slate-300 hover:text-white hover:bg-slate-800/50 text-sm transition-all duration-200",
+                            usePathname() === sub.path && "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white border border-cyan-500/30"
+                          )}
+                        >
+                          <sub.icon className="h-4 w-4 mr-2 inline-block align-middle" />
+                          <span className="align-middle">{sub.label}</span>
+                        </a>
+                      </Link>
+                    ))}
+                  </div>
                 )}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-                {!collapsed && <span>{item.label}</span>}
-                {isActive && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-400 rounded-l" />
-                )}
-              </Button>
+              </div>
             )
           })}
         </nav>
