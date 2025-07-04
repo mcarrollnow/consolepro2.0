@@ -24,14 +24,12 @@ export async function POST(request: Request) {
   try {
     const orderData = await request.json()
 
-    // Generate customer ID if new customer
-    const customerId = await googleSheetsService.generateCustomerId(orderData.customerName, orderData.customerEmail)
-
     // Format the order data according to the Orders sheet structure
+    // Let Google Sheets handle customer ID generation automatically
     const formattedOrder = {
       customerName: orderData.customerName,
       customerEmail: orderData.customerEmail,
-      customerId,
+      customerId: "", // Let Google Sheets generate this automatically
       businessName: orderData.businessName || "",
       phone: orderData.phone || "",
       addressStreet: orderData.addressStreet || "",
@@ -62,7 +60,7 @@ export async function POST(request: Request) {
             quantity: product.quantity,
             timestamp: new Date().toISOString(),
             product: product.name,
-            customer_id: customerId,
+            customer_id: "", // Let Google Sheets handle this
             order_code: orderId,
             customer_name: orderData.customerName,
             email: orderData.customerEmail,
@@ -73,7 +71,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ orderId, customerId })
+    return NextResponse.json({ orderId })
   } catch (error) {
     console.error("Error creating order:", error)
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 })

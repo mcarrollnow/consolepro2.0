@@ -420,7 +420,7 @@ export class GoogleSheetsService {
           orderId,                                     // Order_Code (B)
           order.recordType || "RETAIL_TRANSACTION",    // Record_Type (C)
           order.customerName,                          // Customer_Name (D)
-          order.customerId,                            // customer_id (E)
+          "",                                          // customer_id (E) - Let Google Sheets generate this
           order.customerEmail,                         // Email (F)
           order.businessName || "",                    // Business_Name (G)
           order.phone || "",                           // Phone (H)
