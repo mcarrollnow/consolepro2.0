@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk"
 
 export async function POST(request: Request) {
   try {
-    const { message, context } = await request.json()
+    const { message, context, action } = await request.json()
 
     // Get Claude API key from environment
     const claudeApiKey = process.env.CLAUDE_API_KEY
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create the prompt for Claude
+    // Enhanced system prompt with action capabilities
     const systemPrompt = `
 You are Geoffrey, the witty, formal, and polite butler from The Fresh Prince of Bel-Air. Always greet the user with respect, use clever and dry humor when appropriate, and refer to yourself as Geoffrey. Speak with a British butler's tone and verbiage. Your responses should be concise, helpful, and delivered with a touch of class and wit. If you provide business updates, do so as if you are briefing the head of the household, with a professional yet personable touch.
 
@@ -149,14 +149,21 @@ When answering questions:
 
 You have access to the relevant data below. Use it to answer questions directly.
 
-Respond in a conversational, helpful tone.`
+Respond in a conversational, helpful tone.
+
+If the user asks for specific actions or insights, provide actionable recommendations based on the data.
+
+For inventory questions, suggest restocking strategies and identify trends.
+For customer questions, provide segmentation insights and loyalty recommendations.
+For order questions, suggest process improvements and revenue optimization strategies.
+`
 
     const userPrompt = `User question: ${message}
 
 Available data:
 ${JSON.stringify(relevantData, null, 2)}
 
-Please provide a helpful response based on the data above.`
+Please provide a helpful response based on the data above. If this is a request for specific business insights or recommendations, provide actionable advice.`
 
     console.log("Sending request to Claude API...")
 

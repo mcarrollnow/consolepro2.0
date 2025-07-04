@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Bot, Send, User, Loader2, Sparkles, ChevronDown, ChevronRight } from "lucide-react"
+import { Bot, Send, User, Loader2, Sparkles, ChevronDown, ChevronRight, Zap, Tag, Settings } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -15,6 +15,10 @@ interface Message {
   role: "user" | "assistant"
   content: string
   timestamp: Date
+  action?: {
+    type: string
+    data?: any
+  }
 }
 
 function getGreeting() {
@@ -111,6 +115,7 @@ export function AIChat() {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [contextData, setContextData] = useState<any>(null)
+  const [discountCodes, setDiscountCodes] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -126,15 +131,17 @@ export function AIChat() {
 
   const loadContextData = async () => {
     try {
-      const [inventoryRes, ordersRes, customersRes] = await Promise.all([
+      const [inventoryRes, ordersRes, customersRes, discountCodesRes] = await Promise.all([
         fetch("/api/inventory"),
         fetch("/api/orders"),
-        fetch("/api/customers")
+        fetch("/api/customers"),
+        fetch("/api/console-discount-codes")
       ])
 
       const inventory = await inventoryRes.json()
       const orders = await ordersRes.json()
       const customers = await customersRes.json()
+      const discountCodesData = await discountCodesRes.json()
 
       setContextData({
         inventory,
@@ -142,6 +149,7 @@ export function AIChat() {
         customers,
         timestamp: new Date().toISOString()
       })
+      setDiscountCodes(discountCodesData)
     } catch (error) {
       console.error("Error loading context data:", error)
     }
@@ -162,32 +170,19 @@ export function AIChat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/ai-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: inputValue,
-          context: contextData
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to get AI response")
-      }
-
-      const data = await response.json()
+      // Check if this is a special command
+      const lowerMessage = inputValue.toLowerCase()
       
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response,
-        timestamp: new Date()
+      if (lowerMessage.includes('discount code') || lowerMessage.includes('promo code')) {
+        await handleDiscountCodeRequest(inputValue)
+      } else if (lowerMessage.includes('generate invoice') || lowerMessage.includes('create invoice')) {
+        await handleInvoiceGeneration(inputValue)
+      } else if (lowerMessage.includes('execute') || lowerMessage.includes('run action')) {
+        await handleActionExecution(inputValue)
+      } else {
+        // Regular chat message
+        await handleRegularChat(inputValue)
       }
-
-      setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error("Error sending message:", error)
       
@@ -199,6 +194,143 @@ export function AIChat() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleRegularChat = async (message: string) => {
+    const response = await fetch("/api/ai-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        context: contextData
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to get AI response")
+    }
+
+    const data = await response.json()
+    
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: data.response,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, assistantMessage])
+  }
+
+  const handleDiscountCodeRequest = async (message: string) => {
+    const isCreateRequest = message.toLowerCase().includes('create') || message.toLowerCase().includes('suggest')
+    const action = isCreateRequest ? 'create' : 'analyze'
+
+    const response = await fetch("/api/ai-discount-codes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action,
+        discountCodes,
+        orders: contextData?.orders,
+        customers: contextData?.customers,
+        context: contextData
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to process discount code request")
+    }
+
+    const data = await response.json()
+    
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: data.result,
+      timestamp: new Date(),
+      action: {
+        type: 'discount_codes',
+        data: { action: data.action }
+      }
+    }
+
+    setMessages(prev => [...prev, assistantMessage])
+  }
+
+  const handleInvoiceGeneration = async (message: string) => {
+    // Extract order ID from message (simple regex for now)
+    const orderIdMatch = message.match(/order[:\s]*([A-Z0-9-]+)/i)
+    const orderId = orderIdMatch ? orderIdMatch[1] : null
+
+    if (!orderId) {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'd be happy to help generate an invoice, sir. Could you please specify which order you'd like me to create an invoice for? For example: 'Generate invoice for order ABC123'",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, assistantMessage])
+      return
+    }
+
+    const response = await fetch("/api/ai-execute-action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "generate_stripe_invoice",
+        orderId,
+        orders: contextData?.orders,
+        customers: contextData?.customers,
+        context: contextData
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to execute invoice generation")
+    }
+
+    const data = await response.json()
+    
+    let content = data.analysis
+    if (data.executeAction && data.actionData.success) {
+      content += `\n\n✅ **Invoice Generated Successfully!**\nInvoice Link: ${data.actionData.invoice.invoiceUrl || 'Available in orders section'}`
+    } else if (data.actionData.error) {
+      content += `\n\n❌ **Error**: ${data.actionData.error}`
+    }
+
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content,
+      timestamp: new Date(),
+      action: {
+        type: 'invoice_generation',
+        data: { orderId, success: data.executeAction }
+      }
+    }
+
+    setMessages(prev => [...prev, assistantMessage])
+  }
+
+  const handleActionExecution = async (message: string) => {
+    // This is a placeholder for future action execution
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: "I understand you'd like me to execute an action, sir. I'm currently learning to handle various console operations. Could you please be more specific about what action you'd like me to perform? For example: 'Generate invoice for order ABC123' or 'Analyze discount codes'",
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, assistantMessage])
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -219,7 +351,23 @@ export function AIChat() {
         {/* Geoffrey Header */}
         <div className="flex items-center gap-4 px-6 pt-6 pb-2">
           <GeoffreyAvatar size={64} />
-          <span className="text-2xl font-bold text-white">Geoffrey</span>
+          <div className="flex-1">
+            <span className="text-2xl font-bold text-white">Geoffrey</span>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border-cyan-500/30">
+                <Zap className="h-3 w-3 mr-1" />
+                AI Assistant
+              </Badge>
+              <Badge className="bg-gradient-to-r from-green-500/20 to-blue-500/20 text-green-400 border-green-500/30">
+                <Tag className="h-3 w-3 mr-1" />
+                Discount Codes
+              </Badge>
+              <Badge className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30">
+                <Settings className="h-3 w-3 mr-1" />
+                Actions
+              </Badge>
+            </div>
+          </div>
         </div>
         <CardHeader className="pt-2 pb-0">
           <CardTitle className="text-white flex items-center hidden">
@@ -238,7 +386,13 @@ export function AIChat() {
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
                   <p className="text-slate-200 text-lg font-semibold">How may I be of service today, sir?</p>
-                  <p className="text-slate-400 text-sm">You may inquire about your inventory, orders, or customers. For example: "Might I trouble you for a summary of recent orders?" or "Which items are frightfully low in stock?"</p>
+                  <p className="text-slate-400 text-sm">I can help with inventory, orders, customers, discount codes, and even execute actions like generating invoices. For example:</p>
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <p>• "Analyze my discount codes"</p>
+                    <p>• "Create new discount codes for VIP customers"</p>
+                    <p>• "Generate invoice for order ABC123"</p>
+                    <p>• "Which items need restocking?"</p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -260,6 +414,18 @@ export function AIChat() {
                           )}
                           <div className="flex-1">
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            {message.action && (
+                              <div className="mt-2 p-2 bg-slate-800/50 rounded border border-slate-600/50">
+                                <p className="text-xs text-cyan-400 font-semibold">
+                                  Action: {message.action.type.replace('_', ' ').toUpperCase()}
+                                </p>
+                                {message.action.data && (
+                                  <p className="text-xs text-slate-400">
+                                    {JSON.stringify(message.action.data, null, 2)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             <p className="text-xs text-slate-500 mt-1">
                               {message.timestamp.toLocaleTimeString()}
                             </p>
@@ -293,7 +459,7 @@ export function AIChat() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about inventory, orders, customers..."
+              placeholder="Ask about inventory, orders, customers, discount codes, or execute actions..."
               className="flex-1 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
               disabled={isLoading}
             />

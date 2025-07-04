@@ -15,6 +15,7 @@ import type { InventoryItem } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 import { getDriveDirectImage } from "../app/inventory/[barcode]/page"
+import { AIInventoryInsightsWidget } from "./ai-inventory-insights-widget"
 
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -274,6 +275,14 @@ export function InventorySection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Inventory Insights Widget */}
+      <AIInventoryInsightsWidget 
+        inventory={inventoryData}
+        orders={ordersData}
+        purchases={purchases}
+        sales={sales}
+      />
 
       {/* Filtered inventory view */}
       {(activeView === 'low' || activeView === 'out') && (

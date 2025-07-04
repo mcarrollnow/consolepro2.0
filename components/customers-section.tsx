@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Users, Search, UserPlus, Star, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
+import { AICustomerIntelligenceWidget } from "./ai-customer-intelligence-widget"
 
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL;
 
@@ -173,6 +174,13 @@ export function CustomersSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Customer Intelligence Widget */}
+      <AICustomerIntelligenceWidget 
+        customers={customers}
+        orders={[]} // We'll need to fetch orders data for this
+        archivedOrders={[]} // We'll need to fetch archived orders data for this
+      />
 
       {/* Customers Table */}
       <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">

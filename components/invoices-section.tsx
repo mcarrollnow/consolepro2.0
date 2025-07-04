@@ -134,14 +134,14 @@ export default function InvoicesSection() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-[#181818] text-white border-gray-700">
         <CardHeader>
-          <CardTitle>Stripe Invoices</CardTitle>
+          <CardTitle className="text-white">Stripe Invoices</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">Loading invoices...</span>
+            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-400">Loading invoices...</span>
           </div>
         </CardContent>
       </Card>
@@ -150,14 +150,14 @@ export default function InvoicesSection() {
 
   if (error) {
     return (
-      <Card>
+      <Card className="bg-[#181818] text-white border-gray-700">
         <CardHeader>
-          <CardTitle>Stripe Invoices</CardTitle>
+          <CardTitle className="text-white">Stripe Invoices</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4">Error: {error}</p>
-            <Button onClick={fetchInvoices} variant="outline">
+            <p className="text-red-400 mb-4">Error: {error}</p>
+            <Button onClick={fetchInvoices} variant="outline" className="text-white border-gray-600 hover:bg-gray-700">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>
@@ -168,17 +168,17 @@ export default function InvoicesSection() {
   }
 
   return (
-    <Card>
+    <Card className="bg-[#181818] text-white border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between text-white">
           <span>Stripe Invoices</span>
-          <Button onClick={fetchInvoices} variant="outline" size="sm">
+          <Button onClick={fetchInvoices} variant="outline" size="sm" className="text-white border-gray-600 hover:bg-gray-700">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="text-white">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
@@ -188,95 +188,96 @@ export default function InvoicesSection() {
                 placeholder="Search invoices..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-48 bg-gray-800 border-gray-600 text-white">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="uncollectible">Uncollectible</SelectItem>
-              <SelectItem value="void">Void</SelectItem>
+            <SelectContent className="bg-gray-800 border-gray-600">
+              <SelectItem value="all" className="text-white hover:bg-gray-700">All Statuses</SelectItem>
+              <SelectItem value="open" className="text-white hover:bg-gray-700">Open</SelectItem>
+              <SelectItem value="paid" className="text-white hover:bg-gray-700">Paid</SelectItem>
+              <SelectItem value="uncollectible" className="text-white hover:bg-gray-700">Uncollectible</SelectItem>
+              <SelectItem value="void" className="text-white hover:bg-gray-700">Void</SelectItem>
             </SelectContent>
           </Select>
           <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value))}>
-            <SelectTrigger className="w-24">
+            <SelectTrigger className="w-24 bg-gray-800 border-gray-600 text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
+            <SelectContent className="bg-gray-800 border-gray-600">
+              <SelectItem value="25" className="text-white hover:bg-gray-700">25</SelectItem>
+              <SelectItem value="50" className="text-white hover:bg-gray-700">50</SelectItem>
+              <SelectItem value="100" className="text-white hover:bg-gray-700">100</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Invoices Table */}
-        <div className="rounded-md border">
+        <div className="rounded-md border border-gray-700">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Amount Due</TableHead>
-                <TableHead>Amount Paid</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Actions</TableHead>
+              <TableRow className="border-gray-700">
+                <TableHead className="text-white border-gray-700">Invoice #</TableHead>
+                <TableHead className="text-white border-gray-700">Customer</TableHead>
+                <TableHead className="text-white border-gray-700">Status</TableHead>
+                <TableHead className="text-white border-gray-700">Amount Due</TableHead>
+                <TableHead className="text-white border-gray-700">Amount Paid</TableHead>
+                <TableHead className="text-white border-gray-700">Created</TableHead>
+                <TableHead className="text-white border-gray-700">Due Date</TableHead>
+                <TableHead className="text-white border-gray-700">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredInvoices.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableRow className="border-gray-700">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-400 border-gray-700">
                     No invoices found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={invoice.id} className="border-gray-700 hover:bg-gray-800">
+                    <TableCell className="font-medium text-white border-gray-700">
                       {invoice.number || invoice.id.slice(-8)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border-gray-700">
                       <div>
-                        <div className="font-medium">
+                        <div className="font-medium text-white">
                           {invoice.customer.name || 'Unknown'}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-gray-400">
                           {invoice.customer.email}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border-gray-700">
                       <Badge className={getStatusColor(invoice.status)}>
                         {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-white border-gray-700">
                       {formatCurrency(invoice.amount_due, invoice.currency)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-white border-gray-700">
                       {formatCurrency(invoice.amount_paid, invoice.currency)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-white border-gray-700">
                       {formatDate(invoice.created)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-white border-gray-700">
                       {invoice.due_date ? formatDate(invoice.due_date) : 'No due date'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border-gray-700">
                       <div className="flex gap-2">
                         {invoice.hosted_invoice_url && (
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-white border-gray-600 hover:bg-gray-700"
                             onClick={() => window.open(invoice.hosted_invoice_url!, '_blank')}
                           >
                             <ExternalLink className="h-4 w-4" />
@@ -286,6 +287,7 @@ export default function InvoicesSection() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-white border-gray-600 hover:bg-gray-700"
                             onClick={() => window.open(invoice.invoice_pdf!, '_blank')}
                           >
                             <Download className="h-4 w-4" />
@@ -302,39 +304,39 @@ export default function InvoicesSection() {
 
         {/* Summary */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-400">
                 {invoices.filter(i => i.status === 'paid').length}
               </div>
-              <div className="text-sm text-muted-foreground">Paid</div>
+              <div className="text-sm text-gray-400">Paid</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-400">
                 {invoices.filter(i => i.status === 'open').length}
               </div>
-              <div className="text-sm text-muted-foreground">Open</div>
+              <div className="text-sm text-gray-400">Open</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-400">
                 {invoices.filter(i => i.status === 'uncollectible').length}
               </div>
-              <div className="text-sm text-muted-foreground">Uncollectible</div>
+              <div className="text-sm text-gray-400">Uncollectible</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-white">
                 {formatCurrency(
                   invoices.reduce((sum, i) => sum + i.amount_due, 0),
                   invoices[0]?.currency || 'usd'
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">Total Outstanding</div>
+              <div className="text-sm text-gray-400">Total Outstanding</div>
             </CardContent>
           </Card>
         </div>
