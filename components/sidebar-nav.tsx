@@ -83,13 +83,13 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
         />
       )}
       
-      {/* Floating Mobile Toggle Button */}
+      {/* Floating Mobile Toggle Button - Top of screen */}
       {isMobile && collapsed && (
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(false)}
-          className="fixed top-4 left-4 z-50 bg-slate-800/90 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/90 shadow-lg"
+          className="fixed top-2 left-2 z-50 bg-slate-800/90 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/90 shadow-lg h-8 w-8"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -98,8 +98,8 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
       <div
         className={cn(
           "relative h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 transition-all duration-300 z-50",
-          collapsed ? (isMobile ? "w-0" : "w-12") : "w-64",
-          isMobile && collapsed && "overflow-hidden",
+          collapsed ? (isMobile ? "w-0 opacity-0 pointer-events-none" : "w-12") : "w-64",
+          isMobile && collapsed && "hidden",
           isMobile && !collapsed && "fixed left-0 top-0 w-64 z-50"
         )}
       >
