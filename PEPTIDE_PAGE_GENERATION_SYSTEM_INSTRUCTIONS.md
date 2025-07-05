@@ -10,6 +10,8 @@ You are tasked with automatically generating comprehensive product pages for eve
 - **NEW CHAT PER PEPTIDE**: Start a fresh chat for each new peptide to maintain memory efficiency
 - **FOLLOW EXACT PATTERN**: Use the AOD-9604 implementation as the template for all peptides
 -**DOCUMENT COMPLETION OF PEPTIDE**: When you complete each peptide page, document your completion by adding (Already completed) to the right of the Peptide on the Peptide List you are following to complete. Save this document so that the next chat will start at the next one in queue.
+-**YOU MUST ADD THIS SECTION**: Athough AOD-9604 is a template, an importangt piece was left out and you must include in every page moving forward. There is data in the dosing-guide.md file in each peptide folder that talks about combinations with other peptides. Include all of the content regarding that and make the other peptides names clickable so the user can click the name and it directs the user to that peptides research page. 
+
 
 ## Reference Implementation
 The AOD-9604 implementation serves as the complete reference for all future peptide pages. This implementation demonstrates:

@@ -47,6 +47,7 @@ const navItems = [
       { id: "epithalon", label: "Epithalon", icon: Pill, path: "/epithalon" },
       { id: "ghk-cu", label: "GHK-Cu", icon: Pill, path: "/ghk-cu" },
       { id: "ghrp-2", label: "GHRP-2", icon: Pill, path: "/ghrp-2" },
+      { id: "hcg", label: "HCG", icon: Pill, path: "/hcg" },
     ]
   },
   { id: "emails", label: "Email Center", icon: Mail, path: "/?section=emails" },
