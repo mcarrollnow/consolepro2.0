@@ -141,7 +141,7 @@ Based on the Peptide Research directory, process these peptides in order:
 4. **Epithalon** (Already completed)
 5. **GHK-Cu** (Already completed)
 6. **GHRP-2** (Already completed)
-7. **HCG**
+7. **HCG** (Already completed)
 8. **Hexarelin**
 9. **HGH**
 10. **IGF-1 LR3**
