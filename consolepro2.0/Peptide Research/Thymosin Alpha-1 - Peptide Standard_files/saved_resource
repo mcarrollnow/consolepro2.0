@@ -1,0 +1,1413 @@
+
+<!doctype html>
+<!--[if IE 9 ]><html class="no-js ie9 lt-ie10" lang="en"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+
+  <title>Peptide Standard</title>
+
+  <link rel='canonical' href='https://peptidestandard.com/' /><meta name='platform' content='bigcommerce.stencil' />
+  
+
+  <link href="https://cdn11.bigcommerce.com/s-q1sponaupn/product_images/favicon_1.png?t=1739995112" rel="shortcut icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+  <script nonce="">
+    function browserSupportsAllFeatures() {
+        return window.Promise
+            && window.fetch
+            && window.URL
+            && window.URLSearchParams
+            && window.WeakMap
+            // object-fit support
+            && ('objectFit' in document.documentElement.style);
+    }
+
+    function loadScript(src) {
+        var js = document.createElement('script');
+        js.src = src;
+        js.nonce = "";
+        js.onerror = function () {
+            console.error('Failed to load polyfill script ' + src);
+        };
+        document.head.appendChild(js);
+    }
+
+    if (!browserSupportsAllFeatures()) {
+        loadScript('https://cdn11.bigcommerce.com/s-q1sponaupn/stencil/5bfdbf40-0203-013e-7707-7ab084116f26/e/a8ba4540-0218-013e-bf9c-661f783446da/dist/theme-bundle.polyfills.js');
+    }
+</script>
+
+  <script nonce="">
+    window.lazySizesConfig = window.lazySizesConfig || {};
+    window.lazySizesConfig.loadMode = 1;
+  </script>
+  <script nonce="" async src="https://cdn11.bigcommerce.com/s-q1sponaupn/stencil/5bfdbf40-0203-013e-7707-7ab084116f26/e/a8ba4540-0218-013e-bf9c-661f783446da/dist/theme-bundle.head_async.js"></script>
+
+  <link data-stencil-stylesheet href="https://cdn11.bigcommerce.com/s-q1sponaupn/stencil/5bfdbf40-0203-013e-7707-7ab084116f26/e/a8ba4540-0218-013e-bf9c-661f783446da/css/theme-e42e28a0-2926-013e-5cfa-3a9b5fd13228.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400%7CRoboto+Condensed:,400,700%7CMontserrat:400&display=swap" rel="stylesheet">
+
+  
+<script type="text/javascript">
+var BCData = {};
+</script>
+<script>
+window.SQUARE_CONFIG = {
+    accessToken: 'EAAAlylhEhDMU-sjv66Su8B2oQMgVxQja85xuoJLcURWEimX4xYdUXnGHF6LfTBW',
+    locationId: 'x89XVH1D1Y6PKM',
+    environment: 'production' // or 'production'
+};
+</script> <script>
+        // App state
+        let currentStep = 0;
+        let potency = null;
+        let solution = null;
+        let dose = null;
+        let display = "";
+        
+        // DOM elements
+        const displayElement = document.getElementById('display');
+        const guidanceElement = document.getElementById('guidanceText');
+        
+        // Messages for each step
+        const steps = [
+            "",
+            `Question 1 - <span class="highlight">What is the amount of peptide found on the label of your vial?<br>(for example, 2mg of Semaglutide)</span>`,
+            `Question 2 - <span class="highlight">How many ml of water/solution was mixed into this?<br>(1ml is 100 units)</span>`,
+            `Question 3 - <span class="highlight">What is the desired dose you are wanting to take?<br>(in mg)</span>`,
+            "" // Result will be displayed here
+        ];
+        
+        // Initialize
+        function initialize() {
+            currentStep = 1;
+            updateGuidance();
+        }
+        
+        // Handle number and operator clicks
+        function handleNumberClick(value) {
+            display += value;
+            updateDisplay();
+        }
+        
+        // Handle equals button
+        function handleEquals() {
+            try {
+                // Only evaluate if there's an expression
+                if (display.includes('+') || display.includes('-') || display.includes('*') || display.includes('/')) {
+                    const result = eval(display);
+                    display = result.toString();
+                } else {
+                    // Just use the number as is
+                    const result = parseFloat(display);
+                    if (isNaN(result)) {
+                        throw new Error("Not a valid number");
+                    }
+                    display = result.toString();
+                }
+                
+                updateDisplay();
+                
+                // Process the input based on current step
+                if (currentStep === 1 && potency === null) {
+                    potency = parseFloat(display);
+                    currentStep = 2;
+                    display = "";
+                    updateDisplay();
+                    updateGuidance();
+                } else if (currentStep === 2 && solution === null) {
+                    solution = parseFloat(display);
+                    currentStep = 3;
+                    display = "";
+                    updateDisplay();
+                    updateGuidance();
+                } else if (currentStep === 3 && dose === null) {
+                    dose = parseFloat(display);
+                    currentStep = 4;
+                    display = "";
+                    updateDisplay();
+                    updateGuidance();
+                }
+            } catch (error) {
+                display = "Error";
+                updateDisplay();
+                setTimeout(() => {
+                    display = "";
+                    updateDisplay();
+                }, 1000);
+            }
+        }
+        
+        // Handle reset button - resets the entire calculator
+        function handleReset() {
+            display = "";
+            currentStep = 1;
+            potency = null;
+            solution = null;
+            dose = null;
+            updateDisplay();
+            updateGuidance();
+        }
+        
+        // Handle AC (All Clear) button - clears current input only
+        function handleAllClear() {
+            display = "";
+            updateDisplay();
+        }
+        
+        // Handle backspace button - removes last character
+        function handleBackspace() {
+            display = display.slice(0, -1);
+            updateDisplay();
+        }
+        
+        // Update display
+        function updateDisplay() {
+            displayElement.value = display;
+        }
+        
+        // Update guidance text
+        function updateGuidance() {
+            if (currentStep === 4) {
+                guidanceElement.innerHTML = calculateDosage();
+            } else {
+                guidanceElement.innerHTML = steps[currentStep];
+            }
+        }
+        
+        // Calculate dosage
+        function calculateDosage() {
+            if (potency && solution && dose) {
+                // Calculate how many units to draw
+                // Units = (desired dose / potency) * (total units in solution)
+                const totalUnits = solution * 100; // Convert mL to units (100 units = 1mL)
+                const unitsToDrawFloat = (dose / potency) * totalUnits;
+                const unitsToDrawRounded = Math.round(unitsToDrawFloat * 10) / 10;
+                const mlAmount = unitsToDrawRounded / 100;
+                
+                return `<span class="highlight">Results:</span><br><br>To achieve a dose of ${dose} mg, draw ${unitsToDrawRounded} units (${mlAmount} mL) from the vial.<br><br>Press the reset button (↻) to start over.`;
+            }
+            return 'Error calculating dosage. Please try again.';
+        }
+        
+        // Initialize the app when the page loads
+        window.onload = initialize;
+    </script>
+ <script data-cfasync="false" src="https://microapps.bigcommerce.com/bodl-events/1.9.4/index.js" integrity="sha256-Y0tDj1qsyiKBRibKllwV0ZJ1aFlGYaHHGl/oUFoXJ7Y=" nonce="" crossorigin="anonymous"></script>
+ <script data-cfasync="false" nonce="">
+
+ (function() {
+    function decodeBase64(base64) {
+       const text = atob(base64);
+       const length = text.length;
+       const bytes = new Uint8Array(length);
+       for (let i = 0; i < length; i++) {
+          bytes[i] = text.charCodeAt(i);
+       }
+       const decoder = new TextDecoder();
+       return decoder.decode(bytes);
+    }
+    window.bodl = JSON.parse(decodeBase64("eyJzZXNzaW9uIjp7ImlkIjoiYTcxYjc4MGItYWZhNi00NjI1LTg0OTYtN2E5MDY4MDZiNzAxIiwiZmlyc3RfdG91Y2hfdGltZXN0YW1wIjoiMjAyNS0wNy0wNFQyMTozMzoyNyIsImZpcnN0X3RvdWNoX3JlZmVycmFsX3VybCI6IiIsImZpcnN0X3RvdWNoX3JlcXVlc3RfdXJsIjoiaHR0cHM6Ly9wZXB0aWRlc3RhbmRhcmQuY29tLyJ9LCJzaG9wcGVyIjp7InZpc2l0b3JfaWQiOiIiLCJjdXN0b21lcl9pZCI6MywiZW1haWwiOm51bGwsImZpcnN0X25hbWUiOm51bGwsImxhc3RfbmFtZSI6bnVsbH0sImRhdGFfY29uc2VudCI6eyJmdW5jdGlvbmFsIjp0cnVlLCJhbmFseXRpY3MiOnRydWUsImFkdmVydGlzaW5nIjp0cnVlfSwiZXZlbnRzIjpbXX0="));
+ })()
+
+ </script>
+
+  
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- snippet location html_head -->
+
+  
+<script nonce="" type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "name": "Peptide Standard",
+    "url": "https://peptidestandard.com/"
+  }
+</script>
+</head>
+
+<body
+  class="template-default
+main-nav-closed
+has-carousel
+carousel-border
+
+
+"
+  data-layout="masonry-grid"
+  data-currency-code="USD"
+>
+  <div class="icons-svg-sprite"><svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <symbol id="icon-lock" viewBox="0 0 24 24">
+      <title>lock</title>
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"></path>
+    </symbol>
+
+    <symbol id="icon-plus" viewBox="0 0 10 10">
+      <title>plus</title>
+      <path d="M4.5 4.5H0v1h4.5V10h1V5.5H10v-1H5.5V0h-1v4.5z"></path>
+    </symbol>
+
+    <symbol id="icon-star" viewBox="0 0 15 14">
+      <path d="M7.083 11.374l4.38 2.302-.837-4.876 3.543-3.454-4.898-.71L7.082.197l-2.19 4.437-4.895.71L3.54 8.8l-.837 4.876"></path>
+    </symbol>
+  </defs>
+</svg>
+</div>
+
+
+  <!-- snippet location header -->
+
+  
+<header class="main-header">
+  <div class="layout-module header-container">
+    <div class="header-branding">
+      <a class="header-logo" href="https://peptidestandard.com/">
+          <img class="header-logo-image visible" src="https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/250x100/white_logo_1_1744842452__94063.original.png" alt="Peptide Standard">
+        <span class="header-logo-text ">
+          Peptide Standard
+        </span>
+      </a>
+    </div>
+
+    <div class="header-navigation">
+      <button class="navigation-toggle-mobile-wrapper" data-mobile-menu-button>
+        <span class="navigation-toggle-mobile" data-mobile-menu-toggle></span>
+      </button>
+
+      
+<nav class="main-header-menu">
+  <ul class="nav-menu navigation-tier navigation-tier-primary" data-navigation-tier-primary>
+    <li class="has-slide-out header-navigation-item navigation-item-primary">
+      <a class="navigation-link-primary" href="#header-pane-category" data-slideout-menu="header-pane-category">Products</a>
+    </li>
+    <li class="has-slide-out header-navigation-item navigation-item-primary">
+      <a class="navigation-link-primary" href="#header-pane-pages" data-slideout-menu="header-pane-pages">Information</a>
+    </li>
+    <li class="header-navigation-item navigation-item-primary">
+      <a class="navigation-link-primary toggle-search" href="#modal-search" class="toggle-search">Search</a>
+    </li>
+    <li class="has-slide-out header-navigation-item navigation-item-primary">
+      <a class="navigation-link-primary" href="#header-cart-pane" data-slideout-menu="header-cart-pane">Cart</a>
+    </li>
+  </ul>
+</nav>
+
+    </div>
+  </div>
+</header>
+
+  <main class="main-content">
+
+        <section class="carousel-wrapper"
+  data-list-name="Featured Products"
+  data-carousel-position="0"
+  event="list"
+>
+    <figure class="carousel-item active"
+      data-image-position="0"
+      data-image-distance
+      >
+        <span class="carousel-item-background" style="background-image: url(https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/17/dirk-lach-RYGq_PGtPPk-unsplash.jpg?c=1);">
+          <img class="sr-only" src="https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/17/dirk-lach-RYGq_PGtPPk-unsplash.jpg?c=1" alt="">
+        </span>
+
+      <figcaption class="carousel-item-info">
+      </figcaption>
+    </figure>
+    <figure class="carousel-item "
+      data-image-position="1"
+      data-image-distance
+      >
+        <span class="carousel-item-background" style="background-image: url(https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/18/kunal-patil-8ZKlgI_G-mw-unsplash.jpg?c=1);">
+          <img class="sr-only" src="https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/18/kunal-patil-8ZKlgI_G-mw-unsplash.jpg?c=1" alt="">
+        </span>
+
+      <figcaption class="carousel-item-info">
+      </figcaption>
+    </figure>
+    <figure class="carousel-item "
+      data-image-position="2"
+      data-image-distance
+      >
+        <span class="carousel-item-background" style="background-image: url(https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/15/gradient.jpg?c=1);">
+          <img class="sr-only" src="https://cdn11.bigcommerce.com/s-q1sponaupn/images/stencil/original/carousel/15/gradient.jpg?c=1" alt="">
+        </span>
+
+      <figcaption class="carousel-item-info">
+      </figcaption>
+    </figure>
+</section>
+
+    <div data-content-region="home_below_carousel"><div data-layout-id="0de7af9b-7e03-4ba8-9daa-af0c1b96100a"><div data-sub-layout-container="d5d501ca-2150-43b0-a42d-fe331c64589d" data-layout-name="Layout">
+  <style data-container-styling="d5d501ca-2150-43b0-a42d-fe331c64589d">
+    [data-sub-layout-container="d5d501ca-2150-43b0-a42d-fe331c64589d"] {
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      z-index: 0;
+      position: relative;
+    }
+    [data-sub-layout-container="d5d501ca-2150-43b0-a42d-fe331c64589d"]:after {
+      background-position: center center;
+      background-size: cover;
+      z-index: auto;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <div data-sub-layout="8a34c40e-b650-451c-b7ec-b9c98b677d3c">
+    <style data-column-styling="8a34c40e-b650-451c-b7ec-b9c98b677d3c">
+      [data-sub-layout="8a34c40e-b650-451c-b7ec-b9c98b677d3c"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 100%;
+        max-width: 100%;
+        z-index: 0;
+        justify-content: center;
+        padding-right: 10.5px;
+        padding-left: 10.5px;
+        position: relative;
+      }
+      [data-sub-layout="8a34c40e-b650-451c-b7ec-b9c98b677d3c"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="8a34c40e-b650-451c-b7ec-b9c98b677d3c"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </div>
+</div>
+<div data-sub-layout-container="bbc682f6-bcb4-4c8b-b539-e790bd89bb8a" data-layout-name="PRODUCT GALLERY">
+  <style data-container-styling="bbc682f6-bcb4-4c8b-b539-e790bd89bb8a">
+    [data-sub-layout-container="bbc682f6-bcb4-4c8b-b539-e790bd89bb8a"] {
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      z-index: 0;
+      position: relative;
+    }
+    [data-sub-layout-container="bbc682f6-bcb4-4c8b-b539-e790bd89bb8a"]:after {
+      background-position: center center;
+      background-size: cover;
+      z-index: auto;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <div data-sub-layout="b97f0618-6d13-4ac4-9b85-9ed8d84c1681">
+    <style data-column-styling="b97f0618-6d13-4ac4-9b85-9ed8d84c1681">
+      [data-sub-layout="b97f0618-6d13-4ac4-9b85-9ed8d84c1681"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 100%;
+        max-width: 100%;
+        z-index: 0;
+        justify-content: flex-start;
+        position: relative;
+      }
+      [data-sub-layout="b97f0618-6d13-4ac4-9b85-9ed8d84c1681"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="b97f0618-6d13-4ac4-9b85-9ed8d84c1681"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+    <div data-widget-id="0064b087-b858-4d4a-b112-c4296e037cef" data-placement-id="9c41d3b0-722b-4dc9-b640-df3ce8ae89ee" data-placement-status="ACTIVE"><style>
+  .sd-spacer-0064b087-b858-4d4a-b112-c4296e037cef {
+    height: 50px;
+  }
+</style>
+
+<div class="sd-spacer-0064b087-b858-4d4a-b112-c4296e037cef">
+</div>
+</div>
+  </div>
+</div>
+<div data-sub-layout-container="79d6841a-a99f-433c-8d84-e14e5c67bb6d" data-layout-name="Layout">
+  <style data-container-styling="79d6841a-a99f-433c-8d84-e14e5c67bb6d">
+    [data-sub-layout-container="79d6841a-a99f-433c-8d84-e14e5c67bb6d"] {
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      z-index: 0;
+      position: relative;
+    }
+    [data-sub-layout-container="79d6841a-a99f-433c-8d84-e14e5c67bb6d"]:after {
+      background-position: center center;
+      background-size: cover;
+      z-index: auto;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <div data-sub-layout="4a54fdd9-2f52-47cc-8d92-f279c0db0140">
+    <style data-column-styling="4a54fdd9-2f52-47cc-8d92-f279c0db0140">
+      [data-sub-layout="4a54fdd9-2f52-47cc-8d92-f279c0db0140"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 58.333333333333336%;
+        max-width: 58.333333333333336%;
+        z-index: 0;
+        justify-content: center;
+        padding-right: 10.5px;
+        padding-left: 10.5px;
+        position: relative;
+      }
+      [data-sub-layout="4a54fdd9-2f52-47cc-8d92-f279c0db0140"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="4a54fdd9-2f52-47cc-8d92-f279c0db0140"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </div>
+  <div data-sub-layout="99cfae4e-49cf-4dda-8541-4707ae73d097">
+    <style data-column-styling="99cfae4e-49cf-4dda-8541-4707ae73d097">
+      [data-sub-layout="99cfae4e-49cf-4dda-8541-4707ae73d097"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 41.66666666666667%;
+        max-width: 41.66666666666667%;
+        z-index: 0;
+        justify-content: center;
+        padding-right: 10.5px;
+        padding-left: 10.5px;
+        position: relative;
+      }
+      [data-sub-layout="99cfae4e-49cf-4dda-8541-4707ae73d097"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="99cfae4e-49cf-4dda-8541-4707ae73d097"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </div>
+</div>
+<div data-sub-layout-container="9cc7f848-6b42-444f-a8b6-71290366276b" data-layout-name="Layout">
+  <style data-container-styling="9cc7f848-6b42-444f-a8b6-71290366276b">
+    [data-sub-layout-container="9cc7f848-6b42-444f-a8b6-71290366276b"] {
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      z-index: 0;
+      position: relative;
+    }
+    [data-sub-layout-container="9cc7f848-6b42-444f-a8b6-71290366276b"]:after {
+      background-position: center center;
+      background-size: cover;
+      z-index: auto;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <div data-sub-layout="2364f2cf-baa1-4216-b1f9-e5bb913bb63f">
+    <style data-column-styling="2364f2cf-baa1-4216-b1f9-e5bb913bb63f">
+      [data-sub-layout="2364f2cf-baa1-4216-b1f9-e5bb913bb63f"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 100%;
+        max-width: 100%;
+        z-index: 0;
+        justify-content: center;
+        padding-right: 10.5px;
+        padding-left: 10.5px;
+        position: relative;
+      }
+      [data-sub-layout="2364f2cf-baa1-4216-b1f9-e5bb913bb63f"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="2364f2cf-baa1-4216-b1f9-e5bb913bb63f"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </div>
+</div></div></div>
+
+    <div data-content-region="header_bottom--global"><div data-layout-id="ed20f151-d162-483f-a631-44044b517369"><div data-sub-layout-container="32983093-bdf2-4510-ba29-d850552335d5" data-layout-name="Layout">
+  <style data-container-styling="32983093-bdf2-4510-ba29-d850552335d5">
+    [data-sub-layout-container="32983093-bdf2-4510-ba29-d850552335d5"] {
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      z-index: 0;
+      position: relative;
+    }
+    [data-sub-layout-container="32983093-bdf2-4510-ba29-d850552335d5"]:after {
+      background-position: center center;
+      background-size: cover;
+      z-index: auto;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <div data-sub-layout="3cd0fc18-1a31-47a5-a4a4-4c2b7e28029e">
+    <style data-column-styling="3cd0fc18-1a31-47a5-a4a4-4c2b7e28029e">
+      [data-sub-layout="3cd0fc18-1a31-47a5-a4a4-4c2b7e28029e"] {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        flex-basis: 100%;
+        max-width: 100%;
+        z-index: 0;
+        justify-content: center;
+        padding-right: 10.5px;
+        padding-left: 10.5px;
+        position: relative;
+      }
+      [data-sub-layout="3cd0fc18-1a31-47a5-a4a4-4c2b7e28029e"]:after {
+        background-position: center center;
+        background-size: cover;
+        z-index: auto;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @media only screen and (max-width: 700px) {
+        [data-sub-layout="3cd0fc18-1a31-47a5-a4a4-4c2b7e28029e"] {
+          flex-basis: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </div>
+</div></div></div>
+
+
+  <div data-content-region="header_bottom"></div>
+
+  <!-- snippet location home_content -->
+
+  
+
+
+
+
+
+
+
+    
+  </main>
+
+  
+<section class="navigation-wrap" data-slideout-wrapper>
+  <ul class="navigation-tier navigation-tier-secondary" id="header-pane-category">
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/adipotide/">Adipotide</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/aod9604/">AOD9604</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/bpc-157/-1/">BPC 157</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/cagrilintide/-1/">Cagrilintide</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/cjc-1295/">CJC-1295</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/dsip/">DSIP</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/epithalon/-1/">Epithalon</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/ghk-cu/-1/">GHK-Cu</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/ghrp-2/-1/">GHRP-2</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/hcg/-1/">HCG</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/hexarelin/-1/">Hexarelin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/hgh/-1/">HGH</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/igf-lr3/">IGF LR3</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/ipamorelin/">Ipamorelin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/kisspeptin/-1/">Kisspeptin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/mots-c/-1/">MOTS-C</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/mt2/">MT2</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/nad/-1/">NAD+</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/oxytocin-acetate/">Oxytocin Acetate</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/peg-mgf/-1/">PEG-MGF</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/pt-141/-1/">PT-141</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/retatrutide/">Retatrutide</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/selank/-1/">Selank</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/semaglutide/-1/">Semaglutide</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/semax/-1/">Semax</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/sermorelin/-1/">Sermorelin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/snap-8/-1/">Snap-8</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/ss31/">SS31</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/tesamorelin/-1/">Tesamorelin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/thymosin-alpha-1/">Thymosin alpha 1</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/thymosin-4-tb-500/-1/">Thymosin β4 (TB-500)</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/thymuliin/">Thymuliin</a>
+      </li>
+      <li class="header-navigation-item">
+        <a href="https://peptidestandard.com/tirzepatide/-1/">Tirzepatide</a>
+      </li>
+  </ul>
+
+
+    <ul class="navigation-tier navigation-tier-secondary" id="header-pane-pages">
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/ali/">Ali</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/cc-auth/">CC AUTH</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/ccform/">CCFORM</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/pnc-27-cancer-research-2025/">PNC-27 CANCER RESEARCH 2025</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/2025researchupdate/">researchupdate</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/periodic-table-final/">Periodic Table Final</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/tool/">Research &amp; Journal Tool</a>
+        </li>
+        <li class="header-navigation-item">
+          <a href="https://peptidestandard.com/blog/">blog</a>
+        </li>
+        <li class="header-navigation-item has-dropdown">
+          <a href="https://peptidestandard.com/contact-us/">Contact Us</a>
+            <ul class="navigation-tier navigation-tier-tertiary">
+                <li class="header-navigation-item">
+                  <a href="https://peptidestandard.com/shipping-returns/">Shipping &amp; Returns</a>
+
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+  <div class="navigation-tier navigation-tier-secondary" id="header-cart-pane">
+    <div class="form-field">
+      <label class="quick-cart-currency form-label" for="quick_cart_currency_change">
+      <span class="quick-cart-change-currency form-label-text">
+        Currency:
+          US Dollars
+      </span>
+      </label>
+    </div>
+
+    <div id="quick-cart" class="quick-cart empty" data-count="0">
+  <div data-quick-cart-content>
+    <div class="quick-cart-content-area">
+
+
+    <div class="empty-cart">Your cart is empty.</div>
+
+</div>
+  </div>
+
+  <div data-quick-cart-totals>
+    
+  </div>
+</div>
+  </div>
+</section>
+  <footer class="main-footer">
+
+  <div class="container footer-interactions">
+    <div class="layout-module">
+      <div class="footer-navigation footer-navigation-list-item">
+        <nav class="main-footer-menu">
+  <ul class="nav-menu navigation-tier">
+    <li>
+      <a href="#header-pane-category" data-slideout-menu>Products</a>
+    </li>
+    <li>
+      <a href="#header-pane-pages" data-slideout-menu>Information</a>
+    </li>
+    <li><a href="#modal-search" class="toggle-search">Search</a></li>
+    <li><a href="#header-cart-pane" data-slideout-menu>Cart</a></li>
+  </ul>
+</nav>
+
+      </div>
+
+    </div>
+  </div>
+  <div class="layout-module">
+    <div class="footer-content">
+        <div class="footer-content-column mailing-list-wrapper">
+          <section class="mailing-list footer-module">
+  <h3 class="section-title">Join our mailing list</h3>
+
+  <p>We promise to send only good things.</p>
+
+  <form
+    class="mailing-list-form"
+    action="/subscribe.php"
+    method="post"
+    data-validates
+  >
+    <input type="hidden" name="action" value="subscribe">
+    <input type="hidden" name="check" value="1">
+    <input type="hidden" name="nl_first_name" value="bc">
+
+    <div class="form-field full-width-field">
+      <label class="form-label" for="nl_email">
+        <span class="form-label-text">Email Address</span>
+        <input
+          class="form-input mailing-list-email"
+          id="nl_email"
+          name="nl_email"
+          type="email"
+          value="michael@dreamkidstudio.com"
+        >
+      </label>
+
+      <input
+        class="mailing-list-submit form-input"
+        type="submit"
+        name="subscribe"
+        value="&#xe60a;"
+      >
+    </div>
+  </form>
+
+</section>
+        </div>
+
+      <div class="footer-content-column">
+          <address class="footer-contact-address">
+            5820 w Greenway rd Suite 124<br>
+Glendale, AZ 85306
+          </address>
+
+      </div>
+    </div>
+
+    <div class="footer-quick-links">
+
+        <ul class="footer-account-links">
+            <li>
+              <a href="/account.php">
+                Your Account
+              </a>
+            </li>
+            <li>
+              <a href="/login.php?action=logout">
+                Logout
+              </a>
+            </li>
+        </ul>
+
+
+      <ul class="footer-page-links">
+        <li>
+          <a href="/sitemap.php">
+            Sitemap
+          </a>
+        </li>
+      </ul>
+
+      <ul class="footer-payment-icons">
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-visa"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-mastercard"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-american-express"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-discover"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-paypal"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="payment-icon">
+              <i class="icon-payment-apple-pay"></i>
+            </span>
+          </li>
+      </ul>
+
+      <div data-content-region="ssl_site_seal--global"></div>
+    </div>
+  </div>
+
+  <div class="layout-module">
+    <p class="copyright" role="contentinfo">&copy; <script nonce="">document.write(new Date().getFullYear())</script> <a href="https://peptidestandard.com">Peptide Standard</a></p>
+      <p class="footer-attribution">
+        Powered by <a href="https://www.bigcommerce.com/" target="_blank" rel="nofollow">BigCommerce</a>
+      </p>
+  </div>
+</footer>
+  <div class="navigation-overlay"></div>
+<div class="error-message-modal"></div>
+
+<div class="search-overlay">
+
+  <!-- snippet location forms_search -->
+
+  <form class="search-overlay-form" id="modal-search" action="/search.php">
+    <div class="form-field-inline">
+      <input
+        class="search-overlay-input"
+        name="search_query"
+        placeholder="Search the store"
+      >
+      <a class="button button-invisible-thin search-overlay-close" href="#modal-search">
+        <i class="icon-close"><span class="sr-only">Close</span></i>
+      </a>
+    </div>
+    <input class="button button-invisible search-overlay-submit" type="submit" value="Search">
+  </form>
+
+</div>
+
+
+<div class="loading-overlay">
+  <span class="page-spinner"></span>
+</div>
+
+  
+<script nonce="" id="schema-breadcrumbs">
+  var schema = document.createElement('script');
+  schema.type = 'application/ld+json';
+  schema.text = JSON.stringify({
+    "@context": "http://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 0 + 1,
+          "item": {
+            "@id": window.location.href,
+            "name": "Home"
+          }
+        }
+    ]
+  });
+
+  document.querySelector('body').appendChild(schema);
+
+  var script = document.getElementById('schema-breadcrumbs');
+  script.parentElement.removeChild(script);
+</script>
+
+  <script nonce="">window.__webpack_public_path__ = "https://cdn11.bigcommerce.com/s-q1sponaupn/stencil/5bfdbf40-0203-013e-7707-7ab084116f26/e/a8ba4540-0218-013e-bf9c-661f783446da/dist/";</script>
+  <script nonce="" src="https://cdn11.bigcommerce.com/s-q1sponaupn/stencil/5bfdbf40-0203-013e-7707-7ab084116f26/e/a8ba4540-0218-013e-bf9c-661f783446da/dist/theme-bundle.main.js"></script>
+  <script nonce="">
+    window.stencilBootstrap("pages/home", "{\"themeImageSizes\":[],\"breakPoints\":{\"xlarge\":{\"start\":1200,\"end\":1400},\"medium\":{\"start\":569,\"end\":850},\"small\":{\"start\":0,\"end\":568},\"xxlarge\":{\"start\":1401,\"end\":99999},\"large\":{\"start\":851,\"end\":1199}},\"productsPerPage\":9,\"disableProductAjax\":false,\"cartUrl\":\"/cart.php\",\"carouselDelay\":10000,\"compareCompareProducts\":\"Compare\",\"compareClearSelection\":\"Clear Selection\",\"homeLink\":\"https://peptidestandard.com/\",\"continueShopping\":\"continue shopping\",\"urlsCart\":\"/cart.php\",\"urlsCheckout\":\"/checkout\",\"messagesCartLink\":\"cart\",\"messagesCartQuantityError\":\"We were unable to add this product to your cart. Please try again later. Contact us if you continue to have issues.\",\"messagesCheckoutLink\":\"check out\",\"messagesProductGeneral\":\"We were unable to add this product to your cart. Please try again later. Contact us if you continue to have issues.\",\"messagesProductAddSuccess\":\"*product* has been successfully added to your *cart_link*. Feel free to *continue_link* or *checkout_link*.\",\"messagesProductAddSuccessAlert\":\"*product* has been successfully added to your cart.\",\"productOutOfStock\":\"Unfortunately, we do not have *quantity* in stock.\",\"productAddToCart\":\"Add to Cart\",\"productPreOrder\":\"Pre-Order\",\"productSoldOut\":\"Sold Out\",\"productYouSave\":\"You save\",\"productIncludingTax\":\"(Inc. Tax)\",\"productExcludingTax\":\"(Exc. Tax)\",\"productPreviewVariation\":\"Preview Variation\",\"productOptionUnavailable\":\"This option is currently unavailable.\",\"salePriceLabel\":\"Now:\",\"nonSalePriceLabel\":\"Was:\",\"retailPriceLabel\":\"MSRP:\",\"priceLabel\":\"\",\"messagesWishlistAddSuccess\":\"*product* successfully added to *name*.\",\"messagesWishlistAddError\":\"*product* could not be added to wishlist.\",\"validationRequired\":\"This field is required.\",\"validationEmail\":\"Your E-mail address appears to be invalid.\",\"validationNumber\":\"You can enter only numbers in this field.\",\"validationNumMax\":\"Please enter a number less than undefined.\",\"validationNumMin\":\"Please enter a number greater than undefined.\",\"validationNumRange\":\"Please enter a number greater than undefined and less than undefined.\",\"validationMaxLength\":\"Maximum undefined characters allowed.\",\"validationMinLength\":\"Minimum undefined characters allowed.\",\"validationMaxChecked\":\"Maximum undefined options allowed.\",\"validationMinChecked\":\"Please select minimum undefined options.\",\"validationMaxSelected\":\"Maximum undefined selection allowed.\",\"validationMinSelected\":\"Minimum undefined selection allowed.\",\"validationNotEqual\":\"Fields do not match.\",\"validationDifferent\":\"Fields cannot be the same as each other.\",\"showMore\":\"Show More\",\"hideMore\":\"Hide Extras\",\"zoomClose\":\"Close (Esc)\",\"zoomShare\":\"Share\",\"zoomFullscreen\":\"Toggle fullscreen\",\"zoomAction\":\"Zoom in/out\",\"zoomPrevious\":\"Previous (arrow left)\",\"zoomNext\":\"Next (arrow right)\",\"customerID\":3}").load();
+  </script>
+  <script type="text/javascript" src="https://cdn11.bigcommerce.com/shared/js/csrf-protection-header-5eeddd5de78d98d146ef4fd71b2aedce4161903e.js"></script>
+<script src='https://na.shgcdn3.com/collector.js' async ></script><script src='https://bc-po.myintegrator.com.au/script/q1sponaupn.js?v=1744678412' defer ></script><script>// Enhance product page for scientific products
+document.addEventListener('DOMContentLoaded', function() {
+  // Only run on product pages
+  if (!document.querySelector('.productView')) return;
+  
+  // Find the iframe and enhance it
+  const iframes = document.querySelectorAll('.productView-description iframe');
+  iframes.forEach(iframe => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'molecule-display';
+    iframe.parentNode.insertBefore(wrapper, iframe);
+    wrapper.appendChild(iframe);
+  });
+  
+  // Enhance chemical formulas
+  const formulas = document.querySelectorAll('.productView-info-value');
+  formulas.forEach(formula => {
+    if (formula.textContent.includes('Molecular Formula')) {
+      formula.classList.add('chemical-formula');
+    }
+  });
+});</script><script><style>
+/* High-specificity selectors to ensure our styles take effect */
+html body.page-type-product .productView-title,
+html body.page-type-product h1.productView-title {
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid #3fe2ae !important;
+  display: inline-block !important;
+  padding-bottom: 5px !important;
+  color: #ffffff !important;
+}
+
+html body.page-type-product .productView,
+html body.page-type-product div.productView {
+  background-color: rgba(18, 18, 18, 0.8) !important;
+  color: #ffffff !important;
+  padding: 20px !important;
+  border-radius: 10px !important;
+  margin-top: 20px !important;
+}
+
+html body.page-type-product .productView-details,
+html body.page-type-product div.productView-details {
+  background: rgba(30, 30, 30, 0.8) !important;
+  border-radius: 10px !important;
+  padding: 20px !important;
+  margin-bottom: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+html body.page-type-product .productView-info-name,
+html body.page-type-product span.productView-info-name {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-weight: 600 !important;
+}
+
+html body.page-type-product .productView-info-value,
+html body.page-type-product span.productView-info-value {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+html body.page-type-product .productView-price .price,
+html body.page-type-product span.price {
+  color: #3fe2ae !important;
+  font-weight: 700 !important;
+}
+
+html body.page-type-product .button--primary,
+html body.page-type-product button.button--primary {
+  background: linear-gradient(45deg, #ff6448 0%, #3fe2ae 100%) !important;
+  border: none !important;
+  border-radius: 5px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+html body.page-type-product .productView-description,
+html body.page-type-product div.productView-description {
+  background: rgba(30, 30, 30, 0.8) !important;
+  border-radius: 10px !important;
+  padding: 30px !important;
+  margin-top: 30px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+}
+
+html body.page-type-product .productView-description iframe,
+html body.page-type-product div.productView-description iframe {
+  border-radius: 8px !important;
+  margin: 20px auto !important;
+  display: block !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+html body.page-type-product .form-input, 
+html body.page-type-product .form-select,
+html body.page-type-product input.form-input,
+html body.page-type-product select.form-select {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 5px !important;
+  color: white !important;
+}
+
+/* Target the entire page background */
+html body.page-type-product,
+html body.page-type-product div.body,
+html body.page-type-product div.page,
+html body.page-type-product div.page-content {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+</style>
+
+
+// Enhance molecular visualization
+document.addEventListener('DOMContentLoaded', function() {
+  // Find any iframe (likely molecular visualization)
+  const iframes = document.querySelectorAll('.productView-description iframe');
+  
+  if (iframes.length > 0) {
+    iframes.forEach(iframe => {
+      // Create wrapper for the iframe
+      const wrapper = document.createElement('div');
+      wrapper.className = 'molecule-wrapper';
+      wrapper.style.cssText = `
+        width: 100%;
+        max-width: 500px;
+        margin: 30px auto;
+        border-radius: 10px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #193338, #3fe2ae);
+        padding: 10px;
+      `;
+      
+      // Add a title for the visualization
+      const title = document.createElement('h3');
+      title.textContent = 'Molecular Structure';
+      title.style.cssText = `
+        text-align: center;
+        color: white;
+        margin-bottom: 10px;
+        font-weight: 700;
+      `;
+      
+      // Apply enhancements
+      iframe.parentNode.insertBefore(wrapper, iframe);
+      wrapper.appendChild(title);
+      wrapper.appendChild(iframe);
+      
+      iframe.style.width = '100%';
+      iframe.style.height = '300px';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.style.backgroundColor = 'white';
+    });
+  }
+});
+</script><script>// Square configuration
+const SQUARE_CONFIG = {
+    accessToken: 'EAAAlylhEhDMU-sjv66Su8B2oQMgVxQja85xuoJLcURWEimX4xYdUXnGHF6LfTBW',
+    locationId: 'x89XVH1D1Y6PKM',
+    environment: 'production'
+};
+
+// Square Invoice Handler
+async function createSquareInvoice(formData) {
+    try {
+        const response = await fetch('https://connect.squareup.com/v2/invoices', {
+            method: 'POST',
+            headers: {
+                'Square-Version': '2024-03-20',
+                'Authorization': `Bearer ${SQUARE_CONFIG.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                invoice: {
+                    location_id: SQUARE_CONFIG.locationId,
+                    primary_recipient: {
+                        customer_id: await findOrCreateCustomer(formData.customerInfo)
+                    },
+                    payment_requests: [{
+                        request_method: 'EMAIL',
+                        request_type: 'BALANCE',
+                        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    }],
+                    delivery_method: 'EMAIL',
+                    line_items: formData.lineItems.map(item => ({
+                        quantity: item.quantity.toString(),
+                        name: item.product,
+                        base_price_money: {
+                            amount: Math.round(parseFloat(item.price) * 100),
+                            currency: 'USD'
+                        }
+                    }))
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create invoice');
+        }
+
+        const result = await response.json();
+        alert('Invoice created successfully!');
+        return result;
+    } catch (error) {
+        console.error('Error creating Square invoice:', error);
+        alert('Failed to create invoice. Please try again.');
+        throw error;
+    }
+}
+
+// Find or create customer in Square
+async function findOrCreateCustomer(customerInfo) {
+    try {
+        // Search for existing customer
+        const searchResponse = await fetch('https://connect.squareup.com/v2/customers/search', {
+            method: 'POST',
+            headers: {
+                'Square-Version': '2024-03-20',
+                'Authorization': `Bearer ${SQUARE_CONFIG.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: {
+                    filter: {
+                        email_address: {
+                            exact: customerInfo.email
+                        }
+                    }
+                }
+            })
+        });
+
+        const searchResult = await searchResponse.json();
+        
+        if (searchResult.customers?.length > 0) {
+            return searchResult.customers[0].id;
+        }
+
+        // Create new customer if not found
+        const createResponse = await fetch('https://connect.squareup.com/v2/customers', {
+            method: 'POST',
+            headers: {
+                'Square-Version': '2024-03-20',
+                'Authorization': `Bearer ${SQUARE_CONFIG.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                idempotency_key: Date.now().toString(),
+                given_name: customerInfo.name,
+                email_address: customerInfo.email,
+                phone_number: customerInfo.phone,
+                address: {
+                    address_line_1: customerInfo.address,
+                    locality: customerInfo.city,
+                    administrative_district_level_1: customerInfo.state,
+                    postal_code: customerInfo.zip,
+                    country: 'US'
+                }
+            })
+        });
+
+        const createResult = await createResponse.json();
+        return createResult.customer.id;
+    } catch (error) {
+        console.error('Error finding/creating customer:', error);
+        throw error;
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener to the Square Invoice button
+    const squareInvoiceBtn = document.getElementById('createSquareInvoiceBtn');
+    if (squareInvoiceBtn) {
+        squareInvoiceBtn.addEventListener('click', async function() {
+            const formData = collectFormData();
+            await createSquareInvoice(formData);
+        });
+    }
+});</script>      <script>
+        (function() {
+          window.shogunVariables = {};
+          window.shogunVariables.orderId = '';
+        })();
+      </script>
+<script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="rcNL6wxGDLSXXSo1wljpQ";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
+
+  <!-- snippet location footer -->
+  </body>
+</html>
